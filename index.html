@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cây lời chúc</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sky1:#fdf6ec; --sky2:#e9f4ee; --ink:#24332b; --muted:#5f6f66;
+  --card:#ffffff; --line:#e3e9e5; --brand:#2f8f5b; --brand-ink:#ffffff;
+  --accent:#e9a13b; --shadow:0 12px 32px rgba(36,51,43,.16);
+  --bark:#7a5236; --bark2:#5e3d27; --ground:#cfe3c7; --ground2:#b7d4ac;
+  --overlay:rgba(24,34,28,.55);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --sky1:#17211c; --sky2:#1d2b24; --ink:#eef4f0; --muted:#a9b8af;
+    --card:#22302a; --line:#33443b; --brand:#4fb57c; --brand-ink:#0f1a14;
+    --bark:#8a6347; --bark2:#6d4b34; --ground:#2b3d31; --ground2:#24362a;
+    --overlay:rgba(0,0,0,.65); --shadow:0 12px 32px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  --sky1:#17211c; --sky2:#1d2b24; --ink:#eef4f0; --muted:#a9b8af;
+  --card:#22302a; --line:#33443b; --brand:#4fb57c; --brand-ink:#0f1a14;
+  --bark:#8a6347; --bark2:#6d4b34; --ground:#2b3d31; --ground2:#24362a;
+  --overlay:rgba(0,0,0,.65); --shadow:0 12px 32px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  font-family:"Be Vietnam Pro",system-ui,sans-serif; color:var(--ink);
+  background:linear-gradient(180deg,var(--sky1),var(--sky2)); overflow-x:hidden;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+.btn{border:1px solid var(--line);background:var(--card);padding:10px 16px;border-radius:999px;cursor:pointer;font-weight:600;white-space:nowrap}
+.btn:hover{border-color:var(--brand)}
+.btn.primary{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+.btn.ghost{background:transparent}
+.btn:disabled{opacity:.6;cursor:wait}
+
+/* Header */
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:16px 16px 0;max-width:1200px;margin:0 auto}
+.brand h1{margin:0;font-family:"Dancing Script",cursive;font-size:40px;line-height:1;color:var(--brand)}
+.brand p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.stats{display:flex;gap:16px;align-items:center;font-size:14px;color:var(--muted)}
+.stats b{display:block;font-size:22px;color:var(--ink)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Toolbar */
+.toolbar{max-width:1200px;margin:12px auto 0;padding:0 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.search{flex:1 1 240px;display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 14px}
+.search input{border:0;outline:0;background:transparent;flex:1;min-width:0;padding:4px 0}
+.search .count{font-size:13px;color:var(--muted);white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 10px;font-size:13px;cursor:pointer}
+.chip i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.chip.on{border-color:var(--brand);box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 25%,transparent)}
+
+/* Tree */
+.stage{position:relative;width:100%;overflow:hidden}
+#tree{width:100%;height:auto;display:block;max-height:calc(100vh - 170px);min-height:340px;overflow:visible}
+
+/* Cột "Lời chúc mới nhất" — chỉ hiện trên màn rộng */
+#feed{display:none}
+@media (min-width:1500px){
+  #feed{display:flex;flex-direction:column;position:absolute;top:12px;bottom:56px;right:max(24px,calc((100vw - 1640px)/2));width:380px;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden;z-index:5}
+  #feed h3{margin:0;padding:16px 18px 10px;font-size:16px;display:flex;justify-content:space-between;align-items:baseline}
+  #feed h3 span{font-weight:400;font-size:13px;color:var(--muted)}
+  #feedList{list-style:none;margin:0;padding:0 10px 10px;overflow:auto;flex:1}
+  #feedList li{padding:12px 10px;border-radius:14px;cursor:pointer;border-bottom:1px solid var(--line)}
+  #feedList li:hover{background:color-mix(in srgb,var(--brand) 8%,transparent)}
+  #feedList li.new{animation:feedIn .8s ease-out}
+  @keyframes feedIn{from{background:#fff3c4;transform:translateX(20px);opacity:0}to{transform:none;opacity:1}}
+  #feedList .f-to{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+  #feedList .f-to i{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  #feedList .f-text{font-size:15px;line-height:1.5;margin-top:4px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  #feedList .f-time{font-size:12px;color:var(--muted);margin-top:4px}
+  .stage{overflow:visible;padding-right:calc(max(24px,(100vw - 1640px)/2) + 400px)}
+  .search{flex:1 1 460px}
+  .stage-label,#card{left:calc((100vw - max(24px,(100vw - 1640px)/2) - 400px)/2) !important}
+}
+/* Màn lớn (27 inch QHD): phóng to chữ và nút */
+@media (min-width:1800px){
+  header,.toolbar{max-width:1640px}
+  .brand h1{font-size:52px} .brand p{font-size:16px}
+  .stats{font-size:16px} .stats b{font-size:28px}
+  .btn{font-size:17px;padding:12px 20px}
+  .search{padding:8px 8px 8px 18px} .search input{font-size:17px}
+  .chip{font-size:15px;padding:7px 13px}
+  #card{width:640px;padding:22px 26px 16px}
+  #card .to{font-size:15px} #card blockquote{font-size:21px} #card .meta{font-size:14px}
+  #feed{width:420px} .stage{padding-right:calc(max(24px,(100vw - 1640px)/2) + 444px)}
+  .stage-label{font-size:15px}
+  .stage-label,#card{left:calc((100vw - max(24px,(100vw - 1640px)/2) - 444px)/2) !important}
+  #feedList .f-text{font-size:16px}
+}
+.trunk{stroke:var(--bark);stroke-linecap:round}
+.ground{fill:var(--ground)} .ground2{fill:var(--ground2)}
+#treeScale{transition:transform 1.2s cubic-bezier(.2,.8,.2,1)}
+.seg{animation:draw 1.2s ease-out both}
+@keyframes draw{from{opacity:0}to{opacity:1}}
+.leaf{cursor:pointer;outline:none}
+.leaf .shape{transition:transform .25s, filter .25s, opacity .3s;transform-box:fill-box;transform-origin:center}
+.leaf:hover .shape,.leaf:focus-visible .shape{transform:scale(1.35);filter:drop-shadow(0 0 6px rgba(255,214,102,.95))}
+.leaf.grow .shape{animation:grow .9s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes grow{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.leaf.spot .shape{animation:pulse 1.4s ease-in-out infinite;filter:drop-shadow(0 0 10px rgba(255,214,102,1))}
+@keyframes pulse{0%,100%{transform:scale(1.3)}50%{transform:scale(1.6)}}
+svg.filtering .leaf:not(.match) .shape{opacity:.15}
+svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 7px rgba(255,214,102,1))}
+.stage-label{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);font-size:13px;color:var(--muted);background:var(--card);border:1px solid var(--line);padding:4px 12px;border-radius:999px;white-space:nowrap}
+
+/* Card */
+#card{position:fixed;left:50%;bottom:20px;transform:translate(-50%,140%);width:min(520px,calc(100vw - 32px));background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:18px 20px 14px;transition:transform .45s cubic-bezier(.2,.9,.2,1);z-index:30}
+#card.show{transform:translate(-50%,0)}
+#card .to{font-size:13px;font-weight:600;color:var(--brand);display:flex;align-items:center;gap:8px}
+#card .to i{width:10px;height:10px;border-radius:50%}
+#card blockquote{margin:10px 0 8px;font-size:17px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word;max-height:40vh;overflow:auto}
+#card .meta{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);gap:8px}
+#card .nav{display:flex;gap:6px}
+#card .nav button{border:1px solid var(--line);background:transparent;border-radius:999px;padding:4px 10px;cursor:pointer}
+#card .close{position:absolute;top:8px;right:10px;border:0;background:transparent;font-size:22px;cursor:pointer;color:var(--muted)}
+#card.peek{cursor:pointer}
+#card.peek .nav,#card.peek .close{display:none}
+
+/* Modals */
+.modal{position:fixed;inset:0;background:var(--overlay);display:none;align-items:center;justify-content:center;padding:16px;z-index:40}
+.modal.show{display:flex}
+.panel{background:var(--card);border-radius:20px;box-shadow:var(--shadow);width:min(520px,100%);padding:22px;max-height:calc(100vh - 32px);overflow:auto}
+.panel h2{margin:0 0 4px;font-size:20px}
+.panel .sub{margin:0 0 16px;color:var(--muted);font-size:14px}
+.field{margin-bottom:14px}
+.field label.lbl{display:block;font-weight:600;font-size:14px;margin-bottom:6px}
+.field input[type=text],.field input[type=password],.field select,.field textarea{width:100%;border:1px solid var(--line);background:transparent;border-radius:12px;padding:10px 12px;outline:0}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--brand)}
+.field textarea{min-height:120px;resize:vertical}
+.seg-ctl{display:flex;gap:6px;flex-wrap:wrap}
+.seg-ctl label{flex:1 1 120px;border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;cursor:pointer;font-size:14px}
+.seg-ctl input{display:none}
+.seg-ctl input:checked+span{color:var(--brand);font-weight:700}
+.seg-ctl label:has(input:checked){border-color:var(--brand);background:color-mix(in srgb,var(--brand) 10%,transparent)}
+.hint{font-size:12px;color:var(--muted);margin-top:4px;display:flex;justify-content:space-between}
+.row{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.err{color:#c0392b;font-size:14px;min-height:20px;margin:4px 0}
+.ok-box{text-align:center;padding:12px 0}
+.ok-box .big{font-size:44px}
+.demo-badge{display:inline-block;font-size:12px;background:var(--accent);color:#2b1d05;border-radius:999px;padding:2px 10px;margin-left:8px;vertical-align:middle;font-family:"Be Vietnam Pro",sans-serif;font-weight:600}
+
+/* PIN gate */
+#gate .panel{text-align:center}
+#gate h1{font-family:"Dancing Script",cursive;color:var(--brand);font-size:44px;margin:0}
+#gate input{text-align:center;font-size:20px;letter-spacing:4px}
+
+/* Toast */
+#toast{position:fixed;top:16px;left:50%;transform:translate(-50%,calc(-100% - 40px));background:var(--ink);color:var(--sky1);padding:10px 18px;border-radius:999px;font-size:14px;z-index:50;transition:transform .4s;max-width:calc(100vw - 32px);text-align:center}
+#toast.show{transform:translate(-50%,0)}
+
+/* Slideshow */
+#show{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;padding:32px;background:radial-gradient(circle at 50% 35%,#fff7dd 0%,var(--sky1) 45%,var(--sky2) 100%);text-align:center}
+#show.show{display:flex}
+#show .s-title{font-family:"Dancing Script",cursive;color:var(--brand);font-size:clamp(32px,5vw,56px);margin:0 0 4vh}
+#show .s-to{font-weight:700;color:var(--brand);font-size:clamp(16px,2.2vw,26px)}
+#show .s-text{font-size:clamp(22px,3.6vw,48px);line-height:1.45;max-width:1100px;margin:3vh 0;white-space:pre-wrap;word-wrap:break-word;transition:opacity .6s}
+#show .s-foot{color:var(--muted);font-size:clamp(13px,1.4vw,18px)}
+#show .s-close{position:absolute;top:16px;right:16px}
+#show .fade{opacity:0}
+
+@media (max-width:640px){
+  .brand h1{font-size:34px}
+  .stats b{font-size:18px}
+  header{padding-top:12px}
+  .actions .btn{padding:9px 12px;font-size:14px}
+  .search{flex-wrap:wrap;border-radius:18px;padding:6px 6px 6px 12px}
+  .search input{flex:1 1 100%;padding:6px 0}
+  .search .btn{padding:6px 12px;font-size:13px}
+  .legend{flex-wrap:nowrap;overflow-x:auto;width:100%;padding-bottom:4px;scrollbar-width:none}
+  .chip{flex:0 0 auto}
+  #tree{max-height:none;min-height:0}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1 id="title">Cây lời chúc</h1>
+    <p id="subtitle"></p>
+  </div>
+  <div class="stats">
+    <div><b id="countNum">0</b>lời chúc</div>
+    <div id="countdownBox"><b id="countdown">–</b><span id="countdownLbl">ngày nữa</span></div>
+  </div>
+  <div class="actions">
+    <button class="btn primary" id="btnSend">+ Gửi lời chúc</button>
+    <button class="btn" id="btnShow">Trình chiếu</button>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="search">
+    <input id="q" type="text" placeholder="Tìm lời chúc gửi tới bạn: nhập tên hoặc phòng ban" autocomplete="off" list="names">
+    <datalist id="names"></datalist>
+    <span class="count" id="qCount"></span>
+    <button class="btn ghost" id="qBrowse" hidden>Xem lần lượt</button>
+    <button class="btn ghost" id="qClear" hidden aria-label="Xóa tìm kiếm">✕</button>
+  </div>
+  <div class="legend" id="legend"></div>
+</div>
+
+<div class="stage">
+  <svg id="tree" viewBox="0 0 1000 980" role="img" aria-label="Cây lời chúc, mỗi lá là một lời chúc">
+    <defs>
+      <radialGradient id="sun" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#ffe7a3" stop-opacity=".9"/>
+        <stop offset="100%" stop-color="#ffe7a3" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <circle cx="500" cy="420" r="420" fill="url(#sun)" opacity=".55"/>
+    <ellipse class="ground2" cx="500" cy="1040" rx="2600" ry="150"/>
+    <ellipse class="ground" cx="500" cy="1050" rx="2200" ry="125"/>
+    <g id="treeScale">
+      <g id="branches"></g>
+      <g id="leaves"></g>
+    </g>
+  </svg>
+  <div class="stage-label" id="stageLabel">Hạt mầm</div>
+  <aside id="feed" aria-label="Lời chúc mới nhất">
+    <h3>Lời chúc mới nhất <span id="feedCount"></span></h3>
+    <ul id="feedList"></ul>
+  </aside>
+</div>
+
+<!-- Thẻ lời chúc -->
+<div id="card" aria-live="polite">
+  <button class="close" id="cardClose" aria-label="Đóng">×</button>
+  <div class="to"><i id="cardDot"></i><span id="cardTo"></span></div>
+  <blockquote id="cardText"></blockquote>
+  <div class="meta">
+    <span id="cardMeta"></span>
+    <span class="nav"><button id="cardPrev" aria-label="Lời chúc trước">‹ Trước</button><button id="cardNext" aria-label="Lời chúc sau">Sau ›</button></span>
+  </div>
+</div>
+
+<!-- Gửi lời chúc -->
+<div class="modal" id="sendModal" role="dialog" aria-modal="true" aria-labelledby="sendTitle">
+  <div class="panel">
+    <div id="sendForm">
+      <h2 id="sendTitle">Gửi một lời chúc</h2>
+      <p class="sub">Hoàn toàn giấu tên: hệ thống không lưu tên hay email của bạn.</p>
+      <div class="field">
+        <label class="lbl">Gửi tới</label>
+        <div class="seg-ctl">
+          <label><input type="radio" name="toType" value="company" checked><span>Cả công ty</span></label>
+          <label><input type="radio" name="toType" value="dept"><span>Một phòng ban</span></label>
+          <label><input type="radio" name="toType" value="person"><span>Một đồng nghiệp</span></label>
+        </div>
+      </div>
+      <div class="field" id="fDept" hidden>
+        <label class="lbl" for="toDept">Phòng ban</label>
+        <select id="toDept"></select>
+      </div>
+      <div class="field" id="fName" hidden>
+        <label class="lbl" for="toName">Tên đồng nghiệp</label>
+        <input type="text" id="toName" maxlength="60" placeholder="Ví dụ: chị Lan">
+      </div>
+      <div class="field">
+        <label class="lbl" for="msg">Lời chúc, lời cảm ơn</label>
+        <textarea id="msg" maxlength="500" placeholder="Điều bạn muốn cảm ơn, chúc mừng…"></textarea>
+        <div class="hint"><span>Lời chúc sẽ mọc lên cây sau khi được duyệt.</span><span id="msgCount">0/500</span></div>
+      </div>
+      <div class="err" id="sendErr"></div>
+      <div class="row">
+        <button class="btn ghost" data-close>Hủy</button>
+        <button class="btn primary" id="sendBtn">Gửi lời chúc</button>
+      </div>
+    </div>
+    <div id="sendDone" class="ok-box" hidden>
+      <div class="big">🌱</div>
+      <h2>Đã gửi lời chúc!</h2>
+      <p class="sub" id="sendDoneText">Lời chúc của bạn sẽ thành một chiếc lá trên cây sau khi được duyệt.</p>
+      <div class="row" style="justify-content:center">
+        <button class="btn" id="sendAgain">Gửi thêm</button>
+        <button class="btn primary" data-close>Xem cây</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PIN -->
+<div class="modal" id="gate" role="dialog" aria-modal="true">
+  <div class="panel">
+    <h1>Cây lời chúc</h1>
+    <p class="sub" id="gateSub">Nhập mã PIN được gửi trong nhóm nội bộ để vào trang.</p>
+    <div class="field"><input type="password" id="pin" inputmode="text" autocomplete="off" placeholder="Mã PIN"></div>
+    <div class="err" id="pinErr"></div>
+    <button class="btn primary" id="pinBtn" style="width:100%">Vào xem cây</button>
+  </div>
+</div>
+
+<!-- Trình chiếu -->
+<div id="show">
+  <button class="btn s-close" id="showClose">Thoát (Esc)</button>
+  <p class="s-title" id="sTitle">Cây lời chúc</p>
+  <div class="s-to" id="sTo"></div>
+  <div class="s-text" id="sText"></div>
+  <div class="s-foot" id="sFoot"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* =========================================================
+   CẤU HÌNH — chỉnh các giá trị dưới đây cho công ty bạn
+   ========================================================= */
+const CONFIG = {
+  // Dán URL Web app của Google Apps Script vào đây. Để trống = chế độ demo.
+  API_URL: "",
+  COMPANY_NAME: "SNMO",
+  BIRTHDAY: "2026-11-04",            // ngày sinh nhật công ty (YYYY-MM-DD)
+  DEPARTMENTS: [
+    "Ban Giám đốc", "Hành chính – Nhân sự", "Kế toán", "Kinh doanh",
+    "Marketing", "IT", "Vận hành", "Chăm sóc khách hàng"
+  ],
+  POLL_SECONDS: 45,                  // bao lâu tải lời chúc mới một lần
+  SPOTLIGHT_SECONDS: 6,              // bao lâu tự bật một lời chúc
+  SLIDE_SECONDS: 9                   // thời gian mỗi lời chúc ở chế độ trình chiếu
+};
+
+const DEMO = !CONFIG.API_URL;
+const COMPANY_COLOR = "#f4a7b9";
+const PALETTE = ["#4caf50","#2e9e8f","#8bc34a","#f2b134","#e07b39","#5b8def","#9c6ade","#d9577a","#3fa7c4","#7cb342","#c0a030","#6d8b3a"];
+const deptColor = d => {
+  const i = CONFIG.DEPARTMENTS.indexOf(d);
+  return i >= 0 ? PALETTE[i % PALETTE.length] : PALETTE[hash(d) % PALETTE.length];
+};
+
+/* ---------- tiện ích ---------- */
+const $ = s => document.querySelector(s);
+const SVGNS = "http://www.w3.org/2000/svg";
+function hash(str){ let h = 2166136261; for (let i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h,16777619);} return h>>>0; }
+function rng(seed){ return function(){ seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed>>>15, 1|seed); t = t + Math.imul(t ^ t>>>7, 61|t) ^ t; return ((t ^ t>>>14)>>>0)/4294967296; }; }
+const norm = s => String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").trim();
+function store(k,v){ try{ v===undefined ? sessionStorage.removeItem(k) : sessionStorage.setItem(k,v); }catch(e){} }
+function load(k){ try{ return sessionStorage.getItem(k); }catch(e){ return null; } }
+function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove("show"),3800); }
+function recipient(m){
+  if (m.toType==="person") return "Gửi " + m.toName + (m.toDept ? " · " + m.toDept : "");
+  if (m.toType==="dept") return "Gửi " + m.toDept;
+  return "Gửi cả công ty " + CONFIG.COMPANY_NAME;
+}
+function colorOf(m){ return m.toType==="company" ? COMPANY_COLOR : deptColor(m.toDept); }
+function timeAgo(iso){
+  const d = new Date(iso); if (isNaN(d)) return "";
+  const s = (Date.now()-d)/1000;
+  if (s<60) return "vừa xong"; if (s<3600) return Math.floor(s/60)+" phút trước";
+  if (s<86400) return Math.floor(s/3600)+" giờ trước";
+  return d.toLocaleDateString("vi-VN");
+}
+
+/* ---------- API ---------- */
+let PIN = load("clc_pin") || "";
+async function api(action, data={}){
+  if (DEMO) return demoApi(action, data);
+  const res = await fetch(CONFIG.API_URL, { method:"POST", body: JSON.stringify({ action, pin: PIN, ...data }) });
+  if (!res.ok) throw new Error("Không kết nối được máy chủ.");
+  return res.json();
+}
+
+/* ---------- dữ liệu demo ---------- */
+let demoItems = null;
+function demoApi(action, data){
+  if (!demoItems){
+    const r = rng(7), texts = [
+      "Cảm ơn công ty đã cho em một môi trường làm việc như gia đình. Chúc công ty sinh nhật thật rực rỡ!",
+      "Cảm ơn anh chị đã kiên nhẫn hướng dẫn em những ngày đầu đi làm.",
+      "Chúc công ty ngày càng phát triển, vững vàng vượt mọi thử thách.",
+      "Cảm ơn team đã cùng nhau chạy deadline mà vẫn luôn vui vẻ.",
+      "Cảm ơn chị đã luôn lắng nghe và động viên em đúng lúc nhất.",
+      "Mỗi ngày đi làm đều có lý do để mỉm cười vì có mọi người. Sinh nhật vui vẻ!",
+      "Cảm ơn phòng IT đã cứu laptop của em không biết bao nhiêu lần.",
+      "Chúc cả nhà sức khỏe, hạnh phúc và thêm nhiều dự án thành công.",
+      "Cảm ơn anh vì những buổi cà phê góp ý rất thật lòng.",
+      "Tự hào là một phần của công ty. Cùng nhau đi thêm thật nhiều năm nữa nhé!",
+      "Cảm ơn phòng Kế toán luôn trả lương đúng hẹn, mọi người tuyệt vời!",
+      "Chúc công ty tuổi mới thật nhiều niềm vui và những cột mốc mới."
+    ], names = ["chị Lan","anh Minh","em Hoa","anh Tuấn","chị Thu","anh Đức","em Vy","chị Ngọc"];
+    demoItems = Array.from({length:64}, (_,i)=>{
+      const t = r(), dept = CONFIG.DEPARTMENTS[Math.floor(r()*CONFIG.DEPARTMENTS.length)];
+      const toType = t<.35 ? "company" : t<.7 ? "dept" : "person";
+      return { id:"demo"+i, time:new Date(Date.now()-r()*6*864e5).toISOString(), toType,
+        toDept: toType==="company" ? "" : dept,
+        toName: toType==="person" ? names[Math.floor(r()*names.length)] : "",
+        text: texts[Math.floor(r()*texts.length)] };
+    });
+  }
+  if (action==="verify") return Promise.resolve({ok:true});
+  if (action==="list") return Promise.resolve({ok:true, items: demoItems.slice()});
+  if (action==="submit"){
+    const m = { id:"demo"+Date.now(), time:new Date().toISOString(), toType:data.toType,
+      toDept: data.toType==="company" ? "" : data.toDept, toName: data.toType==="person" ? data.toName : "", text:data.text };
+    demoItems.push(m);
+    return Promise.resolve({ok:true, id:m.id});
+  }
+}
+
+/* ---------- cây ---------- */
+const MAXD = 7, BASE = {x:500, y:930};
+const SEGS = (function buildTree(){
+  const r = rng(20261104), segs = [];
+  (function branch(x,y,ang,len,w,depth){
+    const x2 = x + Math.cos(ang)*len, y2 = y + Math.sin(ang)*len;
+    const bend = (r()-.5)*len*.25;
+    segs.push({x1:x,y1:y,x2,y2,cx:(x+x2)/2+Math.cos(ang+Math.PI/2)*bend,cy:(y+y2)/2+Math.sin(ang+Math.PI/2)*bend,w,depth,ang});
+    if (depth>=MAXD) return;
+    const n = depth<1 ? 2 : (r()<.28 ? 3 : 2);
+    for (let i=0;i<n;i++){
+      const spread = .32 + r()*.3;
+      let a = n===2 ? ang + (i ? spread : -spread) : ang + (i-1)*spread*1.15;
+      a += (r()-.5)*.25;
+      a = a*.85 + (-Math.PI/2)*.15;            // giữ cành hướng lên
+      branch(x2,y2,a,len*(.7+r()*.12),Math.max(1.4,w*.66),depth+1);
+    }
+  })(BASE.x, BASE.y, -Math.PI/2, 190, 38, 0);
+  return segs;
+})();
+
+const STAGES = [
+  {min:0,   depth:1, scale:.42, name:"Hạt mầm"},
+  {min:5,   depth:2, scale:.5,  name:"Mầm non"},
+  {min:15,  depth:3, scale:.6,  name:"Cây non"},
+  {min:40,  depth:4, scale:.7,  name:"Cây nhỏ"},
+  {min:80,  depth:5, scale:.8,  name:"Cây đang lớn"},
+  {min:150, depth:6, scale:.9,  name:"Cây trưởng thành"},
+  {min:250, depth:7, scale:1,   name:"Cây cổ thụ nở hoa"}
+];
+const stageFor = n => STAGES.reduce((s,x)=> n>=x.min ? x : s, STAGES[0]);
+
+let items = [], byId = new Map(), currentStage = null, leafEls = new Map();
+
+function drawBranches(stage){
+  const g = $("#branches"); g.textContent = "";
+  SEGS.filter(s=>s.depth<=stage.depth).forEach(s=>{
+    const p = document.createElementNS(SVGNS,"path");
+    p.setAttribute("d",`M${s.x1},${s.y1} Q${s.cx},${s.cy} ${s.x2},${s.y2}`);
+    p.setAttribute("class","trunk seg");
+    p.setAttribute("fill","none");
+    p.setAttribute("stroke-width", s.w);
+    p.style.animationDelay = (s.depth*0.08)+"s";
+    g.appendChild(p);
+  });
+  const sc = stage.scale;
+  $("#treeScale").setAttribute("transform",`translate(${BASE.x*(1-sc)},${BASE.y*(1-sc)}) scale(${sc})`);
+  // "máy quay": thu khung nhìn sát ngọn cây để cây luôn chiếm phần lớn màn hình
+  const top = Math.min(...SEGS.filter(s=>s.depth<=stage.depth).map(s=>BASE.y*(1-sc)+s.y2*sc));
+  const h = Math.min(980, Math.max(560, 980 - (top - 110)));
+  const w = h*1000/980;
+  $("#tree").setAttribute("viewBox", `${(500-w/2).toFixed(0)} ${(980-h).toFixed(0)} ${w.toFixed(0)} ${h.toFixed(0)}`);
+}
+
+function leafShape(m, size){
+  const g = document.createElementNS(SVGNS,"g");
+  g.setAttribute("class","shape");
+  const col = colorOf(m);
+  if (m.toType==="company"){
+    for (let i=0;i<5;i++){
+      const c = document.createElementNS(SVGNS,"ellipse");
+      const a = i*72*Math.PI/180;
+      c.setAttribute("cx", Math.cos(a)*size*.42); c.setAttribute("cy", Math.sin(a)*size*.42);
+      c.setAttribute("rx", size*.36); c.setAttribute("ry", size*.26);
+      c.setAttribute("transform", `rotate(${i*72} ${Math.cos(a)*size*.42} ${Math.sin(a)*size*.42})`);
+      c.setAttribute("fill", col); c.setAttribute("stroke","rgba(0,0,0,.08)");
+      g.appendChild(c);
+    }
+    const ctr = document.createElementNS(SVGNS,"circle");
+    ctr.setAttribute("r", size*.22); ctr.setAttribute("fill","#f7c948");
+    g.appendChild(ctr);
+  } else {
+    const p = document.createElementNS(SVGNS,"path");
+    const s = size;
+    p.setAttribute("d",`M0,0 C${s*.3},${-s*.42} ${s*.85},${-s*.42} ${s*1.2},0 C${s*.85},${s*.42} ${s*.3},${s*.42} 0,0 Z`);
+    p.setAttribute("fill", col); p.setAttribute("stroke","rgba(0,0,0,.12)"); p.setAttribute("stroke-width",".8");
+    const v = document.createElementNS(SVGNS,"path");
+    v.setAttribute("d",`M${s*.08},0 L${s*1.05},0`); v.setAttribute("stroke","rgba(255,255,255,.55)"); v.setAttribute("stroke-width","1");
+    g.appendChild(p); g.appendChild(v);
+  }
+  return g;
+}
+
+function placeLeaf(m, stage, cands){
+  const h = hash(m.id), r = rng(h);
+  const s = cands[h % cands.length];
+  const t = .3 + r()*.7, u = 1-t;
+  const x = u*u*s.x1 + 2*u*t*s.cx + t*t*s.x2;
+  const y = u*u*s.y1 + 2*u*t*s.cy + t*t*s.y2;
+  const side = r()<.5 ? -1 : 1;
+  const off = (s.w/2 + 2 + r()*14) * side;
+  const px = x + Math.cos(s.ang+Math.PI/2)*off, py = y + Math.sin(s.ang+Math.PI/2)*off;
+  const rot = (s.ang*180/Math.PI) + side*(35+r()*45);
+  const size = (m.toType==="company" ? 17 : 20) / Math.max(stage.scale,.6);
+  return {x:px, y:py, rot, size};
+}
+
+function renderLeaves(newIds=new Set()){
+  const stage = stageFor(items.length);
+  const stageChanged = !currentStage || stage.depth!==currentStage.depth;
+  if (stageChanged){ drawBranches(stage); currentStage = stage; }
+  $("#stageLabel").textContent = stage.name + " · " + items.length + " lời chúc";
+  const minDepth = Math.max(0, stage.depth-2);
+  const cands = SEGS.filter(s=>s.depth<=stage.depth && s.depth>=minDepth && (stage.depth<2 || s.depth>0));
+  const g = $("#leaves"); g.textContent = ""; leafEls.clear();
+  items.forEach(m=>{
+    const pos = placeLeaf(m, stage, cands);
+    const el = document.createElementNS(SVGNS,"g");
+    el.setAttribute("class","leaf" + (newIds.has(m.id) ? " grow" : ""));
+    el.setAttribute("transform",`translate(${pos.x.toFixed(1)},${pos.y.toFixed(1)}) rotate(${pos.rot.toFixed(1)})`);
+    el.setAttribute("tabindex","0"); el.setAttribute("role","button");
+    el.setAttribute("aria-label", recipient(m));
+    el.dataset.id = m.id;
+    el.appendChild(leafShape(m, pos.size));
+    g.appendChild(el); leafEls.set(m.id, el);
+  });
+  applyFilter();
+}
+
+/* ---------- thẻ lời chúc ---------- */
+let cardList = [], cardIdx = -1, cardMode = null, peekTimer = null;
+function showCard(m, mode, list){
+  cardMode = mode;
+  cardList = list || items; cardIdx = cardList.findIndex(x=>x.id===m.id);
+  $("#cardTo").textContent = recipient(m);
+  $("#cardDot").style.background = colorOf(m);
+  $("#cardText").textContent = "“" + m.text + "”";
+  $("#cardMeta").textContent = timeAgo(m.time) + (mode==="open" && cardList.length>1 ? ` · ${cardIdx+1}/${cardList.length}` : "");
+  const c = $("#card"); c.classList.toggle("peek", mode==="peek"); c.classList.add("show");
+  document.querySelectorAll(".leaf.spot").forEach(e=>e.classList.remove("spot"));
+  const el = leafEls.get(m.id); if (el) el.classList.add("spot");
+  clearTimeout(peekTimer);
+  if (mode==="peek") peekTimer = setTimeout(hideCard, (CONFIG.SPOTLIGHT_SECONDS-1)*1000);
+}
+function hideCard(){
+  $("#card").classList.remove("show"); cardMode = null;
+  document.querySelectorAll(".leaf.spot").forEach(e=>e.classList.remove("spot"));
+}
+function stepCard(d){
+  if (!cardList.length) return;
+  cardIdx = (cardIdx + d + cardList.length) % cardList.length;
+  showCard(cardList[cardIdx], "open", cardList);
+}
+$("#card").addEventListener("click", e=>{
+  if (cardMode==="peek"){ const m = cardList[cardIdx]; if (m) showCard(m,"open",items); }
+});
+$("#cardClose").onclick = e=>{ e.stopPropagation(); hideCard(); };
+$("#cardPrev").onclick = e=>{ e.stopPropagation(); stepCard(-1); };
+$("#cardNext").onclick = e=>{ e.stopPropagation(); stepCard(1); };
+$("#leaves").addEventListener("click", e=>{
+  const el = e.target.closest(".leaf"); if (!el) return;
+  const m = byId.get(el.dataset.id); if (m) showCard(m, "open", filtered() || items);
+});
+$("#leaves").addEventListener("keydown", e=>{
+  if (e.key!=="Enter" && e.key!==" ") return;
+  const el = e.target.closest(".leaf"); if (!el) return; e.preventDefault();
+  const m = byId.get(el.dataset.id); if (m) showCard(m, "open", filtered() || items);
+});
+
+/* tự bật lời chúc */
+setInterval(()=>{
+  if (!items.length || document.hidden || cardMode==="open" || anyModal() || $("#show").classList.contains("show")) return;
+  const pool = filtered() || items;
+  if (!pool.length) return;
+  showCard(pool[Math.floor(Math.random()*pool.length)], "peek", pool);
+}, CONFIG.SPOTLIGHT_SECONDS*1000);
+
+/* ---------- tìm kiếm và chú thích ---------- */
+let activeDept = null;
+function filtered(){
+  const q = norm($("#q").value);
+  if (!q && !activeDept) return null;
+  return items.filter(m=>{
+    if (activeDept) return activeDept==="__company" ? m.toType==="company" : m.toDept===activeDept;
+    return norm(m.toName).includes(q) || norm(m.toDept).includes(q) || (q.length>2 && "ca cong ty".includes(q) && m.toType==="company");
+  });
+}
+function applyFilter(){
+  const f = filtered(), svg = $("#tree");
+  svg.classList.toggle("filtering", !!f);
+  const ids = new Set((f||[]).map(m=>m.id));
+  leafEls.forEach((el,id)=>el.classList.toggle("match", ids.has(id)));
+  $("#qCount").textContent = f ? `${f.length} lời chúc` : "";
+  $("#qBrowse").hidden = !f || !f.length;
+  $("#qClear").hidden = !f;
+  document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on", c.dataset.dept===activeDept));
+}
+function buildLegend(){
+  const L = $("#legend"); L.textContent = "";
+  const mk = (label,color,key)=>{
+    const c = document.createElement("button"); c.className="chip"; c.dataset.dept=key;
+    const i = document.createElement("i"); i.style.background=color; c.appendChild(i);
+    c.appendChild(document.createTextNode(label));
+    c.onclick = ()=>{ activeDept = activeDept===key ? null : key; $("#q").value=""; applyFilter(); };
+    L.appendChild(c);
+  };
+  mk("Cả công ty (hoa)", COMPANY_COLOR, "__company");
+  CONFIG.DEPARTMENTS.forEach(d=>mk(d, deptColor(d), d));
+}
+function updateNames(){
+  const set = new Set(); items.forEach(m=>{ if (m.toName) set.add(m.toName); });
+  CONFIG.DEPARTMENTS.forEach(d=>set.add(d));
+  const dl = $("#names"); dl.textContent = "";
+  [...set].sort((a,b)=>a.localeCompare(b,"vi")).forEach(n=>{ const o=document.createElement("option"); o.value=n; dl.appendChild(o); });
+}
+$("#q").addEventListener("input", ()=>{ activeDept = null; applyFilter(); });
+$("#qClear").onclick = ()=>{ $("#q").value=""; activeDept=null; applyFilter(); hideCard(); };
+$("#qBrowse").onclick = ()=>{ const f = filtered(); if (f && f.length) showCard(f[0],"open",f); };
+
+/* ---------- gửi lời chúc ---------- */
+function anyModal(){ return !!document.querySelector(".modal.show"); }
+function openModal(id){ $(id).classList.add("show"); }
+function closeModals(){ document.querySelectorAll(".modal.show").forEach(m=>{ if (m.id!=="gate") m.classList.remove("show"); }); }
+document.querySelectorAll("[data-close]").forEach(b=>b.onclick = closeModals);
+document.querySelectorAll(".modal").forEach(m=>m.addEventListener("click", e=>{ if (e.target===m && m.id!=="gate") closeModals(); }));
+
+CONFIG.DEPARTMENTS.forEach(d=>{ const o=document.createElement("option"); o.value=o.textContent=d; $("#toDept").appendChild(o); });
+document.querySelectorAll("input[name=toType]").forEach(r=>r.addEventListener("change", syncType));
+function syncType(){
+  const t = document.querySelector("input[name=toType]:checked").value;
+  $("#fDept").hidden = t==="company"; $("#fName").hidden = t!=="person";
+}
+$("#msg").addEventListener("input", ()=>{ $("#msgCount").textContent = $("#msg").value.length + "/500"; });
+$("#btnSend").onclick = ()=>{
+  $("#sendForm").hidden=false; $("#sendDone").hidden=true; $("#sendErr").textContent="";
+  hideCard(); openModal("#sendModal"); setTimeout(()=>$("#msg").focus(),50);
+};
+$("#sendAgain").onclick = ()=>{ $("#sendForm").hidden=false; $("#sendDone").hidden=true; $("#msg").focus(); };
+$("#sendBtn").onclick = async ()=>{
+  const toType = document.querySelector("input[name=toType]:checked").value;
+  const data = { toType, toDept: $("#toDept").value, toName: $("#toName").value.trim(), text: $("#msg").value.trim() };
+  if (toType==="person" && !data.toName) return $("#sendErr").textContent = "Vui lòng nhập tên đồng nghiệp.";
+  if (data.text.length < 5) return $("#sendErr").textContent = "Lời chúc cần ít nhất 5 ký tự.";
+  const btn = $("#sendBtn"); btn.disabled = true; btn.textContent = "Đang gửi…"; $("#sendErr").textContent="";
+  try{
+    const res = await api("submit", data);
+    if (!res.ok) throw new Error(res.error || "Gửi không thành công.");
+    $("#msg").value=""; $("#toName").value=""; $("#msgCount").textContent="0/500";
+    $("#sendForm").hidden=true; $("#sendDone").hidden=false;
+    $("#sendDoneText").textContent = DEMO
+      ? "Chế độ demo: lời chúc mọc lên cây ngay (bản thật cần được duyệt trước)."
+      : "Lời chúc của bạn sẽ thành một chiếc lá trên cây sau khi được duyệt.";
+    if (DEMO) refresh(true);
+  }catch(err){ $("#sendErr").textContent = err.message; }
+  finally{ btn.disabled=false; btn.textContent="Gửi lời chúc"; }
+};
+
+/* ---------- trình chiếu ---------- */
+let showTimer = null, showIdx = 0, showList = [];
+function startShow(){
+  if (!items.length) return toast("Chưa có lời chúc nào để trình chiếu.");
+  hideCard();
+  showList = items.slice().sort(()=>Math.random()-.5); showIdx = 0;
+  $("#show").classList.add("show");
+  try{ document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(()=>{}); }catch(e){}
+  renderSlide(); showTimer = setInterval(()=>{ showIdx=(showIdx+1)%showList.length; renderSlide(); }, CONFIG.SLIDE_SECONDS*1000);
+}
+function renderSlide(){
+  const m = showList[showIdx], t = $("#sText");
+  t.classList.add("fade");
+  setTimeout(()=>{
+    $("#sTo").textContent = recipient(m); $("#sTo").style.color = colorOf(m)==="#f4a7b9" ? "var(--brand)" : colorOf(m);
+    t.textContent = "“" + m.text + "”";
+    $("#sFoot").textContent = `${showIdx+1} / ${showList.length} lời chúc · Mừng sinh nhật ${CONFIG.COMPANY_NAME}`;
+    t.classList.remove("fade");
+  }, 350);
+}
+function stopShow(){
+  clearInterval(showTimer); $("#show").classList.remove("show");
+  try{ document.fullscreenElement && document.exitFullscreen(); }catch(e){}
+}
+$("#btnShow").onclick = startShow;
+$("#showClose").onclick = stopShow;
+document.addEventListener("keydown", e=>{
+  if (e.key==="Escape"){ if ($("#show").classList.contains("show")) stopShow(); else { closeModals(); hideCard(); } }
+  if ($("#show").classList.contains("show") && e.key==="ArrowRight"){ showIdx=(showIdx+1)%showList.length; renderSlide(); }
+});
+
+/* ---------- cột lời chúc mới nhất (màn rộng) ---------- */
+function renderFeed(fresh=new Set()){
+  const ul = $("#feedList"); ul.textContent = "";
+  const latest = items.slice().sort((a,b)=>String(b.time).localeCompare(String(a.time))).slice(0,30);
+  $("#feedCount").textContent = items.length ? `${items.length} lời chúc` : "";
+  latest.forEach(m=>{
+    const li = document.createElement("li"); if (fresh.has(m.id)) li.className = "new";
+    const to = document.createElement("div"); to.className = "f-to"; to.style.color = colorOf(m)===COMPANY_COLOR ? "var(--brand)" : colorOf(m);
+    const dot = document.createElement("i"); dot.style.background = colorOf(m); to.appendChild(dot);
+    to.appendChild(document.createTextNode(recipient(m)));
+    const tx = document.createElement("div"); tx.className = "f-text"; tx.textContent = "“" + m.text + "”";
+    const tm = document.createElement("div"); tm.className = "f-time"; tm.textContent = timeAgo(m.time);
+    li.append(to, tx, tm);
+    li.onclick = ()=>showCard(m, "open", items);
+    ul.appendChild(li);
+  });
+  if (!latest.length){ const li=document.createElement("li"); li.textContent="Chưa có lời chúc nào. Hãy là người đầu tiên!"; ul.appendChild(li); }
+}
+
+/* ---------- tải dữ liệu ---------- */
+async function refresh(silent){
+  try{
+    const res = await api("list");
+    if (!res.ok){ if (res.code==="BAD_PIN"){ store("clc_pin"); PIN=""; showGate("Mã PIN đã thay đổi, vui lòng nhập lại."); } return; }
+    const incoming = res.items || [];
+    const fresh = new Set();
+    if (byId.size) incoming.forEach(m=>{ if (!byId.has(m.id)) fresh.add(m.id); });
+    items = incoming.sort((a,b)=> String(a.time).localeCompare(String(b.time)));
+    byId = new Map(items.map(m=>[m.id,m]));
+    $("#countNum").textContent = items.length;
+    renderLeaves(fresh);
+    renderFeed(fresh);
+    updateNames();
+    if (fresh.size){
+      const last = items.find(m=>fresh.has(m.id));
+      toast(fresh.size===1 ? `Một lời chúc vừa ${recipient(last).replace("Gửi","gửi tới")}` : `${fresh.size} lời chúc mới vừa mọc lên cây`);
+    }
+  }catch(e){ if (!silent) toast("Không tải được lời chúc, sẽ thử lại sau."); }
+}
+
+function setupHeader(){
+  $("#subtitle").textContent = `Mừng sinh nhật ${CONFIG.COMPANY_NAME} · mỗi chiếc lá là một lời chúc giấu tên`;
+  if (DEMO){ const b=document.createElement("span"); b.className="demo-badge"; b.textContent="Demo"; $("#title").appendChild(b); }
+  const target = new Date(CONFIG.BIRTHDAY+"T00:00:00");
+  const days = Math.ceil((target - new Date())/864e5);
+  if (isNaN(days)) $("#countdownBox").hidden = true;
+  else if (days>0){ $("#countdown").textContent = days; $("#countdownLbl").textContent = "ngày nữa"; }
+  else if (days===0){ $("#countdown").textContent = "Hôm nay"; $("#countdownLbl").textContent = "là sinh nhật!"; }
+  else $("#countdownBox").hidden = true;
+  $("#sTitle").textContent = `Mừng sinh nhật ${CONFIG.COMPANY_NAME}`;
+}
+
+/* ---------- PIN ---------- */
+function showGate(msg){
+  $("#pinErr").textContent = msg || "";
+  if (DEMO) $("#gateSub").textContent = "Chế độ demo: nhập mã bất kỳ để xem thử.";
+  openModal("#gate"); setTimeout(()=>$("#pin").focus(),50);
+}
+async function tryPin(){
+  const v = $("#pin").value.trim(); if (!v) return;
+  const btn = $("#pinBtn"); btn.disabled = true; btn.textContent = "Đang kiểm tra…";
+  PIN = v;
+  try{
+    const res = await api("verify");
+    if (!res.ok){ $("#pinErr").textContent = res.error || "Mã PIN không đúng."; PIN=""; return; }
+    store("clc_pin", v); $("#gate").classList.remove("show"); start();
+  }catch(e){ $("#pinErr").textContent = "Không kết nối được máy chủ. Kiểm tra mạng và thử lại."; PIN=""; }
+  finally{ btn.disabled=false; btn.textContent="Vào xem cây"; }
+}
+$("#pinBtn").onclick = tryPin;
+$("#pin").addEventListener("keydown", e=>{ if (e.key==="Enter") tryPin(); });
+
+let started = false;
+function start(){
+  if (started) return; started = true;
+  refresh(true);
+  setInterval(()=>{ if (!document.hidden) refresh(true); }, CONFIG.POLL_SECONDS*1000);
+}
+
+setupHeader(); buildLegend(); syncType(); drawBranches(STAGES[0]); currentStage = STAGES[0];
+if (PIN) start(); else showGate();
+</script>
+</body>
+</html>
