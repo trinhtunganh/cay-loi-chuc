@@ -1,11 +1,11 @@
-# Cây lời chúc — Hướng dẫn cài đặt
+# Cây Tri Ân — Hướng dẫn cài đặt và vận hành
 
 Web gồm 2 phần:
 
 - `index.html`: giao diện (cây, lá, gửi lời chúc, tìm kiếm, trình chiếu). Chỉ cần 1 file, đặt lên host nào cũng chạy.
 - `Code.gs`: backend chạy miễn phí trên Google Apps Script, lưu lời chúc vào Google Sheet.
 
-Mở thẳng `index.html` bằng trình duyệt là chạy **chế độ demo** (64 lời chúc mẫu, nhập PIN bất kỳ). Làm theo các bước dưới để chạy thật.
+Khi chưa có backend, web chạy **bản xem trước** (lời chúc mẫu, nhập PIN bất kỳ, có dải thông báo ở đầu trang). Làm theo các bước dưới để chạy thật.
 
 ## Bước 1 — Tạo backend (15 phút)
 
@@ -21,9 +21,9 @@ Mở thẳng `index.html` bằng trình duyệt là chạy **chế độ demo** 
 
 "Bất kỳ ai" là bắt buộc để người không đăng nhập Google vẫn gửi được. Dữ liệu vẫn được bảo vệ bằng PIN, và hệ thống không ghi lại người gửi.
 
-## Bước 2 — Cấu hình giao diện (5 phút)
+## Bước 2 — Nối giao diện với backend
 
-Mở `index.html` bằng VS Code, tìm khối `CONFIG` gần đầu phần `<script>` và sửa:
+Cách nhanh nhất: gửi URL ứng dụng web cho Claude trong chat, Claude sẽ điền vào `index.html` và đưa lên GitHub. Nếu tự sửa: mở `index.html`, tìm khối `CONFIG` gần đầu phần `<script>` và sửa:
 
 | Mục | Ý nghĩa |
 | --- | --- |
@@ -34,11 +34,11 @@ Mở `index.html` bằng VS Code, tìm khối `CONFIG` gần đầu phần `<scr
 | `SPOTLIGHT_SECONDS` | Bao lâu tự bật một lời chúc (mặc định 6 giây) |
 | `SLIDE_SECONDS` | Thời gian mỗi lời chúc ở chế độ trình chiếu |
 
-Lưu file, mở lại bằng trình duyệt: nhãn "Demo" biến mất, trang hỏi PIN thật.
+Sau khi cập nhật: dải "Bản xem trước" biến mất, trang hỏi PIN thật và lưu lời chúc vào Sheet.
 
 ## Bước 3 — Đưa lên mạng
 
-Chọn một trong hai cách:
+Đã xong: web đang chạy trên GitHub Pages tại https://trinhtunganh.github.io/cay-loi-chuc/ và tự cập nhật mỗi khi có code mới. Nếu sau này muốn đổi nơi host:
 
 - **GitHub Pages (miễn phí)**: đưa `index.html` vào repo mới → Settings → Pages → Branch `main` → Save. Link dạng `https://<tên-github>.github.io/<tên-repo>/`.
 - **Hosting riêng (ví dụ Hostinger)**: vào File Manager, tải `index.html` vào thư mục `public_html`. Phù hợp khi muốn dùng tên miền riêng của công ty.
