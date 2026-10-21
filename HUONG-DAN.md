@@ -13,7 +13,7 @@ Mở thẳng `index.html` bằng trình duyệt là chạy **chế độ demo** 
 2. Menu **Tiện ích mở rộng → Apps Script**. Xóa code mẫu, dán toàn bộ nội dung `Code.gs`, bấm Lưu.
 3. Chọn hàm `setup` ở thanh trên cùng, bấm **Chạy**. Lần đầu Google hỏi quyền: chọn tài khoản → Nâng cao → Đi tới dự án → Cho phép.
 4. Quay lại Sheet: đã có tab `LoiChuc` với các cột ID, Thời gian, Loại người nhận, Phòng ban, Tên người nhận, Nội dung, Đã duyệt.
-5. **Đổi mã PIN**: trong Apps Script, bấm biểu tượng bánh răng (Cài đặt dự án) → Thuộc tính tập lệnh → sửa giá trị `PIN`. PIN mặc định là `SNMO2026`; nên dùng từ 6 ký tự trở lên.
+5. **Đổi mã PIN**: trong Apps Script, bấm biểu tượng bánh răng (Cài đặt dự án) → Thuộc tính tập lệnh → sửa giá trị `PIN`. PIN mặc định là `VinRobotics2026`; nên dùng từ 6 ký tự trở lên.
 6. **Triển khai**: bấm **Triển khai → Tùy chọn triển khai mới** → loại **Ứng dụng web**.
    - Thực thi dưới dạng: **Tôi**
    - Người có quyền truy cập: **Bất kỳ ai**
@@ -29,7 +29,7 @@ Mở `index.html` bằng VS Code, tìm khối `CONFIG` gần đầu phần `<scr
 | --- | --- |
 | `API_URL` | Dán URL ứng dụng web ở bước 1 |
 | `COMPANY_NAME` | Tên công ty hiển thị trên trang |
-| `BIRTHDAY` | Ngày sinh nhật, dạng `2026-11-04` (dùng cho đếm ngược) |
+| `BIRTHDAY` | Thời điểm sinh nhật, dạng `2026-11-21T00:00:00+07:00` (đếm ngược ngày, giờ, phút, giây theo giờ Việt Nam) |
 | `DEPARTMENTS` | Danh sách phòng ban; mỗi phòng ban tự có một màu lá |
 | `SPOTLIGHT_SECONDS` | Bao lâu tự bật một lời chúc (mặc định 6 giây) |
 | `SLIDE_SECONDS` | Thời gian mỗi lời chúc ở chế độ trình chiếu |

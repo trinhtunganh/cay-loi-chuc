@@ -23,7 +23,7 @@ function setup() {
   sh.setColumnWidth(6, 480);
   sh.getRange(2, 7, sh.getMaxRows() - 1, 1).insertCheckboxes();
   const props = PropertiesService.getScriptProperties();
-  if (!props.getProperty('PIN')) props.setProperty('PIN', 'SNMO2026');
+  if (!props.getProperty('PIN')) props.setProperty('PIN', 'VinRobotics2026');
   Logger.log('Xong. PIN hiện tại: ' + props.getProperty('PIN') + ' — đổi trong Project Settings > Script properties.');
 }
 

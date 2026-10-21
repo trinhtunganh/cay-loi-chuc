@@ -47,6 +47,13 @@ header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:s
 .brand p{margin:4px 0 0;color:var(--muted);font-size:14px}
 .stats{display:flex;gap:16px;align-items:center;font-size:14px;color:var(--muted)}
 .stats b{display:block;font-size:22px;color:var(--ink)}
+.countdown{display:flex;flex-direction:column;align-items:center;gap:2px}
+.cd-units{display:flex;gap:10px;text-align:center}
+.cd-units>div{min-width:34px}
+.cd-units b{font-variant-numeric:tabular-nums}
+.cd-lbl{font-size:12px;color:var(--muted)}
+.countdown.today .cd-units{display:none}
+.countdown.today .cd-lbl{font-size:18px;font-weight:700;color:var(--brand)}
 .actions{display:flex;gap:8px;flex-wrap:wrap}
 
 /* Toolbar */
@@ -192,7 +199,10 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 7px rgba(255,214,102,1))
   </div>
   <div class="stats">
     <div><b id="countNum">0</b>lời chúc</div>
-    <div id="countdownBox"><b id="countdown">–</b><span id="countdownLbl">ngày nữa</span></div>
+    <div id="countdownBox" class="countdown" aria-live="off">
+      <div class="cd-units"><div><b id="cdD">–</b>ngày</div><div><b id="cdH">–</b>giờ</div><div><b id="cdM">–</b>phút</div><div><b id="cdS">–</b>giây</div></div>
+      <div class="cd-lbl" id="countdownLbl"></div>
+    </div>
   </div>
   <div class="actions">
     <button class="btn primary" id="btnSend">+ Gửi lời chúc</button>
@@ -319,8 +329,8 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 7px rgba(255,214,102,1))
 const CONFIG = {
   // Dán URL Web app của Google Apps Script vào đây. Để trống = chế độ demo.
   API_URL: "",
-  COMPANY_NAME: "SNMO",
-  BIRTHDAY: "2026-11-04",            // ngày sinh nhật công ty (YYYY-MM-DD)
+  COMPANY_NAME: "VinRobotics",
+  BIRTHDAY: "2026-11-21T00:00:00+07:00", // thời điểm sinh nhật (giờ Việt Nam)
   DEPARTMENTS: [
     "Ban Giám đốc", "Hành chính – Nhân sự", "Kế toán", "Kinh doanh",
     "Marketing", "IT", "Vận hành", "Chăm sóc khách hàng"
@@ -728,12 +738,27 @@ async function refresh(silent){
 function setupHeader(){
   $("#subtitle").textContent = `Mừng sinh nhật ${CONFIG.COMPANY_NAME} · mỗi chiếc lá là một lời chúc giấu tên`;
   if (DEMO){ const b=document.createElement("span"); b.className="demo-badge"; b.textContent="Demo"; $("#title").appendChild(b); }
-  const target = new Date(CONFIG.BIRTHDAY+"T00:00:00");
-  const days = Math.ceil((target - new Date())/864e5);
-  if (isNaN(days)) $("#countdownBox").hidden = true;
-  else if (days>0){ $("#countdown").textContent = days; $("#countdownLbl").textContent = "ngày nữa"; }
-  else if (days===0){ $("#countdown").textContent = "Hôm nay"; $("#countdownLbl").textContent = "là sinh nhật!"; }
-  else $("#countdownBox").hidden = true;
+  const target = new Date(CONFIG.BIRTHDAY);
+  if (isNaN(target)) { $("#countdownBox").hidden = true; }
+  else {
+    const dateStr = target.toLocaleDateString("vi-VN",{timeZone:"Asia/Ho_Chi_Minh",day:"2-digit",month:"2-digit",year:"numeric"});
+    const pad = n => String(n).padStart(2,"0");
+    const tick = ()=>{
+      const ms = target - Date.now(), box = $("#countdownBox");
+      if (ms > 0){
+        const s = Math.floor(ms/1000);
+        $("#cdD").textContent = Math.floor(s/86400);
+        $("#cdH").textContent = pad(Math.floor(s%86400/3600));
+        $("#cdM").textContent = pad(Math.floor(s%3600/60));
+        $("#cdS").textContent = pad(s%60);
+        $("#countdownLbl").textContent = "đến sinh nhật " + dateStr;
+      } else if (ms > -864e5){
+        box.classList.add("today"); $("#countdownLbl").textContent = "Hôm nay là sinh nhật!";
+      } else { box.hidden = true; return; }
+      setTimeout(tick, 1000 - (Date.now() % 1000));
+    };
+    tick();
+  }
   $("#sTitle").textContent = `Mừng sinh nhật ${CONFIG.COMPANY_NAME}`;
 }
 
