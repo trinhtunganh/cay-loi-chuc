@@ -65,6 +65,22 @@ function createCore(tables, env = process.env) {
     return v;
   }
 
+  const hashItems = items => crypto.createHash('md5').update(JSON.stringify(items), 'utf8').digest('base64url').slice(0, 22);
+  /* chỉ gửi phần thay đổi: không đổi → {same}, chỉ thêm mới → phần mới, còn lại → cả danh sách */
+  async function listDelta(b) {
+    const items = await approved(), ver = hashItems(items);
+    const out = { ok: true, ver, depts: await depts(), active: await active() };
+    const since = String(b.since || ''), after = String(b.after || '');
+    if (since && since === ver) { out.same = true; return out; }
+    if (since && after) {
+      const old = [], added = [];
+      items.forEach(m => (String(m.time) <= after ? old : added).push(m));
+      if (hashItems(old) === since) { out.partial = true; out.items = added; return out; }
+    }
+    out.items = items;
+    return out;
+  }
+
   async function submit(b) {
     const toType = TYPES[b.toType] ? b.toType : null;
     if (!toType) return { ok: false, error: 'Vui lòng chọn người nhận.' };
@@ -146,7 +162,7 @@ function createCore(tables, env = process.env) {
       await ensure();
       switch (action) {
         case 'verify':        return { ok: true, active: await active() };
-        case 'list':          return { ok: true, items: await approved(), depts: await depts(), active: await active() };
+        case 'list':          return await listDelta(body);
         case 'submit':        return await submit(body);
         case 'adminVerify':   return { ok: true, active: await active() };
         case 'adminList':     return { ok: true, items: await all(), depts: await depts(), active: await active() };

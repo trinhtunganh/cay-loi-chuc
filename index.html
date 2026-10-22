@@ -790,7 +790,7 @@ async function api(action, data={}, which){
 function useBackend(k){
   if (!BACKENDS[k] || k === CUR) return false;
   CUR = k; API_URL = BACKENDS[k]; save("cta_backend", k);
-  items = []; byId = new Map(); loaded = false; mine.clear(); leafEls.clear();
+  items = []; byId = new Map(); loaded = false; mine.clear(); leafEls.clear(); resetSync();
   return true;
 }
 /* máy chủ trả về "active" = máy chủ Ban tổ chức đang chọn: theo đó, trừ khi vừa tự chuyển vì máy chủ kia lỗi */
@@ -1505,15 +1505,26 @@ document.addEventListener("keydown", e=>{
 
 /* ---------- tải dữ liệu ---------- */
 const mine = new Map();
+/* đồng bộ tiết kiệm: nhớ phiên bản danh sách máy chủ đã gửi để lần sau chỉ nhận phần thay đổi */
+let srvItems = [], syncVer = "", syncAfter = "";
+function resetSync(){ srvItems = []; syncVer = ""; syncAfter = ""; }
 async function refresh(silent){
   refresh.at = Date.now();
   try{
-    const res = await api("list");
+    const res = await api("list", syncVer && loaded ? {since:syncVer, after:syncAfter} : {});
     if (res.ok && followActive(res)) return refresh(silent);
     if (!res.ok && /bận/.test(res.error||"")) throw new Error(res.error);
     if (!res.ok){ if (res.code==="BAD_PIN"){ save("cta_pin"); PIN=""; started=false; showGate(t("pinChanged")); } return; }
     if (Array.isArray(res.depts)) applyDepts(res.depts);
-    const incoming = res.items || [], fresh = new Set(), first = !loaded;
+    let base;
+    if (res.same && loaded) base = srvItems;
+    else if (res.partial && loaded) base = srvItems.concat(res.items || []);
+    else base = res.items || [];
+    srvItems = base; syncVer = res.ver || "";
+    syncAfter = base.reduce((a,m)=> String(m.time) > a ? String(m.time) : a, "");
+    /* không có gì mới và không có lời chúc riêng đang chờ: khỏi vẽ lại cây */
+    if (res.same && loaded && !mine.size){ refresh.fails = 0; return; }
+    const incoming = base.slice(), fresh = new Set(), first = !loaded;
     const have = new Set(incoming.map(m=>m.id));
     mine.forEach((m,id)=>{ if (have.has(id) || Date.now() - new Date(m.time) > 180000) mine.delete(id); else incoming.push(m); });
     if (!first) incoming.forEach(m=>{ if (!byId.has(m.id)) fresh.add(m.id); });

@@ -68,7 +68,7 @@ function doPost(e) {
       case 'adminSetDepts': return json(setDepts(body));
       case 'adminSetActive': return json(setActive(body));
       case 'verify': return json({ ok: true, active: activeBackend() });
-      case 'list':   return json({ ok: true, items: listApproved(), depts: getDepts(), active: activeBackend() });
+      case 'list':   return json(listDelta(body));
       case 'submit': return json(submit(body));
       default:       return json({ ok: false, error: 'Thao tác không hợp lệ.' });
     }
@@ -100,6 +100,30 @@ function listApproved() {
   } finally {
     lock.releaseLock();
   }
+}
+
+/**
+ * Tiết kiệm băng thông: trình duyệt gửi lại "ver" (mã của danh sách nó đang có) và "after" (thời điểm
+ * lời chúc mới nhất nó có). Không đổi gì → chỉ trả {same:true}; chỉ có lời chúc mới → chỉ trả phần mới;
+ * có duyệt/bỏ duyệt/đổi tên → trả cả danh sách.
+ */
+function listDelta(body) {
+  const items = listApproved();
+  const ver = hashItems(items);
+  const out = { ok: true, ver: ver, depts: getDepts(), active: activeBackend() };
+  const since = String(body.since || ''), after = String(body.after || '');
+  if (since && since === ver) { out.same = true; return out; }
+  if (since && after) {
+    const old = [], added = [];
+    items.forEach(m => (String(m.time) <= after ? old : added).push(m));
+    if (hashItems(old) === since) { out.partial = true; out.items = added; return out; }
+  }
+  out.items = items;
+  return out;
+}
+function hashItems(items) {
+  const d = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, JSON.stringify(items), Utilities.Charset.UTF_8);
+  return Utilities.base64EncodeWebSafe(d).slice(0, 22);
 }
 
 function readApproved() {
