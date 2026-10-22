@@ -69,12 +69,12 @@ window.SITE_CONFIG = {
   /* ---------- Chữ hiển thị trên trang ---------- */
   text: {
     pageTitle:        "{event} · Mừng sinh nhật {company}",
-    subtitle:         "Mừng sinh nhật {company} · mỗi lời chúc là một chiếc lá",
+    subtitle:         "Mừng sinh nhật {company} · {date}",
     previewLabel:     "Bản xem trước",
     previewText:      "đang hiển thị lời chúc mẫu, lời chúc gửi thử chưa được lưu",
 
     countdownBefore:  "Còn",
-    countdownAfter:   "đến sinh nhật {date}",
+    countdownAfter:   "",          // chữ sau đồng hồ, ví dụ "đến sinh nhật {date}"; để trống để ẩn
     countdownToday:   "Hôm nay là sinh nhật {company}! 🎉",
     unitDay: "ngày", unitHour: "giờ", unitMinute: "phút", unitSecond: "giây",
 
@@ -100,6 +100,7 @@ window.SITE_CONFIG = {
     feedResults:      "Kết quả lọc",
     feedCount:        "{n} lời chúc",
     feedReset:        "Xóa bộ lọc",
+    feedLoading:      "Đang tải thêm lời chúc…",
     feedNoMatch:      "Chưa có lời chúc nào khớp. Bạn thử từ khóa khác nhé.",
 
     toCompany:        "Gửi {company}",
