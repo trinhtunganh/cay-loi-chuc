@@ -7,6 +7,7 @@
  *     PIN           mã PIN để vào trang (mặc định VinRobotics2026)
  *     AUTO_APPROVE  "true" = lời chúc lên cây ngay (mặc định), "false" = chờ duyệt
  *     ADMIN_PIN     mã PIN riêng của Ban tổ chức để duyệt và chọn lời chúc tiêu biểu
+ *     DEPARTMENTS   danh sách phòng ban (JSON), tự lưu khi Ban tổ chức sửa trong trang Quản trị
  * - Sheet tự được tạo ở lần chạy đầu tiên, không cần chuẩn bị gì.
  */
 
@@ -57,10 +58,11 @@ function doPost(e) {
   try {
     switch (body.action) {
       case 'adminVerify': return json({ ok: true });
-      case 'adminList':   return json({ ok: true, items: listAll() });
+      case 'adminList':   return json({ ok: true, items: listAll(), depts: getDepts() });
       case 'adminSet':    return json(adminSet(body));
+      case 'adminSetDepts': return json(setDepts(body));
       case 'verify': return json({ ok: true });
-      case 'list':   return json({ ok: true, items: listApproved() });
+      case 'list':   return json({ ok: true, items: listApproved(), depts: getDepts() });
       case 'submit': return json(submit(body));
       default:       return json({ ok: false, error: 'Thao tác không hợp lệ.' });
     }
@@ -170,6 +172,55 @@ function adminSet(body) {
     CacheService.getScriptCache().remove('approved_list');
     const v = sh.getRange(row, 1, 1, HEADERS.length).getValues()[0];
     return { ok: true, approved: v[6] === true, featured: v[7] === true };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** Phòng ban do Ban tổ chức cấu hình; null = dùng danh sách trong config.js. */
+function getDepts() {
+  const v = PropertiesService.getScriptProperties().getProperty('DEPARTMENTS');
+  if (!v) return null;
+  try { const a = JSON.parse(v); return Array.isArray(a) && a.length ? a : null; } catch (e) { return null; }
+}
+
+/** Quản trị: lưu danh sách, thứ tự, màu phòng ban; đổi tên thì cập nhật lời chúc cũ. */
+function setDepts(body) {
+  const list = Array.isArray(body.depts) ? body.depts : [];
+  const seen = {};
+  const depts = [];
+  for (let i = 0; i < list.length && depts.length < 40; i++) {
+    const name = clean(list[i] && list[i].name, MAX_NAME);
+    const color = String((list[i] && list[i].color) || '');
+    const key = name.toLowerCase();
+    if (!name || seen[key]) continue;
+    seen[key] = true;
+    depts.push(/^#[0-9a-fA-F]{6}$/.test(color) ? { name: name, color: color } : { name: name });
+  }
+  if (!depts.length) return { ok: false, error: 'Cần ít nhất một phòng ban.' };
+
+  const renames = body.renames && typeof body.renames === 'object' ? body.renames : {};
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    PropertiesService.getScriptProperties().setProperty('DEPARTMENTS', JSON.stringify(depts));
+    const keys = Object.keys(renames);
+    if (keys.length) {
+      const sh = getSheet();
+      const last = sh.getLastRow();
+      if (last >= 2) {
+        const rng = sh.getRange(2, 4, last - 1, 1);
+        const vals = rng.getValues();
+        let changed = false;
+        vals.forEach(r => {
+          const to = renames[r[0]];
+          if (to) { r[0] = safeCell(clean(to, MAX_NAME)); changed = true; }
+        });
+        if (changed) rng.setValues(vals);
+      }
+    }
+    CacheService.getScriptCache().remove('approved_list');
+    return { ok: true, depts: depts };
   } finally {
     lock.releaseLock();
   }

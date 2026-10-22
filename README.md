@@ -15,14 +15,14 @@ Khi `backend.apiUrl` trong `config.js` còn trống, web chạy **bản xem trư
 - Cảnh vật sống động: mặt trời, chim, bướm, cánh hoa rơi; 3 robot dạng người đi lại quanh cây (tưới cây, tỉa cành, cầm bóng tim)
 - Thẻ trạng thái: tổng số lời chúc và tiến độ "còn bao nhiêu lời chúc để cây lớn tiếp"
 - Gợi ý "chạm vào lá" cho người mới, màn hình chờ khi cây chưa có lời chúc, nút gửi cố định trên điện thoại
-- Bấm lá hoặc hoa để mở lời chúc dạng callout ngay tại vị trí đó; lời chúc mới tự chèn lên đầu cột "Lời chúc mới nhất" cuộn vô hạn để xem toàn bộ
+- Bấm lá hoặc hoa: lời chúc hiện ở khoảng trống cạnh cây, nối với lá bằng một đường mảnh; lời chúc mới tự chèn lên đầu cột "Lời chúc mới nhất" cuộn vô hạn để xem toàn bộ
 - Ô tìm kiếm ở đầu danh sách lời chúc: lọc theo tên người nhận hoặc nội dung, kèm bộ lọc phòng ban
 - Dãy phòng ban có biểu tượng lá, hoa giống trên cây và số lời chúc của từng phòng
 - Form gửi có gợi ý câu mở đầu, nút mời đồng nghiệp cùng gửi
-- Đếm ngược ngày, giờ, phút, giây đến 00:00 ngày 21/11/2026
+- Đầu trang dải đỏ thương hiệu: logo, "Chào mừng sinh nhật dd/mm/yyyy" (lấy từ ngày trong `config.js`), đếm ngược dạng ô số
 - Chế độ trình chiếu toàn màn hình có cây, lá của lời chúc đang chiếu phát sáng (phím ← → để chuyển)
 - Trang quản trị với PIN riêng: bỏ duyệt lời chúc không phù hợp, chọn tay lời chúc tiêu biểu để ưu tiên trình chiếu
-- Danh sách phòng ban cấu hình trong `config.js` (tên, màu lá tùy chọn)
+- Phòng ban (tên, thứ tự, màu lá) sửa ngay trong trang quản trị; `config.js` giữ danh sách mặc định
 - Ảnh xem trước khi chia sẻ link qua Zalo, Facebook, Teams
 
 ## Cấu trúc

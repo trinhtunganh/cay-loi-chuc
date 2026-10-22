@@ -59,25 +59,29 @@ img{display:block}
 .preview-bar b{color:#ffb3c1;font-weight:500}
 body.preview .preview-bar{display:block}
 
-/* Header */
+/* Header: dải đỏ thương hiệu */
 header,.overview{position:relative;z-index:6}
-header{display:grid;grid-template-columns:auto 1fr auto;gap:24px;align-items:center;padding:16px var(--gutter) 6px}
-.brand{--L:44px;display:flex;align-items:center;gap:18px;min-width:0}
+header{display:grid;grid-template-columns:auto auto 1fr auto;gap:26px;align-items:center;padding:14px var(--gutter);margin-bottom:12px;background:linear-gradient(100deg,var(--brand) 0%,#C40026 100%);box-shadow:0 8px 24px rgba(228,0,43,.18);color:#fff}
+.brand{--L:44px;display:flex;align-items:center;min-width:max-content}
+#btnAdmin span{display:none} #btnAdmin{padding-left:14px;padding-right:14px}
 .brand .logo-img{height:var(--L);width:auto;flex:0 0 auto}
-.brand .sep{width:1px;height:var(--L);background:var(--line);flex:0 0 auto}
-/* cỡ chữ = chiều cao chữ trong logo (46% chiều cao logo) ÷ chiều cao chữ hoa Roboto (0.711) */
-.brand h1{margin:calc(var(--L)*.27) 0 0;font-size:calc(var(--L)*.653);line-height:1;font-weight:900;letter-spacing:-.2px;white-space:nowrap}
+header .logo-img{filter:brightness(0) invert(1)}
+.h-title{border-left:1px solid rgba(255,255,255,.38);padding-left:24px;font-size:20px;font-weight:700;letter-spacing:.3px;line-height:1.2;min-width:0}
 .hl{color:var(--brand)}
-.brand p{margin:6px 0 0;color:var(--muted);font-size:13px}
 .actions{display:flex;gap:8px;justify-content:flex-end}
+header .btn:not(.primary){background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.42)}
+header .btn:not(.primary):hover{background:rgba(255,255,255,.22)}
+header .btn.primary{background:#fff;color:var(--brand);box-shadow:0 6px 16px rgba(80,0,15,.18)}
 
-/* Đếm ngược dạng viên */
-.cd{justify-self:center;display:flex;align-items:baseline;flex-wrap:wrap;justify-content:center;gap:4px 10px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:9px 20px;box-shadow:var(--shadow-sm);font-size:14px;color:var(--muted)}
-.cd .cd-ico{font-size:18px;align-self:center}
-.cd-n{display:inline-flex;align-items:baseline;gap:3px}
-.cd-n b{font-size:22px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;min-width:1.2ch;text-align:right}
-.cd-n small{font-size:13px}
-.cd.today{color:var(--brand);font-weight:700;font-size:16px}
+/* Đếm ngược: bánh sinh nhật + 4 ô số */
+.cd{justify-self:end;display:flex;align-items:center;gap:8px;color:#fff;font-size:14px}
+.cd .cd-ico{font-size:40px;line-height:1;margin-right:2px;filter:drop-shadow(0 3px 6px rgba(80,0,15,.25))}
+.cd .cd-before{font-size:14px;opacity:.92;margin-right:2px}
+.cd-n{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:60px;padding:6px 4px 5px;border-radius:12px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3)}
+.cd-n b{font-size:25px;line-height:1;font-weight:800;font-variant-numeric:tabular-nums}
+.cd-n small{font-size:10.5px;letter-spacing:1px;text-transform:uppercase;opacity:.88;margin-top:3px}
+.cd-after{opacity:.9}
+.cd.today{font-weight:700;font-size:18px}
 
 /* Tổng quan: thẻ trạng thái + phòng ban */
 .main{position:relative}
@@ -126,19 +130,8 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes segin{from{opacity:0}to{opacity:1}}
 
-/* Băng rôn tên sự kiện, treo trên bầu trời phía trên cây */
-.banner{position:absolute;left:var(--tree-center);top:4px;transform:translateX(-50%);z-index:3;text-align:center;pointer-events:none;width:min(720px,calc(100vw - var(--feed-w) - 32px))}
-.bunting{position:absolute;left:0;right:0;top:-2px;width:100%;height:46px;overflow:visible}
-.b-title{position:relative;margin:30px 0 0;font-size:clamp(30px,3.1vw,54px);line-height:1.05;font-weight:900;letter-spacing:-.5px;color:var(--ink);text-shadow:0 2px 0 #fff,0 0 18px rgba(255,255,255,.9)}
-.b-ribbon{position:relative;display:inline-block;margin-top:10px;padding:0 6px}
-.b-ribbon span{position:relative;z-index:1;display:inline-block;background:var(--brand);color:#fff;font-weight:700;font-size:clamp(13px,1.05vw,18px);letter-spacing:1.2px;text-transform:uppercase;padding:8px 26px;box-shadow:0 6px 16px rgba(228,0,43,.25)}
-.b-ribbon::before,.b-ribbon::after{content:"";position:absolute;top:7px;width:30px;height:100%;background:#B80023;z-index:0}
-.b-ribbon::before{left:-18px;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,30% 50%)}
-.b-ribbon::after{right:-18px;clip-path:polygon(0 0,100% 0,70% 50%,100% 100%,0 100%)}
-@media (max-width:640px){ .banner{top:0} .b-title{margin-top:24px} .b-ribbon span{letter-spacing:.6px;padding:6px 16px} }
-
 /* Gợi ý chạm lá */
-.tap-hint{position:absolute;left:var(--tree-center);top:calc(clamp(30px,3.1vw,54px) + 104px);transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:8px;background:var(--ink);color:#fff;font-size:14px;padding:9px 16px;border-radius:999px;box-shadow:var(--shadow);transition:opacity .5s,transform .5s;white-space:nowrap}
+.tap-hint{position:absolute;left:var(--tree-center);top:10px;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:8px;background:var(--ink);color:#fff;font-size:14px;padding:9px 16px;border-radius:999px;box-shadow:var(--shadow);transition:opacity .5s,transform .5s;white-space:nowrap}
 .tap-hint.gone{opacity:0;transform:translate(-50%,-10px);pointer-events:none}
 .tap-hint span{animation:tap 1.4s ease-in-out infinite}
 @keyframes tap{50%{transform:translateY(-3px)}}
@@ -155,11 +148,13 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 @keyframes fall{0%{transform:translate3d(0,-20px,0) rotate(0)}25%{transform:translate3d(30px,25vh,0) rotate(120deg)}50%{transform:translate3d(-20px,50vh,0) rotate(220deg)}75%{transform:translate3d(25px,75vh,0) rotate(300deg)}100%{transform:translate3d(-10px,105vh,0) rotate(400deg)}}
 
 /* Thẻ lời chúc */
-#card{position:absolute;left:0;top:0;width:min(360px,calc(100vw - 24px));background:var(--card);border-radius:16px;box-shadow:0 14px 40px rgba(122,20,40,.2),0 2px 8px rgba(26,26,26,.08);padding:14px 16px 11px;border-top:4px solid var(--accent,var(--brand));z-index:30;opacity:0;pointer-events:none;transform:translateY(8px) scale(.96);transform-origin:var(--ax,50%) 100%;transition:opacity .28s,transform .32s cubic-bezier(.2,1.2,.4,1)}
-#card.below{transform-origin:var(--ax,50%) 0;transform:translateY(-8px) scale(.96)}
+#card{position:absolute;left:0;top:0;width:min(380px,calc(100vw - 24px));background:var(--card);border-radius:16px;box-shadow:0 14px 40px rgba(122,20,40,.2),0 2px 8px rgba(26,26,26,.08);padding:14px 16px 11px;border-top:4px solid var(--accent,var(--brand));z-index:30;opacity:0;pointer-events:none;transform:translateY(8px) scale(.97);transition:opacity .28s,transform .32s cubic-bezier(.2,1.2,.4,1)}
 #card.show{opacity:1;pointer-events:auto;transform:none}
-#card::after{content:"";position:absolute;left:var(--ax,50%);bottom:-8px;width:16px;height:16px;background:#fff;transform:translateX(-50%) rotate(45deg);box-shadow:4px 4px 8px rgba(122,20,40,.08);border-radius:0 0 3px 0}
-#card.below::after{bottom:auto;top:-11px;background:var(--accent,var(--brand));box-shadow:none;border-radius:3px 0 0 0}
+#leader{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible;pointer-events:none;z-index:29;opacity:0;transition:opacity .3s}
+#leader.show{opacity:1}
+#leader path{fill:none;stroke-width:1.3;stroke-linecap:round;stroke-dasharray:var(--len);stroke-dashoffset:var(--len)}
+#leader.show path{animation:drawLine .5s ease-out forwards}
+@keyframes drawLine{to{stroke-dashoffset:0}}
 #card .q{position:absolute;right:44px;top:10px;width:30px;height:25px;color:var(--brand);opacity:.1;pointer-events:none}
 #card .to{font-size:11.5px;font-weight:700;color:var(--accent,var(--brand));letter-spacing:.2px;text-transform:uppercase;padding-right:40px}
 #card blockquote{margin:6px 0 8px;font-size:15px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word;max-height:30vh;overflow:auto;color:var(--ink-2)}
@@ -272,6 +267,26 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 .a-meta b{color:var(--ink-2);text-transform:uppercase;font-size:11.5px;letter-spacing:.3px}
 .a-meta .mi{width:14px;height:14px}
 .a-text{grid-column:1;font-size:15px;line-height:1.5;color:var(--ink-2);white-space:pre-wrap;word-wrap:break-word}
+.dp{display:flex;flex-direction:column;flex:1;min-height:0}
+.dp-hint{font-size:13px;color:var(--muted);margin:0 0 10px;line-height:1.5}
+.dp-list{list-style:none;margin:0;padding:0 4px 0 0;overflow:auto;flex:1;min-height:0}
+.dp-list li{display:grid;grid-template-columns:22px 34px 1fr auto auto;align-items:center;gap:12px;padding:8px 12px;border:1px solid var(--line);border-radius:14px;margin-bottom:8px;background:#fff;transition:box-shadow .2s,border-color .2s}
+.dp-list li.drag{opacity:.5}
+.dp-list li.over{border-color:var(--brand);box-shadow:0 -3px 0 var(--brand)}
+.dp-h{color:#c4b5b8;font-size:17px;cursor:grab;letter-spacing:-3px;user-select:none;text-align:center}
+.dp-c{position:relative;width:30px;height:30px;border-radius:9px;box-shadow:0 0 0 1px #eadadd;overflow:hidden;cursor:pointer}
+.dp-c input{position:absolute;inset:-8px;width:46px;height:46px;opacity:0;cursor:pointer;border:0;padding:0}
+.dp-n{border:1px solid transparent;border-radius:9px;padding:7px 10px;font:inherit;font-size:15px;background:transparent;min-width:0;width:100%}
+.dp-n:hover{border-color:var(--line)} .dp-n:focus{border-color:var(--brand);outline:none;background:#fff}
+.dp-n.bad{border-color:var(--brand);background:var(--brand-tint)}
+.dp-cnt{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.dp-a{display:flex;gap:4px}
+.dp-a button{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:#fff;color:#6b5f61;font-size:14px;cursor:pointer}
+.dp-a button:hover:not(:disabled){border-color:var(--brand);color:var(--brand)}
+.dp-a button:disabled{opacity:.35;cursor:default}
+.dp-a .del{color:#C40026}
+.dp-add{border:1.5px dashed #E8C3CB;background:#FFF8F9;border-radius:14px;padding:11px;font:inherit;color:#C40026;font-weight:600;width:100%;cursor:pointer;margin-top:4px}
+@media (max-width:640px){ .dp-list li{grid-template-columns:18px 30px 1fr auto;gap:8px} .dp-cnt{display:none} }
 .a-acts{grid-column:2;grid-row:1 / span 2;display:flex;flex-direction:column;gap:6px;align-items:stretch;justify-content:center}
 .a-acts button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;cursor:pointer;font-size:13px;white-space:nowrap;display:flex;align-items:center;gap:6px;justify-content:center}
 .a-acts button:disabled{opacity:.5;cursor:wait}
@@ -329,8 +344,8 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 }
 @media (min-width:1800px){
   :root{--feed-w:calc(var(--gutter) + 454px)}
-  .brand{--L:52px}
-  .cd{font-size:15px;padding:10px 24px} .cd-n b{font-size:26px}
+  .brand{--L:50px}
+  .h-title{font-size:22px} .cd-n{min-width:66px} .cd-n b{font-size:28px} .cd .cd-ico{font-size:46px}
   .btn{font-size:16px;padding:12px 22px}
   .chip{font-size:14px;padding:6px 7px 6px 12px}
   .status{padding:16px 28px} .st-count b{font-size:48px} .st-stage{font-size:17px} .st-next{font-size:14px} .chip .mi{width:18px;height:18px}
@@ -338,18 +353,23 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
   #feed{width:430px} .f-search input{font-size:16px}
   #feedList .f-text{font-size:16px}
 }
+/* Màn vừa: đầu trang 2 hàng, đếm ngược xuống hàng dưới */
+@media (max-width:1399px){
+  header{grid-template-columns:auto 1fr auto;grid-template-areas:"brand title actions" "cd cd cd";row-gap:12px}
+  .brand{grid-area:brand} .h-title{grid-area:title} .actions{grid-area:actions} .cd{grid-area:cd;justify-self:center}
+}
 /* Màn vừa và nhỏ: thẻ trạng thái nằm dưới cây */
 @media (max-width:1099px){
-  header{grid-template-columns:1fr auto;grid-template-areas:"brand actions" "cd cd"}
-  .brand{grid-area:brand} .actions{grid-area:actions} .cd{grid-area:cd;justify-self:start}
 }
 /* Điện thoại */
 @media (max-width:640px){
-  header{grid-template-columns:1fr;grid-template-areas:"brand" "cd";padding:14px 16px 4px;gap:12px}
+  header{grid-template-columns:1fr;grid-template-areas:"brand" "title" "cd";padding:14px 16px;gap:10px;margin-bottom:8px}
   .actions{display:none}
-  .brand{--L:30px}
-  .cd{justify-self:stretch;border-radius:16px;padding:9px 12px;gap:2px 8px;font-size:13px}
-  .cd-n b{font-size:19px}
+  .brand{--L:28px}
+  .h-title{border:0;padding:0;font-size:15px;white-space:normal}
+  .cd{justify-self:stretch;gap:6px}
+  .cd .cd-ico{font-size:34px} .cd .cd-before{display:none}
+  .cd-n{flex:1;min-width:0} .cd-n b{font-size:21px}
   .overview{padding:10px 16px 0}
   .legend{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;margin-right:-16px;padding-right:16px}
   .chip{flex:0 0 auto}
@@ -381,6 +401,7 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
   <div class="brand">
     <img class="logo-img" src="assets/logo-vinrobotics.svg" alt="" width="193" height="29">
   </div>
+  <div class="h-title" data-t="headerTitle"></div>
   <div class="cd" id="countdownBox" aria-live="off">
     <span class="cd-ico" aria-hidden="true">🎂</span>
     <span class="cd-before" data-t="countdownBefore"></span>
@@ -391,7 +412,7 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
     <span class="cd-after" id="countdownLbl"></span>
   </div>
   <div class="actions">
-    <button class="btn" id="btnAdmin" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span data-t="adminButton"></span></button>
+    <button class="btn" id="btnAdmin" hidden title="Quản trị" aria-label="Quản trị"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span data-t="adminButton"></span></button>
     <button class="btn" id="btnShow">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span data-t="btnShow"></span></button>
     <button class="btn primary js-send">
@@ -450,12 +471,6 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
     <g id="flyG" class="deco"></g>
   </svg>
 
-  <div class="banner" id="banner" aria-label="">
-    <svg class="bunting" viewBox="0 0 600 60" preserveAspectRatio="none" aria-hidden="true" id="bunting"></svg>
-    <h1 class="b-title event-title"></h1>
-    <div class="b-ribbon"><span data-t="subtitle"></span></div>
-  </div>
-
   <div class="tap-hint gone" id="tapHint"><span aria-hidden="true">👆</span><b data-t="tapHint" style="font-weight:400"></b></div>
 
   <div class="empty" id="empty" hidden>
@@ -466,6 +481,7 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
   </div>
 </div>
 
+<svg id="leader" aria-hidden="true"><path/><circle class="ring" r="9" fill="none" stroke-width="1.3" opacity=".55"/><circle class="dot" r="3.5"/><circle class="end" r="3"/></svg>
 <aside id="feed">
   <div class="f-head">
     <h3><span id="feedTitle"></span> <span class="live" id="feedLive"><i></i><span data-t="feedLive"></span></span></h3>
@@ -594,12 +610,18 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
       <button data-tab="pending" role="tab"><span data-t="adminTabPending"></span> <b id="aCntPending">0</b></button>
       <button data-tab="approved" role="tab"><span data-t="adminTabApproved"></span> <b id="aCntApproved">0</b></button>
       <button data-tab="featured" role="tab">★ <span data-t="adminTabFeatured"></span> <b id="aCntFeatured">0</b></button>
+      <button data-tab="depts" role="tab"><span data-t="adminTabDepts"></span> <b id="aCntDepts">0</b></button>
+    </div>
+    <div class="dp" id="aDepts" hidden>
+      <p class="dp-hint" data-t="adminDeptHint"></p>
+      <ul class="dp-list" id="dpList"></ul>
+      <button class="dp-add" id="dpAdd" type="button" data-t="adminDeptAdd"></button>
     </div>
     <div class="f-search a-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="aQ" type="search" data-ph="adminSearch" autocomplete="off"></div>
     <ul class="a-list" id="aList"></ul>
     <div class="a-foot">
       <span id="aInfo"></span>
-      <div class="row" style="margin:0"><button class="btn" id="aLogout" data-t="adminLogout"></button><button class="btn primary" id="aShow" data-t="adminShowFeatured"></button></div>
+      <div class="row" style="margin:0"><button class="btn" id="aLogout" data-t="adminLogout"></button><button class="btn primary" id="aShow" data-t="adminShowFeatured"></button><button class="btn primary" id="dpSave" hidden data-t="adminDeptSave"></button></div>
     </div>
   </div>
 </div>
@@ -632,8 +654,9 @@ const COMPANY = (CFG.company && CFG.company.name) || "";
 const EVT = CFG.event || {};
 const EVENT_NAME = [EVT.title, EVT.titleHighlight].filter(Boolean).join(" ");
 /* phòng ban: mỗi mục là tên, hoặc { name: "...", color: "#RRGGBB" } để tự chọn màu lá */
-const DEPT_LIST = (CFG.departments || []).map(d => typeof d === "string" ? {name:d.trim()} : {name:String(d && d.name || "").trim(), color:d && d.color}).filter(d=>d.name);
-const DEPARTMENTS = DEPT_LIST.map(d=>d.name);
+const parseDepts = arr => (arr || []).map(d => typeof d === "string" ? {name:d.trim()} : {name:String(d && d.name || "").trim(), color:d && d.color}).filter(d=>d.name);
+let DEPT_LIST = parseDepts(CFG.departments);
+let DEPARTMENTS = DEPT_LIST.map(d=>d.name);
 const TIMING = Object.assign({refresh:45, spotlight:6, slide:9}, CFG.timing || {});
 const API_URL = ((CFG.backend && CFG.backend.apiUrl) || "").trim();
 const PREVIEW = !API_URL;
@@ -641,9 +664,13 @@ const DATE_SHORT = (()=>{ const d = new Date(EVT.birthday); if (isNaN(d)) return
   const p = new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Ho_Chi_Minh",day:"2-digit",month:"2-digit"}).formatToParts(d);
   return p.find(x=>x.type==="day").value + "/" + p.find(x=>x.type==="month").value; })();
 
+const DATE_FULL = (()=>{ const d = new Date(EVT.birthday); if (isNaN(d)) return "";
+  const p = new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Ho_Chi_Minh",day:"2-digit",month:"2-digit",year:"numeric"}).formatToParts(d);
+  return ["day","month","year"].map(k=>p.find(x=>x.type===k).value).join("/"); })();
+
 function t(key, vars={}){
   const s = TXT[key]; if (s == null) return "";
-  const all = Object.assign({company:COMPANY, event:EVENT_NAME, date:DATE_SHORT}, vars);
+  const all = Object.assign({company:COMPANY, event:EVENT_NAME, date:DATE_SHORT, dateFull:DATE_FULL}, vars);
   return String(s).replace(/\{(\w+)\}/g, (m,k)=> all[k] != null ? all[k] : m);
 }
 const fill = s => String(s).replace(/\{company\}/g, COMPANY).replace(/\{event\}/g, EVENT_NAME);
@@ -740,9 +767,14 @@ function previewApi(action, data){
     });
   }
   const pub = () => sample.filter(m=>m.approved);
+  const pDepts = () => { try{ return JSON.parse(load("cta_prev_depts") || "null"); }catch(e){ return null; } };
+  if (action==="adminSetDepts"){
+    Object.keys(data.renames||{}).forEach(o=>sample.forEach(m=>{ if (m.toDept===o) m.toDept = data.renames[o]; }));
+    save("cta_prev_depts", JSON.stringify(data.depts)); return Promise.resolve({ok:true, depts:data.depts});
+  }
   if (action==="verify" || action==="adminVerify") return Promise.resolve({ok:true});
-  if (action==="list") return Promise.resolve({ok:true, items: pub().map(m=>Object.assign({}, m))});
-  if (action==="adminList") return Promise.resolve({ok:true, items: sample.map(m=>Object.assign({}, m))});
+  if (action==="list") return Promise.resolve({ok:true, items: pub().map(m=>Object.assign({}, m)), depts: pDepts()});
+  if (action==="adminList") return Promise.resolve({ok:true, items: sample.map(m=>Object.assign({}, m)), depts: pDepts()});
   if (action==="adminSet"){
     const m = sample.find(x=>x.id===data.id); if (!m) return Promise.resolve({ok:false});
     if (typeof data.featured === "boolean"){ m.featured = data.featured; if (data.featured) m.approved = true; }
@@ -1056,7 +1088,7 @@ function drawTree(stage){
   const sc = stage.scale;
   $("#treeScale").setAttribute("transform",`translate(${BASE.x*(1-sc)},${BASE.y*(1-sc)}) scale(${sc})`);
   const top = Math.min(...SEGS.filter(s=>s.depth<=stage.depth).map(s=>BASE.y*(1-sc)+s.y2*sc));
-  const h = Math.min(1180, Math.max(700, 980 - (top - 250)));
+  const h = Math.min(980, Math.max(560, 980 - (top - 120)));
   const w = h*1000/980;
   CAM = {x:500-w/2, y:980-h, w, h}; TREE = {top, sc};
   $("#tree").setAttribute("viewBox", `${CAM.x.toFixed(0)} ${CAM.y.toFixed(0)} ${w.toFixed(0)} ${h.toFixed(0)}`);
@@ -1145,26 +1177,46 @@ function showCard(m, mode, list){
   clearTimeout(peekTimer);
   if (mode==="peek") peekTimer = setTimeout(hideCard, (TIMING.spotlight-1)*1000);
 }
-/* đặt thẻ lời chúc như một callout mọc ra từ chiếc lá */
+/* đặt thẻ lời chúc ra khoảng trống xa tán cây, nối với chiếc lá bằng một đường mảnh */
 function placeCallout(le, scroll){
-  const c = $("#card"), main = $(".main");
-  if (!le){ c.classList.remove("show"); return; }
+  const c = $("#card"), main = $(".main"), ld = $("#leader");
+  if (!le){ c.classList.remove("show"); ld.classList.remove("show"); return; }
   let r = le.getBoundingClientRect();
   if (scroll && (r.top < 80 || r.bottom > innerHeight - 40)){ le.scrollIntoView({block:"center"}); r = le.getBoundingClientRect(); }
-  const mr = main.getBoundingClientRect(), feed = $("#feed").getBoundingClientRect();
-  const wideFeed = getComputedStyle($("#feed")).position === "absolute";
-  const maxRight = (wideFeed ? feed.left - 12 : innerWidth - 12) - mr.left, w = c.offsetWidth, h = c.offsetHeight;
-  const cx = r.left + r.width/2 - mr.left, cyTop = r.top - mr.top, cyBot = r.bottom - mr.top;
-  const left = Math.max(12 - mr.left, Math.min(maxRight - w, cx - w/2));
-  const above = r.top - h - 18 > 70;
-  c.classList.toggle("below", !above);
-  c.style.left = left.toFixed(0) + "px";
-  c.style.top = (above ? cyTop - h - 14 : cyBot + 14).toFixed(0) + "px";
-  c.style.setProperty("--ax", Math.max(22, Math.min(w - 22, cx - left)).toFixed(0) + "px");
-  requestAnimationFrame(()=>c.classList.add("show"));
+  const mr = main.getBoundingClientRect(), st = $(".stage").getBoundingClientRect(), cv = $("#treeScale").getBoundingClientRect();
+  const feedEl = $("#feed"), wideFeed = getComputedStyle(feedEl).position === "absolute";
+  const rightEdge = wideFeed ? feedEl.getBoundingClientRect().left - 28 : Math.min(innerWidth, st.right) - 16;
+  const room = rightEdge - cv.right - 24, side = room >= 300;
+  c.style.width = side ? Math.min(400, room).toFixed(0) + "px" : "";
+  const w = c.offsetWidth, h = c.offsetHeight;
+  const lx = r.left + r.width/2, ly = r.top + r.height/2;
+  let L, T, ex, ey, d;
+  if (side){
+    /* màn rộng: khung nằm ở khoảng trời bên phải */
+    L = rightEdge - w;
+    T = Math.max(st.top + 40, 16); T = Math.min(T, innerHeight - h - 16);
+    ex = L; ey = T + h*0.7;
+    d = `M${lx},${ly} C${lx+130},${ly} ${ex-150},${ey} ${ex},${ey}`;
+  } else {
+    /* màn hẹp: khung nằm dưới chân cây, đè lên cỏ */
+    L = Math.max(12, (innerWidth - w)/2);
+    T = Math.min(st.bottom, innerHeight) - h - 10; T = Math.max(T, ly + 40);
+    ex = L + w/2; ey = T;
+    d = `M${lx},${ly} C${lx},${ly+80} ${ex},${ey-80} ${ex},${ey}`;
+  }
+  c.style.left = (L - mr.left).toFixed(0) + "px";
+  c.style.top = (T - mr.top).toFixed(0) + "px";
+  const acc = getComputedStyle(c).getPropertyValue("--accent").trim() || BRAND;
+  ld.style.left = (-mr.left) + "px"; ld.style.top = (-mr.top) + "px";
+  const path = ld.querySelector("path"); path.setAttribute("d", d); path.setAttribute("stroke", acc);
+  ld.querySelector(".ring").setAttribute("stroke", acc);
+  [[".ring",lx,ly],[".dot",lx,ly],[".end",ex,ey]].forEach(([q,x,y])=>{ const e = ld.querySelector(q); e.setAttribute("cx",x.toFixed(1)); e.setAttribute("cy",y.toFixed(1)); if (q!==".ring") e.setAttribute("fill",acc); });
+  ld.style.setProperty("--len", Math.ceil(path.getTotalLength()) + "px");
+  ld.classList.remove("show"); void ld.getBoundingClientRect();
+  requestAnimationFrame(()=>{ c.classList.add("show"); ld.classList.add("show"); });
 }
 addEventListener("resize", ()=>{ if (cardMode) hideCard(); });
-function hideCard(){ $("#card").classList.remove("show"); cardMode = null; $$(".leaf.spot").forEach(e=>e.classList.remove("spot")); }
+function hideCard(){ $("#card").classList.remove("show"); $("#leader").classList.remove("show"); cardMode = null; $$(".leaf.spot").forEach(e=>e.classList.remove("spot")); }
 function stepCard(d){ if (!cardList.length) return; cardIdx = (cardIdx + d + cardList.length) % cardList.length; showCard(cardList[cardIdx], "open", cardList); }
 $("#card").addEventListener("click", ()=>{ if (cardMode==="peek"){ const m = cardList[cardIdx]; if (m) showCard(m,"open",items); } });
 $("#cardClose").onclick = e=>{ e.stopPropagation(); hideCard(); };
@@ -1294,7 +1346,19 @@ function openModal(id){ $(id).classList.add("show"); }
 function closeModals(){ $$(".modal.show").forEach(m=>{ if (m.id!=="gate") m.classList.remove("show"); }); }
 $$("[data-close]").forEach(b=>b.onclick = closeModals);
 $$(".modal").forEach(m=>m.addEventListener("click", e=>{ if (e.target===m && m.id!=="gate") closeModals(); }));
-DEPARTMENTS.forEach(d=>{ const o=document.createElement("option"); o.value=o.textContent=d; $("#toDept").appendChild(o); });
+function buildDeptSelect(){ const sel = $("#toDept"), v = sel.value; sel.textContent = ""; DEPARTMENTS.forEach(d=>{ const o=document.createElement("option"); o.value=o.textContent=d; sel.appendChild(o); }); if (DEPARTMENTS.includes(v)) sel.value = v; }
+buildDeptSelect();
+/* áp dụng danh sách phòng ban do Ban tổ chức cấu hình (lưu trên máy chủ) */
+let deptSig = JSON.stringify(DEPT_LIST);
+function applyDepts(list){
+  const next = parseDepts(list); if (!next.length) return;
+  const sig = JSON.stringify(next); if (sig === deptSig) return; deptSig = sig;
+  DEPT_LIST = next; DEPARTMENTS = next.map(d=>d.name);
+  if (activeDept && activeDept !== "__company" && !DEPARTMENTS.includes(activeDept)) activeDept = "";
+  DEPARTMENTS.forEach(d=>leafGrad(deptColor(d)));
+  buildLegend(); buildDeptSelect(); updateLegend();
+  if (loaded) renderLeaves();
+}
 $$("input[name=toType]").forEach(r=>r.addEventListener("change", syncType));
 function syncType(){
   const tp = document.querySelector("input[name=toType]:checked").value;
@@ -1394,6 +1458,7 @@ async function refresh(silent){
   try{
     const res = await api("list");
     if (!res.ok){ if (res.code==="BAD_PIN"){ save("cta_pin"); PIN=""; started=false; showGate(t("pinChanged")); } return; }
+    if (Array.isArray(res.depts)) applyDepts(res.depts);
     const incoming = res.items || [], fresh = new Set(), first = !loaded;
     if (!first) incoming.forEach(m=>{ if (!byId.has(m.id)) fresh.add(m.id); });
     items = incoming.sort((a,b)=> String(a.time).localeCompare(String(b.time)));
@@ -1490,16 +1555,80 @@ async function openAdmin(){
     const res = await api("adminList");
     if (!res.ok){ ADMIN_PIN = ""; saveAdmin(""); $("#btnAdmin").hidden = true; $("#adminPanel").classList.remove("show"); return openAdminGate(); }
     adminItems = (res.items||[]).sort((a,b)=>String(b.time).localeCompare(String(a.time)));
+    if (Array.isArray(res.depts)) applyDepts(res.depts);
+    if (!dpDirty) dpInit();
     if (adminTab==="pending" && !adminItems.some(m=>!m.approved)) adminTab = "approved";
     renderAdmin();
   }catch(e){ $("#aList").innerHTML = `<li class="a-empty">${esc(t("netError"))}</li>`; }
 }
+let dpRows = null, dpDirty = false;
+function dpInit(){ dpRows = DEPT_LIST.map(d=>({name:d.name, orig:d.name, color:deptColor(d.name)})); dpDirty = false; }
+function dpRender(){
+  const ul = $("#dpList"); ul.textContent = "";
+  const cnt = {}; adminItems.forEach(m=>{ if (m.toDept) cnt[m.toDept] = (cnt[m.toDept]||0) + 1; });
+  const names = dpRows.map(r=>norm(r.name));
+  dpRows.forEach((row,i)=>{
+    const li = document.createElement("li"); li.draggable = false;
+    const dup = !row.name.trim() || names.indexOf(norm(row.name)) !== i;
+    li.innerHTML = `<span class="dp-h" title="Kéo để đổi thứ tự">⋮⋮</span>
+      <label class="dp-c" style="background:${row.color}" title="Đổi màu lá"><input type="color" value="${row.color}"></label>
+      <input class="dp-n${dup?" bad":""}" maxlength="60" value="${esc(row.name)}">
+      <span class="dp-cnt">${esc(t("adminDeptCount",{n:cnt[row.orig]||0}))}</span>
+      <span class="dp-a"><button type="button" class="up" title="Lên"${i?"":" disabled"}>↑</button><button type="button" class="dn" title="Xuống"${i<dpRows.length-1?"":" disabled"}>↓</button><button type="button" class="del" title="Xóa">🗑</button></span>`;
+    const mv = to=>{ const [x] = dpRows.splice(i,1); dpRows.splice(to,0,x); dpChange(); };
+    li.querySelector(".up").onclick = ()=>mv(i-1);
+    li.querySelector(".dn").onclick = ()=>mv(i+1);
+    li.querySelector(".del").onclick = ()=>{ dpRows.splice(i,1); dpChange(); };
+    const col = li.querySelector("input[type=color]");
+    col.oninput = ()=>{ row.color = col.value; col.parentNode.style.background = col.value; dpDirty = true; dpFoot(); };
+    const nm = li.querySelector(".dp-n");
+    nm.oninput = ()=>{ row.name = nm.value; dpDirty = true; const ns = dpRows.map(r=>norm(r.name)); $$("#dpList .dp-n").forEach((e,k)=>e.classList.toggle("bad", !dpRows[k].name.trim() || ns.indexOf(ns[k]) !== k)); dpFoot(); };
+    /* kéo thả bằng tay nắm ⋮⋮ */
+    const h = li.querySelector(".dp-h");
+    h.onmousedown = h.ontouchstart = ()=>{ li.draggable = true; };
+    li.ondragstart = e=>{ li.classList.add("drag"); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", String(i)); };
+    li.ondragend = ()=>{ li.draggable = false; li.classList.remove("drag"); $$("#dpList li.over").forEach(x=>x.classList.remove("over")); };
+    li.ondragover = e=>{ e.preventDefault(); li.classList.add("over"); };
+    li.ondragleave = ()=>li.classList.remove("over");
+    li.ondrop = e=>{ e.preventDefault(); const from = +e.dataTransfer.getData("text/plain"); if (isNaN(from) || from===i) return; const [x] = dpRows.splice(from,1); dpRows.splice(from < i ? i-1 : i,0,x); dpChange(); };
+    ul.appendChild(li);
+  });
+  $("#aCntDepts").textContent = dpRows.length;
+  dpFoot();
+}
+function dpChange(){ dpDirty = true; dpRender(); }
+function dpValid(){ const ns = dpRows.map(r=>norm(r.name)); return dpRows.length > 0 && dpRows.every((r,k)=>r.name.trim() && ns.indexOf(ns[k])===k); }
+function dpFoot(){ if (adminTab!=="depts") return; $("#aInfo").textContent = dpDirty ? t("adminDeptUnsaved") : ""; $("#dpSave").disabled = !dpDirty || !dpValid(); }
+$("#dpAdd").onclick = ()=>{ const used = new Set(dpRows.map(r=>r.color.toLowerCase())); const color = PALETTE.find(c=>!used.has(c.toLowerCase())) || PALETTE[dpRows.length % PALETTE.length];
+  dpRows.push({name:"", orig:"", color}); dpChange(); const ins = $$("#dpList .dp-n"); ins[ins.length-1].focus(); };
+$("#dpSave").onclick = async ()=>{
+  if (!dpValid()) return;
+  const btn = $("#dpSave"); btn.disabled = true;
+  const depts = dpRows.map(r=>({name:r.name.trim(), color:r.color}));
+  const renames = {}; dpRows.forEach(r=>{ if (r.orig && r.orig !== r.name.trim()) renames[r.orig] = r.name.trim(); });
+  try{
+    const res = await api("adminSetDepts", {depts, renames});
+    if (!res.ok) throw new Error(res.error);
+    adminItems.forEach(m=>{ if (renames[m.toDept]) m.toDept = renames[m.toDept]; });
+    applyDepts(res.depts || depts); dpInit(); dpRender(); toast(t("adminDeptSaved")); refresh(true);
+  }catch(e){ toast(e.message || t("adminSaveError")); btn.disabled = false; }
+};
 function renderAdmin(){
+  const isD = adminTab === "depts";
+  $("#aDepts").hidden = !isD; $("#aList").hidden = isD; $(".a-search").hidden = isD;
+  $("#aShow").hidden = isD; $("#dpSave").hidden = !isD;
+  if (!dpRows) dpInit();
+  $("#aCntDepts").textContent = dpRows.length;
+  if (isD){
+    $$("#aTabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===adminTab));
+    dpRender();
+  }
   const c = { pending: adminItems.filter(m=>!m.approved), approved: adminItems.filter(m=>m.approved), featured: adminItems.filter(m=>m.featured) };
   $("#aCntPending").textContent = c.pending.length; $("#aCntApproved").textContent = c.approved.length; $("#aCntFeatured").textContent = c.featured.length;
   $$("#aTabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===adminTab));
   $("#aInfo").textContent = t("adminInfo",{n:c.featured.length});
   $("#aShow").disabled = !c.featured.length;
+  if (isD) return dpFoot();
   const q = norm($("#aQ").value);
   const list = c[adminTab].filter(m=>!q || norm(m.text).includes(q) || norm(m.toName).includes(q) || norm(m.toDept).includes(q));
   const ul = $("#aList"); ul.textContent = "";

@@ -35,6 +35,8 @@ window.SITE_CONFIG = {
      - Bớt phòng: xóa dòng đó. Lời chúc cũ gửi phòng đó vẫn hiện, lá đổi màu tự động.
      - Tự chọn màu lá: viết { name: "Tên phòng", color: "#2F7D57" },
        không ghi color thì màu được chọn tự động theo thứ tự. */
+  /* Danh sách này là mặc định. Khi đã chạy máy chủ, Ban tổ chức sửa phòng ban, thứ tự, màu
+     ngay trong trang Quản trị → tab Phòng ban; danh sách trên máy chủ sẽ được ưu tiên. */
   departments: [
     "Ban Giám đốc",
     "Hành chính – Nhân sự",
@@ -75,6 +77,7 @@ window.SITE_CONFIG = {
   /* ---------- Chữ hiển thị trên trang ---------- */
   text: {
     pageTitle:        "{event} · Mừng sinh nhật {company}",
+    headerTitle:      "Chào mừng sinh nhật {dateFull}",   // {dateFull} = ngày sinh nhật dạng dd/mm/yyyy, lấy từ event.birthday
     subtitle:         "Mừng sinh nhật {company} · {date}",
     previewLabel:     "Bản xem trước",
     previewText:      "đang hiển thị lời chúc mẫu, lời chúc gửi thử chưa được lưu",
@@ -187,6 +190,13 @@ window.SITE_CONFIG = {
     adminInfo:        "{n} lời chúc tiêu biểu sẽ được ưu tiên trình chiếu",
     adminShowFeatured:"Trình chiếu lời chúc tiêu biểu",
     adminLogout:      "Đăng xuất",
+    adminTabDepts:    "Phòng ban",
+    adminDeptHint:    "Kéo ⋮⋮ hoặc bấm ↑ ↓ để đổi thứ tự (áp dụng cho dãy phòng ban, ô chọn khi gửi lời chúc và bộ lọc). Bấm ô màu để đổi màu lá. Đổi tên sẽ tự cập nhật các lời chúc cũ của phòng đó.",
+    adminDeptAdd:     "+ Thêm phòng ban",
+    adminDeptSave:    "Lưu phòng ban",
+    adminDeptSaved:   "Đã lưu danh sách phòng ban.",
+    adminDeptUnsaved: "Có thay đổi chưa lưu",
+    adminDeptCount:   "{n} lời chúc",
     adminSaveError:   "Chưa lưu được, bạn thử lại nhé.",
 
     loadError:        "Chưa tải được lời chúc, sẽ thử lại sau ít phút."
