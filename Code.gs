@@ -20,12 +20,15 @@ const MAX_TEXT = 500;
 const MAX_NAME = 60;
 const MAX_FAILS = 40;          // số lần nhập sai PIN tối đa trong 10 phút (toàn hệ thống)
 const LIST_CACHE_SECONDS = 20; // giảm tải khi nhiều người cùng xem
+const PROPS_CACHE_SECONDS = 120; // đọc cài đặt từ cache: Google giới hạn 50.000 lượt đọc thuộc tính/ngày
+const MIN_ROWS = 3000;           // số dòng có sẵn ô tick, đủ cho cả công ty
 
 /** Bấm Chạy hàm này 1 lần để cấp quyền và tạo sheet. */
 function setup() {
   const sh = getSheet();
   const props = PropertiesService.getScriptProperties();
   Object.keys(DEFAULTS).forEach(k => { if (!props.getProperty(k)) props.setProperty(k, DEFAULTS[k]); });
+  CacheService.getScriptCache().removeAll(['props', 'sheet_ok']);
   Logger.log('Xong. Sheet "%s" đã sẵn sàng. PIN: %s. PIN quản trị: %s. Tự duyệt: %s', sh.getName(), props.getProperty('PIN'), props.getProperty('ADMIN_PIN'), props.getProperty('AUTO_APPROVE'));
 }
 
@@ -73,8 +76,7 @@ function doPost(e) {
 }
 
 function listApproved() {
-  const cache = CacheService.getScriptCache();
-  const cached = cache.get('approved_list');
+  const cached = getBig('approved_list');
   if (cached) return JSON.parse(cached);
 
   const sh = getSheet();
@@ -88,8 +90,7 @@ function listApproved() {
     .filter(r => r[0] && r[6] === true)
     .map(r => rowToItem(r, labelToType));
 
-  const str = JSON.stringify(items);
-  if (str.length < 90000) cache.put('approved_list', str, LIST_CACHE_SECONDS);
+  putBig('approved_list', JSON.stringify(items), LIST_CACHE_SECONDS);
   return items;
 }
 
@@ -106,27 +107,22 @@ function submit(body) {
   if (text.length < 5) return { ok: false, error: 'Lời chúc cần ít nhất 5 ký tự.' };
 
   const approved = prop('AUTO_APPROVE').toLowerCase() === 'true';
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-  try {
-    const sh = getSheet();
-    const id = Utilities.getUuid().slice(0, 8);
-    sh.appendRow([
+  /* appendRow của Google Sheet tự đảm bảo không ghi đè khi nhiều người gửi cùng lúc,
+     nên không cần khóa: hàng trăm người gửi một lúc cũng không phải xếp hàng chờ. */
+  const sh = getSheet();
+  const id = Utilities.getUuid().slice(0, 8);
+  sh.appendRow([
       id,
       new Date(),
       TYPE_LABELS[toType],
       toType === 'company' ? '' : safeCell(toDept),
       toType === 'person' ? safeCell(toName) : '',
       safeCell(text),
-      approved,
-      false
-    ]);
-    sh.getRange(sh.getLastRow(), COL.approved, 1, 2).insertCheckboxes();
-    if (approved) CacheService.getScriptCache().remove('approved_list');
-    return { ok: true, id: id, approved: approved };
-  } finally {
-    lock.releaseLock();
-  }
+    approved,
+    false
+  ]);
+  if (approved) removeBig('approved_list');
+  return { ok: true, id: id, approved: approved };
 }
 
 function rowToItem(r, labelToType) {
@@ -166,10 +162,10 @@ function adminSet(body) {
     let row = -1;
     for (let i = 0; i < ids.length; i++) if (String(ids[i][0]) === id) { row = i + 2; break; }
     if (row < 0) return { ok: false, error: 'Không tìm thấy lời chúc.' };
-    const set = (col, v) => { const c = sh.getRange(row, col); c.insertCheckboxes(); c.setValue(v === true); };
+    const set = (col, v) => sh.getRange(row, col).setValue(v === true);
     if (typeof body.featured === 'boolean') { set(COL.featured, body.featured); if (body.featured) set(COL.approved, true); }
     if (typeof body.approved === 'boolean') { set(COL.approved, body.approved); if (!body.approved) set(COL.featured, false); }
-    CacheService.getScriptCache().remove('approved_list');
+    removeBig('approved_list');
     const v = sh.getRange(row, 1, 1, HEADERS.length).getValues()[0];
     return { ok: true, approved: v[6] === true, featured: v[7] === true };
   } finally {
@@ -179,7 +175,7 @@ function adminSet(body) {
 
 /** Phòng ban do Ban tổ chức cấu hình; null = dùng danh sách trong config.js. */
 function getDepts() {
-  const v = PropertiesService.getScriptProperties().getProperty('DEPARTMENTS');
+  const v = allProps().DEPARTMENTS;
   if (!v) return null;
   try { const a = JSON.parse(v); return Array.isArray(a) && a.length ? a : null; } catch (e) { return null; }
 }
@@ -204,6 +200,7 @@ function setDepts(body) {
   lock.waitLock(10000);
   try {
     PropertiesService.getScriptProperties().setProperty('DEPARTMENTS', JSON.stringify(depts));
+    CacheService.getScriptCache().remove('props');
     const keys = Object.keys(renames);
     if (keys.length) {
       const sh = getSheet();
@@ -219,7 +216,7 @@ function setDepts(body) {
         if (changed) rng.setValues(vals);
       }
     }
-    CacheService.getScriptCache().remove('approved_list');
+    removeBig('approved_list');
     return { ok: true, depts: depts };
   } finally {
     lock.releaseLock();
@@ -228,7 +225,7 @@ function setDepts(body) {
 
 /** Tự chạy khi bạn sửa Sheet (ví dụ tick "Đã duyệt"): xóa cache để lá lên cây nhanh hơn. */
 function onEdit() {
-  CacheService.getScriptCache().remove('approved_list');
+  removeBig('approved_list');
 }
 
 function getSheet() {
@@ -241,14 +238,54 @@ function getSheet() {
     sh.setColumnWidth(6, 480);
     sh.setColumnWidth(2, 150);
   }
-  if (!sh.getRange(1, COL.featured).getValue()) {   // sheet cũ chưa có cột "Tiêu biểu"
-    sh.getRange(1, COL.featured).setValue(HEADERS[COL.featured - 1]).setFontWeight('bold').setBackground('#FDE8EC');
+  const cache = CacheService.getScriptCache();
+  if (!cache.get('sheet_ok')) {
+    if (!sh.getRange(1, COL.featured).getValue()) {   // sheet cũ chưa có cột "Tiêu biểu"
+      sh.getRange(1, COL.featured).setValue(HEADERS[COL.featured - 1]).setFontWeight('bold').setBackground('#FDE8EC');
+    }
+    /* Ô tick sẵn cho 2 cột "Đã duyệt", "Tiêu biểu" để lúc gửi lời chúc chỉ cần 1 lệnh ghi */
+    if (sh.getMaxRows() < MIN_ROWS) sh.insertRowsAfter(sh.getMaxRows(), MIN_ROWS - sh.getMaxRows());
+    const cb = sh.getRange(2, COL.approved, sh.getMaxRows() - 1, 2);
+    if (!sh.getRange(sh.getMaxRows(), COL.approved).getDataValidation()) {
+      cb.setDataValidation(SpreadsheetApp.newDataValidation().requireCheckbox().build());
+    }
+    cache.put('sheet_ok', '1', 21600);
   }
   return sh;
 }
 
+/** Toàn bộ cài đặt, đọc 1 lần rồi giữ trong cache 2 phút (đổi PIN có hiệu lực sau tối đa 2 phút). */
+function allProps() {
+  if (allProps.v) return allProps.v;
+  const cache = CacheService.getScriptCache();
+  const c = cache.get('props');
+  if (c) { allProps.v = JSON.parse(c); return allProps.v; }
+  allProps.v = PropertiesService.getScriptProperties().getProperties();
+  cache.put('props', JSON.stringify(allProps.v), PROPS_CACHE_SECONDS);
+  return allProps.v;
+}
+
+/** Cache cho dữ liệu lớn hơn 100 KB: chia thành nhiều mảnh. */
+function putBig(key, str, ttl) {
+  const cache = CacheService.getScriptCache(), size = 90000, parts = {};
+  const n = Math.ceil(str.length / size) || 1;
+  if (n > 40) return;
+  for (let i = 0; i < n; i++) parts[key + '_' + i] = str.slice(i * size, (i + 1) * size);
+  parts[key] = String(n);
+  cache.putAll(parts, ttl);
+}
+function getBig(key) {
+  const cache = CacheService.getScriptCache(), n = Number(cache.get(key) || 0);
+  if (!n) return null;
+  const keys = []; for (let i = 0; i < n; i++) keys.push(key + '_' + i);
+  const got = cache.getAll(keys);
+  if (keys.some(k => got[k] == null)) return null;
+  return keys.map(k => got[k]).join('');
+}
+function removeBig(key) { CacheService.getScriptCache().remove(key); }
+
 function prop(key) {
-  const v = PropertiesService.getScriptProperties().getProperty(key);
+  const v = allProps()[key];
   return v == null || v === '' ? DEFAULTS[key] : v;
 }
 

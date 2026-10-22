@@ -36,7 +36,7 @@ Trong Apps Script, bấm bánh răng **Cài đặt dự án → Thuộc tính t�
 | `DEPARTMENTS` | (trống) | Tự tạo khi lưu trong tab Phòng ban. Xóa thuộc tính này để quay về danh sách trong `config.js` |
 | `AUTO_APPROVE` | `true` | `true` = lời chúc lên cây ngay, Ban tổ chức bỏ duyệt nếu cần ẩn; `false` = duyệt từng lời chúc trước |
 
-Đổi thuộc tính có hiệu lực ngay, không cần triển khai lại.
+Đổi thuộc tính có hiệu lực sau tối đa 2 phút (máy chủ giữ cài đặt trong bộ nhớ đệm để không vượt giới hạn 50.000 lượt đọc/ngày của Google), không cần triển khai lại.
 
 ## Vận hành hằng ngày
 

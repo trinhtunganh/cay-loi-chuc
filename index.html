@@ -1455,6 +1455,7 @@ document.addEventListener("keydown", e=>{
 
 /* ---------- tải dữ liệu ---------- */
 async function refresh(silent){
+  refresh.at = Date.now();
   try{
     const res = await api("list");
     if (!res.ok){ if (res.code==="BAD_PIN"){ save("cta_pin"); PIN=""; started=false; showGate(t("pinChanged")); } return; }
@@ -1472,8 +1473,16 @@ async function refresh(silent){
       if (ul.scrollTop > 40){ const pill = $("#feedNew"); pill.textContent = t("feedNewPill",{n:fresh.size}); pill.hidden = false; }
       if (!feedSide) toast(fresh.size===1 ? t("toastNewOne",{to:target(last)}) : t("toastNewMany",{n:fresh.size}));
     }
-  }catch(e){ if (!silent) toast(t("loadError")); }
+    refresh.fails = 0;
+  }catch(e){
+    /* máy chủ bận hoặc mạng chập chờn: tự thử lại sau vài giây, giãn dần, lệch nhau giữa các máy */
+    refresh.fails = (refresh.fails||0) + 1;
+    if (!silent && refresh.fails > 2) toast(t("loadError"));
+    if (refresh.fails <= 5){ clearTimeout(refresh.retry); refresh.retry = setTimeout(()=>refresh(true), (3 + Math.random()*5) * 1000 * refresh.fails); }
+  }
 }
+
+document.addEventListener("visibilitychange", ()=>{ if (!document.hidden && started && Date.now() - (refresh.at||0) > TIMING.refresh*1000) refresh(true); });
 
 /* ---------- đếm ngược ---------- */
 function setupCountdown(){
@@ -1525,8 +1534,10 @@ let started = false, poll = null;
 function start(){
   if (started) return; started = true;
   spotAfter = Date.now() + 10000;
-  refresh(false);
-  clearInterval(poll); poll = setInterval(()=>{ if (!document.hidden) refresh(true); }, TIMING.refresh*1000);
+  /* lệch thời điểm tải giữa các máy để 150 người mở cùng lúc không dồn vào một giây */
+  setTimeout(()=>refresh(false), Math.random()*400);
+  clearTimeout(poll);
+  (function loop(){ poll = setTimeout(()=>{ if (!document.hidden) refresh(true); loop(); }, TIMING.refresh*1000*(0.85 + Math.random()*0.3)); })();
 }
 
 /* ---------- khởi động ---------- */

@@ -50,7 +50,7 @@ window.SITE_CONFIG = {
 
   /* ---------- Thời gian (giây) ---------- */
   timing: {
-    refresh: 45,      // bao lâu tải lời chúc mới một lần
+    refresh: 60,      // bao lâu tải lời chúc mới một lần (150 người cùng mở ≈ 2,5 lượt/giây lên máy chủ)
     spotlight: 6,     // bao lâu tự bật một lời chúc trên cây
     slide: 9          // mỗi lời chúc ở chế độ trình chiếu
   },
