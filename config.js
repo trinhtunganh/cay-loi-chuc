@@ -25,7 +25,7 @@ window.SITE_CONFIG = {
   /* ---------- Kết nối máy chủ (Google Apps Script) ----------
      Để trống = bản xem trước, hiển thị lời chúc mẫu và không lưu. */
   backend: {
-    apiUrl: ""
+    apiUrl: "https://script.google.com/macros/s/AKfycbwiJ4EybwQW5afgu4LjLXgBq3dXl_8fpdAg9HlJUtVNk5IaMaj7Bbh7mgVC71Kxkc3yaA/exec"
   },
 
   /* ---------- Phòng ban ----------
