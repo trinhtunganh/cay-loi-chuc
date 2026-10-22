@@ -14,7 +14,7 @@ window.SITE_CONFIG = {
   /* ---------- Thông tin chung ---------- */
   company: {
     name: "VinRobotics",
-    logo: "assets/logo-vinrobotics.png"
+    logo: "assets/logo-vinrobotics.svg"
   },
   event: {
     title: "Cây",                 // phần chữ đen của tên sự kiện
@@ -106,6 +106,7 @@ window.SITE_CONFIG = {
     feedResults:      "Kết quả lọc",
     feedCount:        "{n} lời chúc",
     feedReset:        "Xóa bộ lọc",
+    feedNewPill:      "↑ {n} lời chúc mới",
     feedLoading:      "Đang tải thêm lời chúc…",
     feedNoMatch:      "Chưa có lời chúc nào khớp. Bạn thử từ khóa khác nhé.",
 
@@ -117,7 +118,7 @@ window.SITE_CONFIG = {
     cardPeekHint:     "Chạm để đọc tiếp",
 
     formTitle:        "Gửi một lời chúc",
-    formPrivacy:      "Hoàn toàn giấu tên. Hệ thống không lưu tên, email hay thiết bị của bạn. Lời chúc sẽ mọc thành lá sau khi Ban tổ chức duyệt.",
+    formPrivacy:      "Hoàn toàn giấu tên. Hệ thống không lưu tên, email hay thiết bị của bạn. Lời chúc mọc thành lá trên cây ngay sau khi gửi.",
     formTo:           "Bạn muốn gửi tới",
     optCompany:       "Cả công ty",      optCompanySub: "thành một bông hoa",
     optDept:          "Một phòng ban",   optDeptSub:    "lá theo màu phòng",
@@ -136,7 +137,8 @@ window.SITE_CONFIG = {
     errSend:          "Gửi chưa thành công, bạn thử lại giúp nhé.",
 
     doneTitle:        "Cảm ơn bạn đã gửi yêu thương!",
-    doneText:         "Lời chúc sẽ mọc thành một chiếc lá trên cây sau khi Ban tổ chức duyệt, thường trong ngày.",
+    doneText:         "Lời chúc của bạn đã mọc thành một chiếc lá trên cây. Cảm ơn bạn!",
+    doneTextPending:  "Lời chúc sẽ mọc thành một chiếc lá trên cây sau khi Ban tổ chức duyệt.",
     donePreviewText:  "Bản xem trước: lời chúc mọc lên cây ngay để bạn xem thử, nhưng chưa được lưu.",
     btnInvite:        "Mời đồng nghiệp cùng gửi",
     btnAgain:         "Gửi thêm",

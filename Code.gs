@@ -5,7 +5,7 @@
  * - Không lưu email, tên hay bất kỳ thông tin nào của người gửi.
  * - Cài đặt nằm ở Project Settings > Script properties:
  *     PIN           mã PIN để vào trang (mặc định VinRobotics2026)
- *     AUTO_APPROVE  "true" = lời chúc lên cây ngay, "false" = chờ duyệt (mặc định)
+ *     AUTO_APPROVE  "true" = lời chúc lên cây ngay (mặc định), "false" = chờ duyệt
  *     ADMIN_PIN     mã PIN riêng của Ban tổ chức để duyệt và chọn lời chúc tiêu biểu
  * - Sheet tự được tạo ở lần chạy đầu tiên, không cần chuẩn bị gì.
  */
@@ -14,7 +14,7 @@ const SHEET_NAME = 'LoiChuc';
 const HEADERS = ['ID', 'Thời gian', 'Loại người nhận', 'Phòng ban', 'Tên người nhận', 'Nội dung', 'Đã duyệt', 'Tiêu biểu'];
 const COL = { approved: 7, featured: 8 };
 const TYPE_LABELS = { company: 'Cả công ty', dept: 'Phòng ban', person: 'Đồng nghiệp' };
-const DEFAULTS = { PIN: 'VinRobotics2026', ADMIN_PIN: 'VRAdmin2026', AUTO_APPROVE: 'false' };
+const DEFAULTS = { PIN: 'VinRobotics2026', ADMIN_PIN: 'VRAdmin2026', AUTO_APPROVE: 'true' };
 const MAX_TEXT = 500;
 const MAX_NAME = 60;
 const MAX_FAILS = 40;          // số lần nhập sai PIN tối đa trong 10 phút (toàn hệ thống)

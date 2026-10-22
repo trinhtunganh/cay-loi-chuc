@@ -33,7 +33,7 @@ Trong Apps Script, bấm bánh răng **Cài đặt dự án → Thuộc tính t�
 | --- | --- | --- |
 | `PIN` | `VinRobotics2026` | Mã PIN để vào trang. Nên đổi trước khi gửi cho mọi người |
 | `ADMIN_PIN` | `VRAdmin2026` | Mã PIN riêng của Ban tổ chức để vào trang quản trị. **Bắt buộc đổi** và không chia sẻ |
-| `AUTO_APPROVE` | `false` | `false` = Ban tổ chức duyệt từng lời chúc; `true` = lời chúc lên cây ngay |
+| `AUTO_APPROVE` | `true` | `true` = lời chúc lên cây ngay, Ban tổ chức bỏ duyệt nếu cần ẩn; `false` = duyệt từng lời chúc trước |
 
 Đổi thuộc tính có hiệu lực ngay, không cần triển khai lại.
 
@@ -43,8 +43,9 @@ Trong Apps Script, bấm bánh răng **Cài đặt dự án → Thuộc tính t�
 
 Mở web, bấm **"Ban tổ chức? Đăng nhập quản trị"** ở màn hình nhập PIN (hoặc mở link có đuôi `#admin`), nhập `ADMIN_PIN`. Sau khi đăng nhập, nút **Quản trị** xuất hiện ở đầu trang.
 
-- Tab **Chờ duyệt**: bấm **Duyệt** để lời chúc mọc lên cây.
-- Tab **Đã duyệt**: bỏ duyệt để ẩn lời chúc khỏi cây; bấm **☆ Tiêu biểu** để chọn lời chúc nổi bật (chọn tiêu biểu thì tự duyệt luôn).
+- Mặc định lời chúc **tự duyệt**, lên cây ngay khi gửi. Gặp lời chúc không phù hợp: tab **Đã duyệt** → **Bỏ duyệt** để ẩn.
+- Tab **Chờ duyệt**: lời chúc đã bị bỏ duyệt (hoặc mọi lời chúc mới nếu đặt `AUTO_APPROVE` = `false`); bấm **Duyệt** để đưa lại lên cây.
+- Tab **Đã duyệt**: bỏ duyệt để ẩn lời chúc khỏi cây; lời chúc tiêu biểu luôn do Ban tổ chức chọn tay, bấm **☆ Tiêu biểu** để chọn lời chúc nổi bật (chọn tiêu biểu thì tự duyệt luôn).
 - Tab **Tiêu biểu**: xem các lời chúc đã chọn; nút **Trình chiếu lời chúc tiêu biểu** mở ngay màn trình chiếu.
 - Trình chiếu tự ưu tiên lời chúc tiêu biểu khi có; ở góc trên có nút chuyển **★ Tiêu biểu / Tất cả**.
 - Phiên quản trị chỉ lưu trong tab trình duyệt đang mở; đóng tab là đăng xuất.
