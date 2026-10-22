@@ -60,6 +60,18 @@ Mở web, bấm **"Ban tổ chức? Đăng nhập quản trị"** ở màn hình
 - **Gửi cho CBNV**: link web + mã PIN qua email hoặc nhóm chat nội bộ. Khi dán link vào Zalo, Teams, Facebook sẽ hiện ảnh xem trước.
 - **Ngày sinh nhật**: mở web trên máy chiếu, bấm **Trình chiếu** (toàn màn hình; phím ← → để chuyển, Esc để thoát).
 
+## Máy chủ dự phòng Azure
+
+Ngoài Google còn một máy chủ dự phòng trên Azure (Function App `caytrian-vinrobotics`, resource group `cay-tri-an-rg`, vùng Southeast Asia, gói Consumption).
+
+- **Chuyển máy chủ:** Quản trị → tab **Máy chủ** → **Chuyển sang Azure/Google**. Mọi người tự chuyển theo trong khoảng 1–2 phút.
+- **Tự chuyển khi lỗi:** nếu máy chủ đang dùng không trả lời 3 lần liên tiếp, trình duyệt của nhân viên tự chuyển sang máy chủ còn lại trong 5 phút rồi thử lại.
+- **Dữ liệu riêng:** lời chúc trên Google và Azure không chép qua lại. Danh sách phòng ban nên sửa ở cả hai (vào tab Phòng ban sau khi chuyển).
+- **Mã PIN:** đặt ở Function App → Settings → Environment variables (`PIN`, `ADMIN_PIN`, `AUTO_APPROVE`). Phải giống bên Google.
+- **Dữ liệu:** bảng `LoiChuc` và `CaiDat` trong Storage account của resource group.
+- **Cập nhật code:** sửa thư mục `azure/`, đóng gói lại `azure/dist/cay-azure.zip`, đẩy lên GitHub. Máy chủ tự nạp gói mới lần khởi động kế tiếp (sau khoảng 20 phút không dùng, hoặc bấm Restart).
+- **Chi phí:** cảnh báo ngân sách `cay-tri-an-5usd` gửi email khi chi tiêu đạt 80% của 5 USD/tháng. Muốn ngừng hẳn: xóa resource group `cay-tri-an-rg`.
+
 ## Khi sửa `Code.gs`
 
 Mỗi lần sửa code máy chủ: **Triển khai → Quản lý tùy chọn triển khai → bút chì → Phiên bản: Phiên bản mới → Triển khai**. Làm như vậy URL giữ nguyên.
