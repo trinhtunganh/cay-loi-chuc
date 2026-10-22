@@ -8,6 +8,7 @@
  *     AUTO_APPROVE  "true" = lời chúc lên cây ngay (mặc định), "false" = chờ duyệt
  *     ADMIN_PIN     mã PIN riêng của Ban tổ chức để duyệt và chọn lời chúc tiêu biểu
  *     DEPARTMENTS   danh sách phòng ban (JSON), tự lưu khi Ban tổ chức sửa trong trang Quản trị
+ *     ACTIVE        máy chủ cả công ty đang dùng (google/azure), đổi trong Quản trị → Máy chủ
  * - Sheet tự được tạo ở lần chạy đầu tiên, không cần chuẩn bị gì.
  */
 
@@ -37,6 +38,7 @@ function doGet() {
 }
 
 function doPost(e) {
+  allProps.v = null;
   let body;
   try {
     body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
@@ -60,12 +62,13 @@ function doPost(e) {
 
   try {
     switch (body.action) {
-      case 'adminVerify': return json({ ok: true });
-      case 'adminList':   return json({ ok: true, items: listAll(), depts: getDepts() });
+      case 'adminVerify': return json({ ok: true, active: activeBackend() });
+      case 'adminList':   return json({ ok: true, items: listAll(), depts: getDepts(), active: activeBackend() });
       case 'adminSet':    return json(adminSet(body));
       case 'adminSetDepts': return json(setDepts(body));
-      case 'verify': return json({ ok: true });
-      case 'list':   return json({ ok: true, items: listApproved(), depts: getDepts() });
+      case 'adminSetActive': return json(setActive(body));
+      case 'verify': return json({ ok: true, active: activeBackend() });
+      case 'list':   return json({ ok: true, items: listApproved(), depts: getDepts(), active: activeBackend() });
       case 'submit': return json(submit(body));
       default:       return json({ ok: false, error: 'Thao tác không hợp lệ.' });
     }
@@ -236,6 +239,16 @@ function setDepts(body) {
   } finally {
     lock.releaseLock();
   }
+}
+
+/** Máy chủ Ban tổ chức đang chọn cho cả công ty: "google" hoặc "azure" (null = chưa chọn). */
+function activeBackend() { return allProps().ACTIVE || null; }
+function setActive(body) {
+  const v = String(body.active || '');
+  if (!/^(google|azure)$/.test(v)) return { ok: false, error: 'Máy chủ không hợp lệ.' };
+  PropertiesService.getScriptProperties().setProperty('ACTIVE', v);
+  CacheService.getScriptCache().remove('props');
+  return { ok: true, active: v };
 }
 
 /** Tự chạy khi bạn sửa Sheet (ví dụ tick "Đã duyệt"): xóa cache để lá lên cây nhanh hơn. */

@@ -268,6 +268,18 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 .a-meta .mi{width:14px;height:14px}
 .a-text{grid-column:1;font-size:15px;line-height:1.5;color:var(--ink-2);white-space:pre-wrap;word-wrap:break-word}
 .dp{display:flex;flex-direction:column;flex:1;min-height:0}
+.sv{display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto}
+.sv-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.sv-card{border:1px solid var(--line);border-radius:16px;padding:16px 18px;background:#fff;display:flex;flex-direction:column;gap:10px}
+.sv-card.on{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-tint)}
+.sv-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sv-name{font-size:17px;font-weight:700}
+.sv-badge{font-size:12px;font-weight:700;color:#fff;background:var(--brand);border-radius:999px;padding:3px 10px}
+.sv-stat{font-size:13.5px;color:var(--muted);line-height:1.6}
+.sv-stat b{color:var(--ink-2);font-weight:600}
+.sv-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:#bbb;vertical-align:1px}
+.sv-dot.ok{background:#2F9E5B} .sv-dot.bad{background:#D93025} .sv-dot.warn{background:#E0A800}
+.sv-card .btn{align-self:flex-start}
 .dp-hint{font-size:13px;color:var(--muted);margin:0 0 10px;line-height:1.5}
 .dp-list{list-style:none;margin:0;padding:0 4px 0 0;overflow:auto;flex:1;min-height:0}
 .dp-list li{display:grid;grid-template-columns:22px 34px 1fr auto auto;align-items:center;gap:12px;padding:8px 12px;border:1px solid var(--line);border-radius:14px;margin-bottom:8px;background:#fff;transition:box-shadow .2s,border-color .2s}
@@ -611,6 +623,11 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
       <button data-tab="approved" role="tab"><span data-t="adminTabApproved"></span> <b id="aCntApproved">0</b></button>
       <button data-tab="featured" role="tab">★ <span data-t="adminTabFeatured"></span> <b id="aCntFeatured">0</b></button>
       <button data-tab="depts" role="tab"><span data-t="adminTabDepts"></span> <b id="aCntDepts">0</b></button>
+      <button data-tab="srv" role="tab" id="aTabSrv"><span data-t="adminTabServer"></span></button>
+    </div>
+    <div class="sv" id="aSrv" hidden>
+      <p class="dp-hint" data-t="adminServerHint"></p>
+      <div class="sv-list" id="svList"></div>
     </div>
     <div class="dp" id="aDepts" hidden>
       <p class="dp-hint" data-t="adminDeptHint"></p>
@@ -658,8 +675,18 @@ const parseDepts = arr => (arr || []).map(d => typeof d === "string" ? {name:d.t
 let DEPT_LIST = parseDepts(CFG.departments);
 let DEPARTMENTS = DEPT_LIST.map(d=>d.name);
 const TIMING = Object.assign({refresh:45, spotlight:6, slide:9}, CFG.timing || {});
-const API_URL = ((CFG.backend && CFG.backend.apiUrl) || "").trim();
-const PREVIEW = !API_URL;
+/* hai máy chủ: Google (chính) và Azure (dự phòng); Ban tổ chức chọn máy chủ đang dùng trong Quản trị */
+const BACKENDS = {};
+{ const B = CFG.backend || {}; const g = String(B.apiUrl || B.google || "").trim(), a = String(B.azureUrl || B.azure || "").trim();
+  if (g) BACKENDS.google = g; if (a) BACKENDS.azure = a; }
+const BACKEND_NAMES = { google: "Google", azure: "Azure" };
+const PREVIEW = !Object.keys(BACKENDS).length;
+let CUR = (()=>{ const v = load("cta_backend"); if (BACKENDS[v]) return v; const d = (CFG.backend||{}).active; return BACKENDS[d] ? d : Object.keys(BACKENDS)[0] || ""; })();
+let API_URL = BACKENDS[CUR] || "";
+let failoverFrom = "", failoverUntil = 0;
+try{ const f = JSON.parse(load("cta_failover") || "null"); if (f && f.until > Date.now()){ failoverFrom = f.from; failoverUntil = f.until; } }catch(e){}
+function markFailover(from){ failoverFrom = from; failoverUntil = Date.now() + 5*60e3; save("cta_failover", JSON.stringify({from, until:failoverUntil})); }
+const otherBackend = () => Object.keys(BACKENDS).find(k => k !== CUR) || "";
 const DATE_SHORT = (()=>{ const d = new Date(EVT.birthday); if (isNaN(d)) return "";
   const p = new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Ho_Chi_Minh",day:"2-digit",month:"2-digit"}).formatToParts(d);
   return p.find(x=>x.type==="day").value + "/" + p.find(x=>x.type==="month").value; })();
@@ -746,17 +773,32 @@ function applyTexts(){
 let PIN = load("cta_pin") || "";
 let ADMIN_PIN = (()=>{ try{ return sessionStorage.getItem("cta_admin") || ""; }catch(e){ return ""; } })();
 function saveAdmin(v){ try{ v ? sessionStorage.setItem("cta_admin", v) : sessionStorage.removeItem("cta_admin"); }catch(e){} }
-async function api(action, data={}){
+async function api(action, data={}, which){
   if (PREVIEW) return previewApi(action, data);
+  const url = BACKENDS[which || CUR];
   /* quá 20 giây không phản hồi thì bỏ, để cơ chế thử lại tự chạy thay vì treo mãi */
   const ctl = typeof AbortController === "function" ? new AbortController() : null;
   const timer = ctl && setTimeout(()=>ctl.abort(), action==="submit" ? 30000 : 20000);
   let res;
-  try{ res = await fetch(API_URL, { method:"POST", body: JSON.stringify({ action, pin: PIN, adminPin: ADMIN_PIN, ...data }), signal: ctl ? ctl.signal : undefined }); }
+  try{ res = await fetch(url, { method:"POST", body: JSON.stringify({ action, pin: PIN, adminPin: ADMIN_PIN, ...data }), signal: ctl ? ctl.signal : undefined }); }
   catch(e){ throw new Error(t("netError")); }
   finally{ clearTimeout(timer); }
   if (!res.ok) throw new Error(t("netError"));
-  return res.json();
+  try{ return await res.json(); }catch(e){ throw new Error(t("netError")); }
+}
+/* đổi máy chủ đang dùng trên trình duyệt này; dữ liệu 2 máy chủ là riêng nên tải lại từ đầu */
+function useBackend(k){
+  if (!BACKENDS[k] || k === CUR) return false;
+  CUR = k; API_URL = BACKENDS[k]; save("cta_backend", k);
+  items = []; byId = new Map(); loaded = false; mine.clear(); leafEls.clear();
+  return true;
+}
+/* máy chủ trả về "active" = máy chủ Ban tổ chức đang chọn: theo đó, trừ khi vừa tự chuyển vì máy chủ kia lỗi */
+function followActive(res){
+  const a = res && res.active;
+  if (!a || a === CUR || !BACKENDS[a]) return false;
+  if (a === failoverFrom && Date.now() < failoverUntil) return false;
+  return useBackend(a);
 }
 
 /* ---------- lời chúc mẫu (bản xem trước) ---------- */
@@ -1467,6 +1509,8 @@ async function refresh(silent){
   refresh.at = Date.now();
   try{
     const res = await api("list");
+    if (res.ok && followActive(res)) return refresh(silent);
+    if (!res.ok && /bận/.test(res.error||"")) throw new Error(res.error);
     if (!res.ok){ if (res.code==="BAD_PIN"){ save("cta_pin"); PIN=""; started=false; showGate(t("pinChanged")); } return; }
     if (Array.isArray(res.depts)) applyDepts(res.depts);
     const incoming = res.items || [], fresh = new Set(), first = !loaded;
@@ -1488,6 +1532,14 @@ async function refresh(silent){
   }catch(e){
     /* máy chủ bận hoặc mạng chập chờn: tự thử lại sau vài giây, giãn dần, lệch nhau giữa các máy */
     refresh.fails = (refresh.fails||0) + 1;
+    /* máy chủ đang dùng lỗi liên tục: thử máy chủ còn lại */
+    const other = otherBackend();
+    if (refresh.fails >= 3 && other){
+      try{
+        const r2 = await api("verify", {}, other);
+        if (r2 && r2.ok){ markFailover(CUR); useBackend(other); refresh.fails = 0; return refresh(silent); }
+      }catch(e2){}
+    }
     if (!silent && refresh.fails > 2) toast(t("loadError"));
     if (refresh.fails <= 5){ clearTimeout(refresh.retry); refresh.retry = setTimeout(()=>refresh(true), (3 + Math.random()*5) * 1000 * refresh.fails); }
   }
@@ -1532,7 +1584,10 @@ async function tryPin(){
   const v = $("#pin").value.trim(); if (!v) return;
   const btn = $("#pinBtn"); btn.disabled = true; btn.textContent = t("gateChecking"); PIN = v;
   try{
-    const res = await api("verify");
+    let res;
+    try{ res = await api("verify"); }
+    catch(e){ const o = otherBackend(); if (!o) throw e; res = await api("verify", {}, o); if (res.ok){ markFailover(CUR); useBackend(o); } }
+    if (res.ok) followActive(res);
     if (!res.ok){ $("#pinErr").textContent = res.code==="BAD_PIN" ? t("pinWrong") : (res.error || t("pinWrong")); PIN=""; return; }
     save("cta_pin", v); $("#gate").classList.remove("show"); start();
   }catch(e){ $("#pinErr").textContent = t("netError"); PIN=""; }
@@ -1635,7 +1690,67 @@ $("#dpSave").onclick = async ()=>{
     applyDepts(res.depts || depts); dpInit(); dpRender(); toast(t("adminDeptSaved")); refresh(true);
   }catch(e){ toast(e.message || t("adminSaveError")); btn.disabled = false; }
 };
+/* ---- tab Máy chủ: xem tình trạng 2 máy chủ và chọn máy chủ đang dùng ---- */
+let svState = {};
+async function svCheck(){
+  const keys = Object.keys(BACKENDS);
+  await Promise.all(keys.map(async k=>{
+    const t0 = performance.now();
+    try{
+      const r = await api("adminList", {}, k), ms = Math.round(performance.now() - t0);
+      svState[k] = r.ok ? {status:"ok", ms, n:(r.items||[]).length, active:r.active||""} : {status: r.code==="BAD_ADMIN_PIN" ? "pin" : "bad", ms, err:r.error};
+    }catch(e){ svState[k] = {status:"down"}; }
+  }));
+}
+function svActive(){ const a = Object.values(svState).map(s=>s.active).find(Boolean); return BACKENDS[a] ? a : CUR; }
+function svRender(){
+  const box = $("#svList"); box.textContent = "";
+  const act = svActive();
+  ["google","azure"].forEach(k=>{
+    const s = svState[k], has = !!BACKENDS[k], on = has && k === act;
+    const card = document.createElement("div"); card.className = "sv-card" + (on ? " on" : "");
+    let stat;
+    if (!has) stat = `<span class="sv-dot"></span>${esc(t("adminServerNotSet"))}`;
+    else if (!s) stat = `<span class="sv-dot"></span>${esc(t("adminServerChecking"))}`;
+    else if (s.status==="ok") stat = `<span class="sv-dot ok"></span>${esc(t("adminServerOk",{ms:s.ms}))}<br>${esc(t("adminServerCount",{n:s.n}))}`;
+    else if (s.status==="pin") stat = `<span class="sv-dot warn"></span>${esc(t("adminServerPin"))}`;
+    else stat = `<span class="sv-dot bad"></span>${esc(t("adminServerDown"))}`;
+    card.innerHTML = `<div class="sv-top"><span class="sv-name">${esc(BACKEND_NAMES[k])}</span>${on ? `<span class="sv-badge">${esc(t("adminServerActive"))}</span>` : ""}</div>
+      <div class="sv-stat">${stat}</div>`;
+    if (has && !on){
+      const b = document.createElement("button"); b.className = "btn primary"; b.type = "button";
+      b.textContent = t("adminServerSwitch",{name:BACKEND_NAMES[k]});
+      b.disabled = !s || s.status !== "ok";
+      b.onclick = ()=>svSwitch(k, b);
+      card.appendChild(b);
+    }
+    box.appendChild(card);
+  });
+}
+async function svSwitch(k, btn){
+  btn.disabled = true; btn.textContent = t("adminServerSwitching");
+  /* ghi lựa chọn lên cả 2 máy chủ, máy chủ đích trước */
+  const order = [k].concat(Object.keys(BACKENDS).filter(x=>x!==k)), result = {};
+  for (const x of order){ try{ const r = await api("adminSetActive", {active:k}, x); result[x] = r.ok; }catch(e){ result[x] = false; } }
+  if (!result[k]){ toast(t("adminServerSwitchFail",{name:BACKEND_NAMES[k]})); svRender(); return; }
+  failoverFrom = ""; failoverUntil = 0; save("cta_failover"); useBackend(k);
+  toast(t(Object.values(result).every(Boolean) ? "adminServerSwitched" : "adminServerSwitchedPartly",{name:BACKEND_NAMES[k]}));
+  svState = {}; svRender(); refresh(true);
+  try{ const res = await api("adminList"); adminItems = (res.items||[]).sort((a,b)=>String(b.time).localeCompare(String(a.time))); if (Array.isArray(res.depts)) applyDepts(res.depts); dpInit(); }catch(e){}
+  renderAdmin();
+}
 function renderAdmin(){
+  const isS = adminTab === "srv";
+  $("#aSrv").hidden = !isS;
+  if (isS){
+    $("#aDepts").hidden = true; $("#aList").hidden = true; $(".a-search").hidden = true; $("#aShow").hidden = true; $("#dpSave").hidden = true;
+    $$("#aTabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===adminTab));
+    $("#aInfo").textContent = t("adminServerInfo",{name:BACKEND_NAMES[CUR]||""});
+    $("#aCntPending").textContent = adminItems.filter(m=>!m.approved).length; $("#aCntApproved").textContent = adminItems.filter(m=>m.approved).length; $("#aCntFeatured").textContent = adminItems.filter(m=>m.featured).length;
+    if (dpRows) $("#aCntDepts").textContent = dpRows.length;
+    svRender(); svCheck().then(()=>{ if (adminTab==="srv") svRender(); });
+    return;
+  }
   const isD = adminTab === "depts";
   $("#aDepts").hidden = !isD; $("#aList").hidden = isD; $(".a-search").hidden = isD;
   $("#aShow").hidden = isD; $("#dpSave").hidden = !isD;

@@ -25,7 +25,12 @@ window.SITE_CONFIG = {
   /* ---------- Kết nối máy chủ (Google Apps Script) ----------
      Để trống = bản xem trước, hiển thị lời chúc mẫu và không lưu. */
   backend: {
-    apiUrl: "https://script.google.com/macros/s/AKfycbwiJ4EybwQW5afgu4LjLXgBq3dXl_8fpdAg9HlJUtVNk5IaMaj7Bbh7mgVC71Kxkc3yaA/exec"
+    /* Máy chủ chính: Google Apps Script. Máy chủ dự phòng: Azure Functions.
+       Ban tổ chức chuyển qua lại trong Quản trị → tab Máy chủ, mọi người tự theo trong khoảng 1–2 phút.
+       Hai máy chủ giữ dữ liệu riêng. Để trống cả hai thì web chạy bản xem trước. */
+    apiUrl:   "https://script.google.com/macros/s/AKfycbwiJ4EybwQW5afgu4LjLXgBq3dXl_8fpdAg9HlJUtVNk5IaMaj7Bbh7mgVC71Kxkc3yaA/exec",
+    azureUrl: "",
+    active:   "google"     // máy chủ dùng khi chưa liên lạc được máy chủ nào
   },
 
   /* ---------- Phòng ban ----------
@@ -191,6 +196,21 @@ window.SITE_CONFIG = {
     adminShowFeatured:"Trình chiếu lời chúc tiêu biểu",
     adminLogout:      "Đăng xuất",
     adminTabDepts:    "Phòng ban",
+    adminTabServer:   "Máy chủ",
+    adminServerHint:  "Chọn máy chủ cả công ty đang dùng. Sau khi chuyển, mọi người tự chuyển theo trong khoảng 1–2 phút. Hai máy chủ giữ dữ liệu riêng, lời chúc không được chép qua lại. Nếu máy chủ đang dùng bị lỗi liên tục, trình duyệt của nhân viên tự chuyển sang máy chủ còn lại.",
+    adminServerActive:"Đang dùng",
+    adminServerNotSet:"Chưa cài đặt",
+    adminServerChecking:"Đang kiểm tra…",
+    adminServerOk:    "Hoạt động tốt · phản hồi {ms} ms",
+    adminServerCount: "{n} lời chúc",
+    adminServerPin:   "Mã PIN quản trị ở máy chủ này khác, cần đặt giống nhau",
+    adminServerDown:  "Không liên lạc được",
+    adminServerSwitch:"Chuyển sang {name}",
+    adminServerSwitching:"Đang chuyển…",
+    adminServerSwitched:"Đã chuyển cả công ty sang máy chủ {name}.",
+    adminServerSwitchedPartly:"Đã chuyển sang {name}. Máy chủ còn lại chưa ghi nhận được, người dùng vẫn tự theo khi máy chủ đó trả lời.",
+    adminServerSwitchFail:"Chưa chuyển được sang {name}, bạn thử lại nhé.",
+    adminServerInfo:  "Trình duyệt này đang dùng máy chủ {name}",
     adminDeptHint:    "Kéo ⋮⋮ hoặc bấm ↑ ↓ để đổi thứ tự (áp dụng cho dãy phòng ban, ô chọn khi gửi lời chúc và bộ lọc). Bấm ô màu để đổi màu lá. Đổi tên sẽ tự cập nhật các lời chúc cũ của phòng đó.",
     adminDeptAdd:     "+ Thêm phòng ban",
     adminDeptSave:    "Lưu phòng ban",
