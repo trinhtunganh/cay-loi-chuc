@@ -76,22 +76,37 @@ function doPost(e) {
 }
 
 function listApproved() {
-  const cached = getBig('approved_list');
-  if (cached) return JSON.parse(cached);
+  const fresh = getBig('approved_list');
+  if (fresh) return JSON.parse(fresh);
+  /* Hết hạn cache lúc đông người: chỉ 1 lượt đọc lại Sheet, các lượt khác dùng bản vừa hết hạn
+     (cũ hơn vài giây) thay vì cùng lúc đọc Sheet và làm Google báo quá tải. */
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(0)) {
+    const stale = getBig('approved_stale');
+    if (stale) return JSON.parse(stale);
+    lock.waitLock(10000);
+    const again = getBig('approved_list');
+    if (again) { lock.releaseLock(); return JSON.parse(again); }
+  }
+  try {
+    const items = readApproved();
+    const str = JSON.stringify(items);
+    putBig('approved_list', str, LIST_CACHE_SECONDS);
+    putBig('approved_stale', str, 21600);
+    return items;
+  } finally {
+    lock.releaseLock();
+  }
+}
 
+function readApproved() {
   const sh = getSheet();
   const last = sh.getLastRow();
   if (last < 2) return [];
   const rows = sh.getRange(2, 1, last - 1, HEADERS.length).getValues();
   const labelToType = {};
   Object.keys(TYPE_LABELS).forEach(k => labelToType[TYPE_LABELS[k]] = k);
-
-  const items = rows
-    .filter(r => r[0] && r[6] === true)
-    .map(r => rowToItem(r, labelToType));
-
-  putBig('approved_list', JSON.stringify(items), LIST_CACHE_SECONDS);
-  return items;
+  return rows.filter(r => r[0] && r[6] === true).map(r => rowToItem(r, labelToType));
 }
 
 function submit(body) {

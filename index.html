@@ -1390,6 +1390,8 @@ $("#sendBtn").onclick = async ()=>{
     $("#msg").value=""; $("#toName").value=""; $("#msgCount").textContent="0/500";
     $("#sendForm").hidden=true; $("#sendDone").hidden=false;
     $("#sendDoneText").textContent = PREVIEW ? t("donePreviewText") : (res.approved === false ? t("doneTextPending") : t("doneText"));
+    /* máy chủ có thể trả danh sách cũ vài giây khi đông người: giữ lời chúc của chính mình cho tới khi máy chủ trả về */
+    if (!PREVIEW && res.approved !== false && res.id) mine.set(res.id, Object.assign({}, data, {id:res.id, time:new Date().toISOString(), approved:true, featured:false}));
     refresh(true);
   }catch(err){ $("#sendErr").textContent = err.message || t("errSend"); }
   finally{ btn.disabled=false; btn.textContent=t("btnSubmit"); }
@@ -1454,6 +1456,7 @@ document.addEventListener("keydown", e=>{
 });
 
 /* ---------- tải dữ liệu ---------- */
+const mine = new Map();
 async function refresh(silent){
   refresh.at = Date.now();
   try{
@@ -1461,6 +1464,8 @@ async function refresh(silent){
     if (!res.ok){ if (res.code==="BAD_PIN"){ save("cta_pin"); PIN=""; started=false; showGate(t("pinChanged")); } return; }
     if (Array.isArray(res.depts)) applyDepts(res.depts);
     const incoming = res.items || [], fresh = new Set(), first = !loaded;
+    const have = new Set(incoming.map(m=>m.id));
+    mine.forEach((m,id)=>{ if (have.has(id) || Date.now() - new Date(m.time) > 180000) mine.delete(id); else incoming.push(m); });
     if (!first) incoming.forEach(m=>{ if (!byId.has(m.id)) fresh.add(m.id); });
     items = incoming.sort((a,b)=> String(a.time).localeCompare(String(b.time)));
     byId = new Map(items.map(m=>[m.id,m]));
