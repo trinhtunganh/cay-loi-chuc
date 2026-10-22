@@ -28,14 +28,20 @@ window.SITE_CONFIG = {
     apiUrl: ""
   },
 
-  /* ---------- Phòng ban (mỗi phòng một màu lá, theo thứ tự) ---------- */
+  /* ---------- Phòng ban ----------
+     Danh sách này điều khiển: dãy phòng ban dưới thẻ tổng số, ô "Phòng ban"
+     trong form gửi, bộ lọc trong danh sách lời chúc và màu lá trên cây.
+     - Thêm phòng: thêm một dòng "Tên phòng", (nhớ dấu phẩy).
+     - Bớt phòng: xóa dòng đó. Lời chúc cũ gửi phòng đó vẫn hiện, lá đổi màu tự động.
+     - Tự chọn màu lá: viết { name: "Tên phòng", color: "#2F7D57" },
+       không ghi color thì màu được chọn tự động theo thứ tự. */
   departments: [
     "Ban Giám đốc",
     "Hành chính – Nhân sự",
     "Kế toán",
     "Kinh doanh",
     "Marketing",
-    "IT",
+    { name: "IT", color: "#3D6FB6" },
     "Vận hành",
     "Chăm sóc khách hàng"
   ],
@@ -156,6 +162,31 @@ window.SITE_CONFIG = {
 
     toastNewOne:      "🍃 Một lời chúc vừa gửi tới {to}",
     toastNewMany:     "🍃 {n} lời chúc mới vừa mọc lên cây",
+    featuredBadge:    "Tiêu biểu",
+    showModeFeatured: "★ Tiêu biểu ({n})",
+    showModeAll:      "Tất cả ({n})",
+
+    /* Quản trị (Ban tổ chức) */
+    gateAdminLink:    "Ban tổ chức? Đăng nhập quản trị",
+    adminButton:      "Quản trị",
+    adminLoginTitle:  "Đăng nhập quản trị",
+    adminLoginText:   "Dành cho Ban tổ chức: duyệt lời chúc và chọn lời chúc tiêu biểu để trình chiếu.",
+    adminPinPlaceholder: "Mã PIN quản trị",
+    adminLoginButton: "Đăng nhập",
+    adminTitle:       "Quản trị lời chúc",
+    adminPreviewNote: "Bản xem trước: thay đổi chỉ lưu tạm trên trình duyệt này.",
+    adminTabPending:  "Chờ duyệt",
+    adminTabApproved: "Đã duyệt",
+    adminTabFeatured: "Tiêu biểu",
+    adminSearch:      "Tìm theo người nhận hoặc nội dung",
+    adminApprove:     "Duyệt",
+    adminFeature:     "Tiêu biểu",
+    adminEmpty:       "Không có lời chúc nào ở mục này.",
+    adminInfo:        "{n} lời chúc tiêu biểu sẽ được ưu tiên trình chiếu",
+    adminShowFeatured:"Trình chiếu lời chúc tiêu biểu",
+    adminLogout:      "Đăng xuất",
+    adminSaveError:   "Chưa lưu được, bạn thử lại nhé.",
+
     loadError:        "Chưa tải được lời chúc, sẽ thử lại sau ít phút."
   },
 

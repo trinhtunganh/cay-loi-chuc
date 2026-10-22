@@ -11,7 +11,7 @@ Khi `backend.apiUrl` trong `config.js` còn trống, web chạy **bản xem trư
 ## Tính năng
 
 - Giao diện theo nhận diện VinRobotics: đỏ `#E4002B`, font Roboto, logo
-- Cây vẽ bằng SVG, chạc cây mang hình logo VinRobotics (vòng tròn + hai cánh chữ V); lá theo màu phòng ban, hoa đỏ cho lời chúc gửi công ty
+- Cây vẽ bằng SVG, thân và cành dựng theo logo VinRobotics (hai cành ngoài chữ V, hai cành trong bắt chéo gặp nhau ở hai đỉnh); lá theo màu phòng ban, hoa đỏ cho lời chúc gửi công ty
 - Cảnh vật sống động: mặt trời, chim, bướm, cánh hoa rơi; 3 robot dạng người đi lại quanh cây (tưới cây, tỉa cành, cầm bóng tim)
 - Thẻ trạng thái: tổng số lời chúc và tiến độ "còn bao nhiêu lời chúc để cây lớn tiếp"
 - Gợi ý "chạm vào lá" cho người mới, màn hình chờ khi cây chưa có lời chúc, nút gửi cố định trên điện thoại
@@ -21,6 +21,8 @@ Khi `backend.apiUrl` trong `config.js` còn trống, web chạy **bản xem trư
 - Form gửi có gợi ý câu mở đầu, nút mời đồng nghiệp cùng gửi
 - Đếm ngược ngày, giờ, phút, giây đến 00:00 ngày 21/11/2026
 - Chế độ trình chiếu toàn màn hình có cây, lá của lời chúc đang chiếu phát sáng (phím ← → để chuyển)
+- Trang quản trị với PIN riêng: duyệt lời chúc, chọn lời chúc tiêu biểu để ưu tiên trình chiếu
+- Danh sách phòng ban cấu hình trong `config.js` (tên, màu lá tùy chọn)
 - Ảnh xem trước khi chia sẻ link qua Zalo, Facebook, Teams
 
 ## Cấu trúc

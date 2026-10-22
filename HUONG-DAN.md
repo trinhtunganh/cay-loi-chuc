@@ -32,13 +32,27 @@ Trong Apps Script, bấm bánh răng **Cài đặt dự án → Thuộc tính t�
 | Thuộc tính | Mặc định | Ý nghĩa |
 | --- | --- | --- |
 | `PIN` | `VinRobotics2026` | Mã PIN để vào trang. Nên đổi trước khi gửi cho mọi người |
+| `ADMIN_PIN` | `VRAdmin2026` | Mã PIN riêng của Ban tổ chức để vào trang quản trị. **Bắt buộc đổi** và không chia sẻ |
 | `AUTO_APPROVE` | `false` | `false` = Ban tổ chức duyệt từng lời chúc; `true` = lời chúc lên cây ngay |
 
 Đổi thuộc tính có hiệu lực ngay, không cần triển khai lại.
 
 ## Vận hành hằng ngày
 
-- **Duyệt lời chúc**: mở Google Sheet, đọc cột Nội dung, tick cột **Đã duyệt**. Lá xuất hiện trên cây trong khoảng 1 phút.
+### Trang quản trị (khuyên dùng)
+
+Mở web, bấm **"Ban tổ chức? Đăng nhập quản trị"** ở màn hình nhập PIN (hoặc mở link có đuôi `#admin`), nhập `ADMIN_PIN`. Sau khi đăng nhập, nút **Quản trị** xuất hiện ở đầu trang.
+
+- Tab **Chờ duyệt**: bấm **Duyệt** để lời chúc mọc lên cây.
+- Tab **Đã duyệt**: bỏ duyệt để ẩn lời chúc khỏi cây; bấm **☆ Tiêu biểu** để chọn lời chúc nổi bật (chọn tiêu biểu thì tự duyệt luôn).
+- Tab **Tiêu biểu**: xem các lời chúc đã chọn; nút **Trình chiếu lời chúc tiêu biểu** mở ngay màn trình chiếu.
+- Trình chiếu tự ưu tiên lời chúc tiêu biểu khi có; ở góc trên có nút chuyển **★ Tiêu biểu / Tất cả**.
+- Phiên quản trị chỉ lưu trong tab trình duyệt đang mở; đóng tab là đăng xuất.
+
+### Hoặc duyệt trực tiếp trong Google Sheet
+
+- **Duyệt lời chúc**: tick cột **Đã duyệt**. Lá xuất hiện trên cây trong khoảng 1 phút.
+- **Chọn tiêu biểu**: tick cột **Tiêu biểu** (cột này tự thêm ở lần chạy đầu tiên sau khi cập nhật code).
 - **Ẩn một lời chúc đã duyệt**: bỏ tick.
 - **Gửi cho CBNV**: link web + mã PIN qua email hoặc nhóm chat nội bộ. Khi dán link vào Zalo, Teams, Facebook sẽ hiện ảnh xem trước.
 - **Ngày sinh nhật**: mở web trên máy chiếu, bấm **Trình chiếu** (toàn màn hình; phím ← → để chuyển, Esc để thoát).
@@ -49,7 +63,7 @@ Mỗi lần sửa code máy chủ: **Triển khai → Quản lý tùy chọn tri
 
 ## Sửa chữ và thông tin hiển thị
 
-Mọi chữ nằm trong `config.js`, nhóm theo khu vực (đếm ngược, thẻ trạng thái, form gửi, cổng PIN, trình chiếu…). Các từ trong ngoặc nhọn như `{company}`, `{date}`, `{n}` được thay tự động. Cách nhanh nhất là nhắn Claude nội dung muốn đổi.
+Mọi chữ và danh sách phòng ban nằm trong `config.js`, nhóm theo khu vực (đếm ngược, thẻ trạng thái, form gửi, cổng PIN, trình chiếu…). Các từ trong ngoặc nhọn như `{company}`, `{date}`, `{n}` được thay tự động. Cách nhanh nhất là nhắn Claude nội dung muốn đổi.
 
 Riêng ảnh và chữ hiện khi chia sẻ link (Zalo, Facebook) nằm trong thẻ `<meta>` đầu file `index.html` và ảnh `assets/og-image.png`, vì các ứng dụng chat đọc chúng trước khi trang chạy.
 
