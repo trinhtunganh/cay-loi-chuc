@@ -29,7 +29,7 @@ window.SITE_CONFIG = {
        Ban tổ chức chuyển qua lại trong Quản trị → tab Máy chủ, mọi người tự theo trong khoảng 1–2 phút.
        Hai máy chủ giữ dữ liệu riêng. Để trống cả hai thì web chạy bản xem trước. */
     apiUrl:   "https://script.google.com/macros/s/AKfycbwiJ4EybwQW5afgu4LjLXgBq3dXl_8fpdAg9HlJUtVNk5IaMaj7Bbh7mgVC71Kxkc3yaA/exec",
-    azureUrl: "",
+    azureUrl: "https://caytrian-vinrobotics.azurewebsites.net/api/cay",
     active:   "google"     // máy chủ dùng khi chưa liên lạc được máy chủ nào
   },
 
