@@ -1,62 +1,61 @@
 # Cây Tri Ân — Hướng dẫn cài đặt và vận hành
 
-Web gồm 2 phần:
+Web gồm 3 phần:
 
-- `index.html`: giao diện (cây, lá, gửi lời chúc, tìm kiếm, trình chiếu). Chỉ cần 1 file, đặt lên host nào cũng chạy.
-- `Code.gs`: backend chạy miễn phí trên Google Apps Script, lưu lời chúc vào Google Sheet.
+| File | Vai trò | Ai sửa |
+| --- | --- | --- |
+| `config.js` | Tên công ty, ngày sinh nhật, phòng ban, link máy chủ và **toàn bộ chữ hiển thị** | Nhắn Claude, hoặc tự sửa trên GitHub |
+| `index.html` | Giao diện, cây, hiệu ứng | Không cần sửa |
+| `Code.gs` | Máy chủ chạy miễn phí trên Google Apps Script, lưu lời chúc vào Google Sheet | Dán 1 lần |
 
-Khi chưa có backend, web chạy **bản xem trước** (lời chúc mẫu, nhập PIN bất kỳ, có dải thông báo ở đầu trang). Làm theo các bước dưới để chạy thật.
+Khi `backend.apiUrl` trong `config.js` còn trống, web chạy **bản xem trước**: hiện lời chúc mẫu, có dải thông báo ở đầu trang, không lưu gì.
 
-## Bước 1 — Tạo backend (15 phút)
+## Kích hoạt máy chủ (khoảng 10 phút, làm 1 lần)
 
-1. Vào sheets.google.com, tạo bảng tính mới, đặt tên `Cay loi chuc`.
-2. Menu **Tiện ích mở rộng → Apps Script**. Xóa code mẫu, dán toàn bộ nội dung `Code.gs`, bấm Lưu.
-3. Chọn hàm `setup` ở thanh trên cùng, bấm **Chạy**. Lần đầu Google hỏi quyền: chọn tài khoản → Nâng cao → Đi tới dự án → Cho phép.
-4. Quay lại Sheet: đã có tab `LoiChuc` với các cột ID, Thời gian, Loại người nhận, Phòng ban, Tên người nhận, Nội dung, Đã duyệt.
-5. **Đổi mã PIN**: trong Apps Script, bấm biểu tượng bánh răng (Cài đặt dự án) → Thuộc tính tập lệnh → sửa giá trị `PIN`. PIN mặc định là `VinRobotics2026`; nên dùng từ 6 ký tự trở lên.
-6. **Triển khai**: bấm **Triển khai → Tùy chọn triển khai mới** → loại **Ứng dụng web**.
+Máy chủ phải tạo bằng tài khoản Google của Ban tổ chức, vì lời chúc sẽ nằm trong Google Sheet của tài khoản đó.
+
+1. Vào sheets.google.com, tạo **bảng tính trống**, đặt tên `Cay Tri An`.
+2. Menu **Tiện ích mở rộng → Apps Script**. Xóa hết code mẫu, dán toàn bộ nội dung file `Code.gs`, bấm biểu tượng **Lưu**.
+3. Ở thanh trên cùng chọn hàm `setup`, bấm **Chạy**. Google hỏi quyền: chọn tài khoản → **Nâng cao** → **Đi tới dự án (không an toàn)** → **Cho phép**. Cảnh báo này xuất hiện vì đây là script tự viết, không phải ứng dụng công khai.
+4. Bấm **Triển khai → Tùy chọn triển khai mới**, bấm bánh răng chọn **Ứng dụng web**:
    - Thực thi dưới dạng: **Tôi**
    - Người có quyền truy cập: **Bất kỳ ai**
-   - Bấm Triển khai, sao chép **URL ứng dụng web** (dạng `https://script.google.com/macros/s/.../exec`).
+   - Bấm **Triển khai**, sao chép **URL ứng dụng web** (dạng `https://script.google.com/macros/s/…/exec`).
+5. Gửi URL đó cho Claude trong chat. Claude điền vào `config.js` và đưa lên GitHub, sau khoảng 1 phút web chạy thật.
 
-"Bất kỳ ai" là bắt buộc để người không đăng nhập Google vẫn gửi được. Dữ liệu vẫn được bảo vệ bằng PIN, và hệ thống không ghi lại người gửi.
+"Bất kỳ ai" là cần thiết để nhân viên không phải đăng nhập Google. Dữ liệu vẫn được bảo vệ bằng mã PIN, và hệ thống không ghi lại người gửi.
 
-## Bước 2 — Nối giao diện với backend
+## Cài đặt máy chủ
 
-Cách nhanh nhất: gửi URL ứng dụng web cho Claude trong chat, Claude sẽ điền vào `index.html` và đưa lên GitHub. Nếu tự sửa: mở `index.html`, tìm khối `CONFIG` gần đầu phần `<script>` và sửa:
+Trong Apps Script, bấm bánh răng **Cài đặt dự án → Thuộc tính tập lệnh**:
 
-| Mục | Ý nghĩa |
-| --- | --- |
-| `API_URL` | Dán URL ứng dụng web ở bước 1 |
-| `COMPANY_NAME` | Tên công ty hiển thị trên trang |
-| `BIRTHDAY` | Thời điểm sinh nhật, dạng `2026-11-21T00:00:00+07:00` (đếm ngược ngày, giờ, phút, giây theo giờ Việt Nam) |
-| `DEPARTMENTS` | Danh sách phòng ban; mỗi phòng ban tự có một màu lá |
-| `SPOTLIGHT_SECONDS` | Bao lâu tự bật một lời chúc (mặc định 6 giây) |
-| `SLIDE_SECONDS` | Thời gian mỗi lời chúc ở chế độ trình chiếu |
+| Thuộc tính | Mặc định | Ý nghĩa |
+| --- | --- | --- |
+| `PIN` | `VinRobotics2026` | Mã PIN để vào trang. Nên đổi trước khi gửi cho mọi người |
+| `AUTO_APPROVE` | `false` | `false` = Ban tổ chức duyệt từng lời chúc; `true` = lời chúc lên cây ngay |
 
-Sau khi cập nhật: dải "Bản xem trước" biến mất, trang hỏi PIN thật và lưu lời chúc vào Sheet.
+Đổi thuộc tính có hiệu lực ngay, không cần triển khai lại.
 
-## Bước 3 — Đưa lên mạng
+## Vận hành hằng ngày
 
-Đã xong: web đang chạy trên GitHub Pages tại https://trinhtunganh.github.io/cay-loi-chuc/ và tự cập nhật mỗi khi có code mới. Nếu sau này muốn đổi nơi host:
-
-- **GitHub Pages (miễn phí)**: đưa `index.html` vào repo mới → Settings → Pages → Branch `main` → Save. Link dạng `https://<tên-github>.github.io/<tên-repo>/`.
-- **Hosting riêng (ví dụ Hostinger)**: vào File Manager, tải `index.html` vào thư mục `public_html`. Phù hợp khi muốn dùng tên miền riêng của công ty.
-
-Backend vẫn ở Google nên không cần host hỗ trợ PHP hay cơ sở dữ liệu.
-
-## Bước 4 — Vận hành
-
-- **Duyệt lời chúc**: mở Sheet, đọc cột Nội dung, tick cột **Đã duyệt**. Lá xuất hiện trên cây trong khoảng 1 phút.
+- **Duyệt lời chúc**: mở Google Sheet, đọc cột Nội dung, tick cột **Đã duyệt**. Lá xuất hiện trên cây trong khoảng 1 phút.
 - **Ẩn một lời chúc đã duyệt**: bỏ tick.
-- **Gửi cho CBNV**: link web + mã PIN qua kênh nội bộ (email, nhóm Zalo/Teams).
-- **Ngày sinh nhật**: mở trang trên máy chiếu → bấm **Trình chiếu** (toàn màn hình, phím → để chuyển nhanh, Esc để thoát).
+- **Gửi cho CBNV**: link web + mã PIN qua email hoặc nhóm chat nội bộ. Khi dán link vào Zalo, Teams, Facebook sẽ hiện ảnh xem trước.
+- **Ngày sinh nhật**: mở web trên máy chiếu, bấm **Trình chiếu** (toàn màn hình; phím ← → để chuyển, Esc để thoát).
 
 ## Khi sửa `Code.gs`
 
-Mỗi lần sửa code backend: **Triển khai → Quản lý tùy chọn triển khai → biểu tượng bút chì → Phiên bản: Phiên bản mới → Triển khai**. Làm như vậy URL giữ nguyên, không phải sửa lại `index.html`.
+Mỗi lần sửa code máy chủ: **Triển khai → Quản lý tùy chọn triển khai → bút chì → Phiên bản: Phiên bản mới → Triển khai**. Làm như vậy URL giữ nguyên.
+
+## Sửa chữ và thông tin hiển thị
+
+Mọi chữ nằm trong `config.js`, nhóm theo khu vực (đếm ngược, thẻ trạng thái, form gửi, cổng PIN, trình chiếu…). Các từ trong ngoặc nhọn như `{company}`, `{date}`, `{n}` được thay tự động. Cách nhanh nhất là nhắn Claude nội dung muốn đổi.
+
+Riêng ảnh và chữ hiện khi chia sẻ link (Zalo, Facebook) nằm trong thẻ `<meta>` đầu file `index.html` và ảnh `assets/og-image.png`, vì các ứng dụng chat đọc chúng trước khi trang chạy.
 
 ## Cây lớn theo số lời chúc
+
+Mốc mặc định (sửa trong `config.js`, mục `stages`):
 
 | Số lời chúc | Giai đoạn |
 | --- | --- |
@@ -66,6 +65,6 @@ Mỗi lần sửa code backend: **Triển khai → Quản lý tùy chọn triể
 | 40–79 | Cây nhỏ |
 | 80–149 | Cây đang lớn |
 | 150–249 | Cây trưởng thành |
-| 250+ | Cây cổ thụ nở hoa |
+| 250+ | Đại thụ nở hoa |
 
-Hoa = lời chúc gửi cả công ty; lá màu = gửi phòng ban hoặc đồng nghiệp (màu theo phòng ban).
+Hoa đỏ = lời chúc gửi cả công ty; lá màu = gửi phòng ban hoặc đồng nghiệp (màu theo thứ tự phòng ban trong `config.js`).

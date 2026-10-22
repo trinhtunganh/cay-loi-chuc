@@ -1,34 +1,33 @@
 /**
- * CÂY LỜI CHÚC — Backend Google Apps Script
- * Lưu lời chúc giấu tên vào Google Sheet, chỉ trả về lời chúc đã được duyệt.
+ * CÂY TRI ÂN — Backend Google Apps Script
+ * Lưu lời chúc giấu tên vào Google Sheet và chỉ trả về lời chúc đã được duyệt.
  *
- * Không lưu email, tên hay bất kỳ thông tin nào của người gửi.
- * Mã PIN lưu trong Script Properties (khóa "PIN"), không nằm trong code giao diện.
+ * - Không lưu email, tên hay bất kỳ thông tin nào của người gửi.
+ * - Cài đặt nằm ở Project Settings > Script properties:
+ *     PIN           mã PIN để vào trang (mặc định VinRobotics2026)
+ *     AUTO_APPROVE  "true" = lời chúc lên cây ngay, "false" = chờ duyệt (mặc định)
+ * - Sheet tự được tạo ở lần chạy đầu tiên, không cần chuẩn bị gì.
  */
 
 const SHEET_NAME = 'LoiChuc';
 const HEADERS = ['ID', 'Thời gian', 'Loại người nhận', 'Phòng ban', 'Tên người nhận', 'Nội dung', 'Đã duyệt'];
 const TYPE_LABELS = { company: 'Cả công ty', dept: 'Phòng ban', person: 'Đồng nghiệp' };
+const DEFAULTS = { PIN: 'VinRobotics2026', AUTO_APPROVE: 'false' };
 const MAX_TEXT = 500;
 const MAX_NAME = 60;
 const MAX_FAILS = 40;          // số lần nhập sai PIN tối đa trong 10 phút (toàn hệ thống)
 const LIST_CACHE_SECONDS = 20; // giảm tải khi nhiều người cùng xem
 
-/** Chạy 1 lần sau khi dán code: tạo sheet, tiêu đề, ô tick duyệt, PIN mặc định. */
+/** Bấm Chạy hàm này 1 lần để cấp quyền và tạo sheet. */
 function setup() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sh = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
-  sh.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]).setFontWeight('bold').setBackground('#e8f5e9');
-  sh.setFrozenRows(1);
-  sh.setColumnWidth(6, 480);
-  sh.getRange(2, 7, sh.getMaxRows() - 1, 1).insertCheckboxes();
+  const sh = getSheet();
   const props = PropertiesService.getScriptProperties();
-  if (!props.getProperty('PIN')) props.setProperty('PIN', 'VinRobotics2026');
-  Logger.log('Xong. PIN hiện tại: ' + props.getProperty('PIN') + ' — đổi trong Project Settings > Script properties.');
+  Object.keys(DEFAULTS).forEach(k => { if (!props.getProperty(k)) props.setProperty(k, DEFAULTS[k]); });
+  Logger.log('Xong. Sheet "%s" đã sẵn sàng. PIN: %s. Tự duyệt: %s', sh.getName(), props.getProperty('PIN'), props.getProperty('AUTO_APPROVE'));
 }
 
 function doGet() {
-  return json({ ok: true, message: 'Cây lời chúc API đang chạy.' });
+  return json({ ok: true, message: 'Cây Tri Ân API đang chạy.' });
 }
 
 function doPost(e) {
@@ -45,17 +44,21 @@ function doPost(e) {
     return json({ ok: false, error: 'Nhập sai PIN quá nhiều lần. Vui lòng thử lại sau 10 phút.' });
   }
 
-  const pin = PropertiesService.getScriptProperties().getProperty('PIN');
-  if (!pin || String(body.pin || '').trim() !== pin) {
+  if (String(body.pin || '').trim() !== prop('PIN')) {
     cache.put('pin_fails', String(fails + 1), 600);
     return json({ ok: false, error: 'Mã PIN không đúng.', code: 'BAD_PIN' });
   }
 
-  switch (body.action) {
-    case 'verify': return json({ ok: true });
-    case 'list':   return json({ ok: true, items: listApproved() });
-    case 'submit': return json(submit(body));
-    default:       return json({ ok: false, error: 'Thao tác không hợp lệ.' });
+  try {
+    switch (body.action) {
+      case 'verify': return json({ ok: true });
+      case 'list':   return json({ ok: true, items: listApproved() });
+      case 'submit': return json(submit(body));
+      default:       return json({ ok: false, error: 'Thao tác không hợp lệ.' });
+    }
+  } catch (err) {
+    console.error(err);
+    return json({ ok: false, error: 'Máy chủ đang bận, bạn thử lại sau ít phút nhé.' });
   }
 }
 
@@ -99,36 +102,50 @@ function submit(body) {
   if (toType === 'person' && !toName) return { ok: false, error: 'Vui lòng nhập tên người nhận.' };
   if (text.length < 5) return { ok: false, error: 'Lời chúc cần ít nhất 5 ký tự.' };
 
+  const approved = prop('AUTO_APPROVE').toLowerCase() === 'true';
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
+    const sh = getSheet();
     const id = Utilities.getUuid().slice(0, 8);
-    getSheet().appendRow([
+    sh.appendRow([
       id,
       new Date(),
       TYPE_LABELS[toType],
       toType === 'company' ? '' : safeCell(toDept),
       toType === 'person' ? safeCell(toName) : '',
       safeCell(text),
-      false
+      approved
     ]);
-    const row = getSheet().getLastRow();
-    getSheet().getRange(row, 7).insertCheckboxes();
-    return { ok: true, id: id };
+    sh.getRange(sh.getLastRow(), 7).insertCheckboxes();
+    if (approved) CacheService.getScriptCache().remove('approved_list');
+    return { ok: true, id: id, approved: approved };
   } finally {
     lock.releaseLock();
   }
 }
 
-/** Khi bạn tick "Đã duyệt", xóa cache để lời chúc hiện lên cây nhanh hơn. Gắn trigger "On edit" nếu muốn. */
+/** Tự chạy khi bạn sửa Sheet (ví dụ tick "Đã duyệt"): xóa cache để lá lên cây nhanh hơn. */
 function onEdit() {
   CacheService.getScriptCache().remove('approved_list');
 }
 
 function getSheet() {
-  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-  if (!sh) throw new Error('Chưa chạy hàm setup().');
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(SHEET_NAME);
+  if (!sh) {
+    sh = ss.insertSheet(SHEET_NAME, 0);
+    sh.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]).setFontWeight('bold').setBackground('#FDE8EC');
+    sh.setFrozenRows(1);
+    sh.setColumnWidth(6, 480);
+    sh.setColumnWidth(2, 150);
+  }
   return sh;
+}
+
+function prop(key) {
+  const v = PropertiesService.getScriptProperties().getProperty(key);
+  return v == null || v === '' ? DEFAULTS[key] : v;
 }
 
 function clean(v, max) {
