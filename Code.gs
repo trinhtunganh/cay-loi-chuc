@@ -9,12 +9,13 @@
  *     ADMIN_PIN     mã PIN riêng của Ban tổ chức để duyệt và chọn lời chúc tiêu biểu
  *     DEPARTMENTS   danh sách phòng ban (JSON), tự lưu khi Ban tổ chức sửa trong trang Quản trị
  *     ACTIVE        máy chủ cả công ty đang dùng (google/azure), đổi trong Quản trị → Máy chủ
+ *     SYNC_KEY      khóa bí mật dùng chung với máy chủ Azure để 2 máy chủ đồng bộ dữ liệu
  * - Sheet tự được tạo ở lần chạy đầu tiên, không cần chuẩn bị gì.
  */
 
 const SHEET_NAME = 'LoiChuc';
-const HEADERS = ['ID', 'Thời gian', 'Loại người nhận', 'Phòng ban', 'Tên người nhận', 'Nội dung', 'Đã duyệt', 'Tiêu biểu'];
-const COL = { approved: 7, featured: 8 };
+const HEADERS = ['ID', 'Thời gian', 'Loại người nhận', 'Phòng ban', 'Tên người nhận', 'Nội dung', 'Đã duyệt', 'Tiêu biểu', 'Cập nhật', 'Đã xóa'];
+const COL = { approved: 7, featured: 8, updated: 9, deleted: 10 };
 const TYPE_LABELS = { company: 'Cả công ty', dept: 'Phòng ban', person: 'Đồng nghiệp' };
 const DEFAULTS = { PIN: 'VinRobotics2026', ADMIN_PIN: 'VRAdmin2026', AUTO_APPROVE: 'true' };
 const MAX_TEXT = 500;
@@ -29,7 +30,7 @@ function setup() {
   const sh = getSheet();
   const props = PropertiesService.getScriptProperties();
   Object.keys(DEFAULTS).forEach(k => { if (!props.getProperty(k)) props.setProperty(k, DEFAULTS[k]); });
-  CacheService.getScriptCache().removeAll(['props', 'sheet_ok']);
+  CacheService.getScriptCache().removeAll(['props', 'sheet_ok', 'sheet_ok2']);
   Logger.log('Xong. Sheet "%s" đã sẵn sàng. PIN: %s. PIN quản trị: %s. Tự duyệt: %s', sh.getName(), props.getProperty('PIN'), props.getProperty('ADMIN_PIN'), props.getProperty('AUTO_APPROVE'));
 }
 
@@ -44,6 +45,17 @@ function doPost(e) {
     body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
   } catch (err) {
     return json({ ok: false, error: 'Dữ liệu gửi lên không hợp lệ.' });
+  }
+
+  /* Đồng bộ giữa 2 máy chủ: xác thực bằng SYNC_KEY, không dùng PIN */
+  if (String(body.action || '').indexOf('peer') === 0) {
+    const key = String(prop('SYNC_KEY') || '');
+    if (key.length < 16 || String(body.key || '') !== key) return json({ ok: false, error: 'Sai khóa đồng bộ.' });
+    try {
+      if (body.action === 'peerDump') return json(peerDump(body));
+      if (body.action === 'peerUpsert') return json(peerUpsert(body));
+      return json({ ok: false, error: 'Thao tác không hợp lệ.' });
+    } catch (err) { console.error(err); return json({ ok: false, error: String(err) }); }
   }
 
   const cache = CacheService.getScriptCache();
@@ -133,7 +145,7 @@ function readApproved() {
   const rows = sh.getRange(2, 1, last - 1, HEADERS.length).getValues();
   const labelToType = {};
   Object.keys(TYPE_LABELS).forEach(k => labelToType[TYPE_LABELS[k]] = k);
-  return rows.filter(r => r[0] && r[6] === true).map(r => rowToItem(r, labelToType));
+  return rows.filter(r => r[0] && r[6] === true && r[9] !== true).map(r => publicItem(rowToItem(r, labelToType)));
 }
 
 function submit(body) {
@@ -161,6 +173,8 @@ function submit(body) {
       toType === 'person' ? safeCell(toName) : '',
       safeCell(text),
     approved,
+    false,
+    Date.now(),
     false
   ]);
   if (approved) removeBig('approved_list');
@@ -168,16 +182,23 @@ function submit(body) {
 }
 
 function rowToItem(r, labelToType) {
+  const time = r[1] instanceof Date ? r[1].toISOString() : String(r[1]);
   return {
     id: String(r[0]),
-    time: r[1] instanceof Date ? r[1].toISOString() : String(r[1]),
+    time: time,
     toType: labelToType[r[2]] || 'company',
     toDept: String(r[3] || ''),
     toName: String(r[4] || ''),
     text: String(r[5] || ''),
     approved: r[6] === true,
-    featured: r[7] === true
+    featured: r[7] === true,
+    updated: Number(r[8]) || Date.parse(time) || 0,
+    deleted: r[9] === true
   };
+}
+/** Bản gửi cho trình duyệt nhân viên: bỏ các trường chỉ dùng nội bộ. */
+function publicItem(m) {
+  return { id: m.id, time: m.time, toType: m.toType, toDept: m.toDept, toName: m.toName, text: m.text, approved: m.approved, featured: m.featured };
 }
 
 /** Quản trị: toàn bộ lời chúc, kể cả chưa duyệt. */
@@ -190,7 +211,7 @@ function listAll() {
   return sh.getRange(2, 1, last - 1, HEADERS.length).getValues().filter(r => r[0]).map(r => rowToItem(r, labelToType));
 }
 
-/** Quản trị: duyệt / bỏ duyệt, chọn / bỏ chọn tiêu biểu. Chọn tiêu biểu thì tự duyệt luôn. */
+/** Quản trị: duyệt / bỏ duyệt, chọn / bỏ chọn tiêu biểu, xóa / khôi phục. Chọn tiêu biểu thì tự duyệt luôn. */
 function adminSet(body) {
   const id = String(body.id || '');
   if (!id) return { ok: false, error: 'Thiếu mã lời chúc.' };
@@ -207,9 +228,11 @@ function adminSet(body) {
     const set = (col, v) => sh.getRange(row, col).setValue(v === true);
     if (typeof body.featured === 'boolean') { set(COL.featured, body.featured); if (body.featured) set(COL.approved, true); }
     if (typeof body.approved === 'boolean') { set(COL.approved, body.approved); if (!body.approved) set(COL.featured, false); }
+    if (typeof body.deleted === 'boolean') { set(COL.deleted, body.deleted); if (body.deleted) set(COL.featured, false); }
+    sh.getRange(row, COL.updated).setValue(Date.now());
     removeBig('approved_list');
     const v = sh.getRange(row, 1, 1, HEADERS.length).getValues()[0];
-    return { ok: true, approved: v[6] === true, featured: v[7] === true };
+    return { ok: true, approved: v[6] === true, featured: v[7] === true, deleted: v[9] === true };
   } finally {
     lock.releaseLock();
   }
@@ -241,21 +264,21 @@ function setDepts(body) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    PropertiesService.getScriptProperties().setProperty('DEPARTMENTS', JSON.stringify(depts));
+    PropertiesService.getScriptProperties().setProperties({ DEPARTMENTS: JSON.stringify(depts), DEPARTMENTS_AT: String(Date.now()) });
     CacheService.getScriptCache().remove('props');
     const keys = Object.keys(renames);
     if (keys.length) {
       const sh = getSheet();
       const last = sh.getLastRow();
       if (last >= 2) {
-        const rng = sh.getRange(2, 4, last - 1, 1);
-        const vals = rng.getValues();
+        const rng = sh.getRange(2, 4, last - 1, 1), upd = sh.getRange(2, COL.updated, last - 1, 1);
+        const vals = rng.getValues(), uv = upd.getValues(), now = Date.now();
         let changed = false;
-        vals.forEach(r => {
+        vals.forEach((r, i) => {
           const to = renames[r[0]];
-          if (to) { r[0] = safeCell(clean(to, MAX_NAME)); changed = true; }
+          if (to) { r[0] = safeCell(clean(to, MAX_NAME)); uv[i][0] = now; changed = true; }
         });
-        if (changed) rng.setValues(vals);
+        if (changed) { rng.setValues(vals); upd.setValues(uv); }
       }
     }
     removeBig('approved_list');
@@ -270,13 +293,74 @@ function activeBackend() { return allProps().ACTIVE || null; }
 function setActive(body) {
   const v = String(body.active || '');
   if (!/^(google|azure)$/.test(v)) return { ok: false, error: 'Máy chủ không hợp lệ.' };
-  PropertiesService.getScriptProperties().setProperty('ACTIVE', v);
+  PropertiesService.getScriptProperties().setProperties({ ACTIVE: v, ACTIVE_AT: String(Date.now()) });
   CacheService.getScriptCache().remove('props');
   return { ok: true, active: v };
 }
 
-/** Tự chạy khi bạn sửa Sheet (ví dụ tick "Đã duyệt"): xóa cache để lá lên cây nhanh hơn. */
-function onEdit() {
+/* ---------- Đồng bộ với máy chủ Azure ----------
+   Azure chủ động gọi 2 phút/lần: lấy thay đổi của Google (peerDump) và gửi thay đổi của Azure sang
+   (peerUpsert). Mỗi lời chúc có cùng mã ở 2 nơi; bên nào sửa sau ("Cập nhật" lớn hơn) thì thắng. */
+function peerSettings(p) {
+  return {
+    DEPARTMENTS: { v: p.DEPARTMENTS || '', at: Number(p.DEPARTMENTS_AT || 0) },
+    ACTIVE: { v: p.ACTIVE || '', at: Number(p.ACTIVE_AT || 0) }
+  };
+}
+function peerDump(body) {
+  const since = Number(body.since || 0);
+  const items = listAll().filter(m => m.updated >= since);
+  return { ok: true, items: items, settings: peerSettings(PropertiesService.getScriptProperties().getProperties()), now: Date.now() };
+}
+function peerUpsert(body) {
+  const items = Array.isArray(body.items) ? body.items : [];
+  let added = 0, changed = 0;
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const sh = getSheet();
+    if (items.length) {
+      const last = sh.getLastRow();
+      const local = {};
+      if (last >= 2) sh.getRange(2, 1, last - 1, COL.updated).getValues().forEach((r, i) => {
+        if (r[0]) local[String(r[0])] = { row: i + 2, updated: Number(r[8]) || (r[1] instanceof Date ? r[1].getTime() : 0) };
+      });
+      items.forEach(m => {
+        const id = String(m.id || '');
+        if (!/^[\w-]{1,40}$/.test(id) || !TYPE_LABELS[m.toType]) return;
+        const vals = [
+          TYPE_LABELS[m.toType], safeCell(clean(m.toDept, MAX_NAME)), safeCell(clean(m.toName, MAX_NAME)), safeCell(clean(m.text, MAX_TEXT)),
+          m.approved === true, m.featured === true, Number(m.updated) || Date.now(), m.deleted === true
+        ];
+        const l = local[id];
+        if (!l) { sh.appendRow([id, new Date(m.time || Date.now())].concat(vals)); added++; }
+        else if (Number(m.updated) > l.updated) { sh.getRange(l.row, 3, 1, vals.length).setValues([vals]); changed++; }
+      });
+    }
+    /* cài đặt: bên nào đổi sau thì thắng */
+    const s = body.settings || {}, props = PropertiesService.getScriptProperties(), cur = peerSettings(props.getProperties()), upd = {};
+    ['DEPARTMENTS', 'ACTIVE'].forEach(k => {
+      const v = s[k];
+      if (v && Number(v.at) > cur[k].at && typeof v.v === 'string' && v.v) { upd[k] = v.v; upd[k + '_AT'] = String(Number(v.at)); }
+    });
+    if (Object.keys(upd).length) props.setProperties(upd);
+    CacheService.getScriptCache().removeAll(['props']);
+    if (added || changed) removeBig('approved_list');
+    return { ok: true, added: added, changed: changed, settings: Object.keys(upd) };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** Tự chạy khi bạn sửa Sheet (ví dụ tick "Đã duyệt"): ghi thời điểm sửa để đồng bộ sang Azure, xóa cache. */
+function onEdit(e) {
+  try {
+    const r = e && e.range;
+    if (r && r.getSheet().getName() === SHEET_NAME && r.getRow() >= 2 && r.getColumn() <= COL.deleted && r.getLastColumn() >= 3 && !(r.getColumn() === COL.updated && r.getNumColumns() === 1)) {
+      const n = r.getNumRows(), now = Date.now();
+      r.getSheet().getRange(r.getRow(), COL.updated, n, 1).setValues(Array.from({ length: n }, () => [now]));
+    }
+  } catch (err) {}
   removeBig('approved_list');
 }
 
@@ -291,9 +375,9 @@ function getSheet() {
     sh.setColumnWidth(2, 150);
   }
   const cache = CacheService.getScriptCache();
-  if (!cache.get('sheet_ok')) {
-    if (!sh.getRange(1, COL.featured).getValue()) {   // sheet cũ chưa có cột "Tiêu biểu"
-      sh.getRange(1, COL.featured).setValue(HEADERS[COL.featured - 1]).setFontWeight('bold').setBackground('#FDE8EC');
+  if (!cache.get('sheet_ok2')) {
+    if (sh.getRange(1, COL.deleted).getValue() !== HEADERS[COL.deleted - 1]) {   // sheet cũ thiếu cột mới
+      sh.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]).setFontWeight('bold').setBackground('#FDE8EC');
     }
     /* Ô tick sẵn cho 2 cột "Đã duyệt", "Tiêu biểu" để lúc gửi lời chúc chỉ cần 1 lệnh ghi */
     if (sh.getMaxRows() < MIN_ROWS) sh.insertRowsAfter(sh.getMaxRows(), MIN_ROWS - sh.getMaxRows());
@@ -301,7 +385,11 @@ function getSheet() {
     if (!sh.getRange(sh.getMaxRows(), COL.approved).getDataValidation()) {
       cb.setDataValidation(SpreadsheetApp.newDataValidation().requireCheckbox().build());
     }
-    cache.put('sheet_ok', '1', 21600);
+    const del = sh.getRange(2, COL.deleted, sh.getMaxRows() - 1, 1);
+    if (!sh.getRange(sh.getMaxRows(), COL.deleted).getDataValidation()) {
+      del.setDataValidation(SpreadsheetApp.newDataValidation().requireCheckbox().build());
+    }
+    cache.put('sheet_ok2', '1', 21600);
   }
   return sh;
 }

@@ -27,10 +27,11 @@ window.SITE_CONFIG = {
   backend: {
     /* Máy chủ chính: Google Apps Script. Máy chủ dự phòng: Azure Functions.
        Ban tổ chức chuyển qua lại trong Quản trị → tab Máy chủ, mọi người tự theo trong khoảng 1–2 phút.
-       Hai máy chủ giữ dữ liệu riêng. Để trống cả hai thì web chạy bản xem trước. */
+       Hai máy chủ tự đồng bộ 2 phút/lần (Azure chủ động), nên vào máy nào cũng thấy cùng một cây.
+       Để trống cả hai thì web chạy bản xem trước. */
     apiUrl:   "https://script.google.com/macros/s/AKfycbwiJ4EybwQW5afgu4LjLXgBq3dXl_8fpdAg9HlJUtVNk5IaMaj7Bbh7mgVC71Kxkc3yaA/exec",
     azureUrl: "https://caytrian-vinrobotics.azurewebsites.net/api/cay",
-    active:   "google"     // máy chủ dùng khi chưa liên lạc được máy chủ nào
+    active:   "azure"      // máy chủ dùng khi chưa liên lạc được máy chủ nào
   },
 
   /* ---------- Phòng ban ----------
@@ -197,7 +198,16 @@ window.SITE_CONFIG = {
     adminLogout:      "Đăng xuất",
     adminTabDepts:    "Phòng ban",
     adminTabServer:   "Máy chủ",
-    adminServerHint:  "Chọn máy chủ cả công ty đang dùng. Sau khi chuyển, mọi người tự chuyển theo trong khoảng 1–2 phút. Hai máy chủ giữ dữ liệu riêng, lời chúc không được chép qua lại. Nếu máy chủ đang dùng bị lỗi liên tục, trình duyệt của nhân viên tự chuyển sang máy chủ còn lại.",
+    adminTabTrash:    "Đã xóa",
+    adminDelete:      "Xóa",
+    adminRestore:     "Khôi phục",
+    adminSyncOk:      "Hai máy chủ đã đồng bộ · {m} phút trước",
+    adminSyncBad:     "Đồng bộ chưa chạy được ({m} phút trước): {err}",
+    adminSyncNever:   "Chưa đồng bộ lần nào",
+    adminSyncNow:     "Đồng bộ ngay",
+    adminSyncing:     "Đang đồng bộ…",
+    adminSyncDone:    "Đã đồng bộ: nhận {a}, gửi {b} lời chúc mới.",
+    adminServerHint:  "Chọn máy chủ cả công ty đang dùng. Sau khi chuyển, mọi người tự chuyển theo trong khoảng 1–2 phút. Hai máy chủ tự đồng bộ lời chúc, phòng ban 2 phút/lần, nên người ở mạng chặn Google (tự dùng Azure) vẫn thấy cùng một cây. Nếu máy chủ đang dùng lỗi liên tục, trình duyệt tự chuyển sang máy còn lại.",
     adminServerActive:"Đang dùng",
     adminServerNotSet:"Chưa cài đặt",
     adminServerChecking:"Đang kiểm tra…",

@@ -15,9 +15,14 @@
 <meta property="og:url" content="https://trinhtunganh.github.io/cay-loi-chuc/">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,300;1,400&display=swap" rel="stylesheet">
+<!-- Font Roboto tải từ jsDelivr (không qua Google, để mạng chặn Google vẫn hiển thị đúng); không chặn hiển thị trang -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://cdn.jsdelivr.net/npm/@fontsource/roboto@5.0.8/300.css">
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://cdn.jsdelivr.net/npm/@fontsource/roboto@5.0.8/400.css">
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://cdn.jsdelivr.net/npm/@fontsource/roboto@5.0.8/500.css">
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://cdn.jsdelivr.net/npm/@fontsource/roboto@5.0.8/700.css">
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://cdn.jsdelivr.net/npm/@fontsource/roboto@5.0.8/900.css">
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://cdn.jsdelivr.net/npm/@fontsource/roboto@5.0.8/400-italic.css">
 <style>
 :root{
   color-scheme: light;
@@ -280,6 +285,8 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 .sv-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:#bbb;vertical-align:1px}
 .sv-dot.ok{background:#2F9E5B} .sv-dot.bad{background:#D93025} .sv-dot.warn{background:#E0A800}
 .sv-card .btn{align-self:flex-start}
+.sv-sync{grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13.5px;color:var(--muted);border:1px dashed var(--line);border-radius:14px;padding:10px 14px}
+.sv-sync .btn{margin-left:auto;padding:7px 14px;font-size:13px}
 .dp-hint{font-size:13px;color:var(--muted);margin:0 0 10px;line-height:1.5}
 .dp-list{list-style:none;margin:0;padding:0 4px 0 0;overflow:auto;flex:1;min-height:0}
 .dp-list li{display:grid;grid-template-columns:22px 34px 1fr auto auto;align-items:center;gap:12px;padding:8px 12px;border:1px solid var(--line);border-radius:14px;margin-bottom:8px;background:#fff;transition:box-shadow .2s,border-color .2s}
@@ -300,6 +307,7 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 .dp-add{border:1.5px dashed #E8C3CB;background:#FFF8F9;border-radius:14px;padding:11px;font:inherit;color:#C40026;font-weight:600;width:100%;cursor:pointer;margin-top:4px}
 @media (max-width:640px){ .dp-list li{grid-template-columns:18px 30px 1fr auto;gap:8px} .dp-cnt{display:none} }
 .a-acts{grid-column:2;grid-row:1 / span 2;display:flex;flex-direction:column;gap:6px;align-items:stretch;justify-content:center}
+.a-acts .dl{color:#C40026}
 .a-acts button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;cursor:pointer;font-size:13px;white-space:nowrap;display:flex;align-items:center;gap:6px;justify-content:center}
 .a-acts button:disabled{opacity:.5;cursor:wait}
 .a-acts .ap.on{background:#E8F5EC;border-color:#7DB65A;color:#22603F;font-weight:500}
@@ -622,6 +630,7 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
       <button data-tab="pending" role="tab"><span data-t="adminTabPending"></span> <b id="aCntPending">0</b></button>
       <button data-tab="approved" role="tab"><span data-t="adminTabApproved"></span> <b id="aCntApproved">0</b></button>
       <button data-tab="featured" role="tab">★ <span data-t="adminTabFeatured"></span> <b id="aCntFeatured">0</b></button>
+      <button data-tab="trash" role="tab">🗑 <span data-t="adminTabTrash"></span> <b id="aCntTrash">0</b></button>
       <button data-tab="depts" role="tab"><span data-t="adminTabDepts"></span> <b id="aCntDepts">0</b></button>
       <button data-tab="srv" role="tab" id="aTabSrv"><span data-t="adminTabServer"></span></button>
     </div>
@@ -685,7 +694,7 @@ let CUR = (()=>{ const v = load("cta_backend"); if (BACKENDS[v]) return v; const
 let API_URL = BACKENDS[CUR] || "";
 let failoverFrom = "", failoverUntil = 0;
 try{ const f = JSON.parse(load("cta_failover") || "null"); if (f && f.until > Date.now()){ failoverFrom = f.from; failoverUntil = f.until; } }catch(e){}
-function markFailover(from){ failoverFrom = from; failoverUntil = Date.now() + 5*60e3; save("cta_failover", JSON.stringify({from, until:failoverUntil})); }
+function markFailover(from){ failoverFrom = from; failoverUntil = Date.now() + 30*60e3; save("cta_failover", JSON.stringify({from, until:failoverUntil})); }
 const otherBackend = () => Object.keys(BACKENDS).find(k => k !== CUR) || "";
 const DATE_SHORT = (()=>{ const d = new Date(EVT.birthday); if (isNaN(d)) return "";
   const p = new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Ho_Chi_Minh",day:"2-digit",month:"2-digit"}).formatToParts(d);
@@ -814,7 +823,7 @@ function previewApi(action, data){
         text: texts[Math.floor(r()*texts.length)], approved: i < (P.count||60) - 6, featured: i % 11 === 3 };
     });
   }
-  const pub = () => sample.filter(m=>m.approved);
+  const pub = () => sample.filter(m=>m.approved && !m.deleted);
   const pDepts = () => { try{ return JSON.parse(load("cta_prev_depts") || "null"); }catch(e){ return null; } };
   if (action==="adminSetDepts"){
     Object.keys(data.renames||{}).forEach(o=>sample.forEach(m=>{ if (m.toDept===o) m.toDept = data.renames[o]; }));
@@ -827,7 +836,8 @@ function previewApi(action, data){
     const m = sample.find(x=>x.id===data.id); if (!m) return Promise.resolve({ok:false});
     if (typeof data.featured === "boolean"){ m.featured = data.featured; if (data.featured) m.approved = true; }
     if (typeof data.approved === "boolean"){ m.approved = data.approved; if (!data.approved) m.featured = false; }
-    return Promise.resolve({ok:true, approved:m.approved, featured:m.featured});
+    if (typeof data.deleted === "boolean"){ m.deleted = data.deleted; if (data.deleted) m.featured = false; }
+    return Promise.resolve({ok:true, approved:m.approved, featured:m.featured, deleted:!!m.deleted});
   }
   if (action==="submit"){
     const m = { id:"p"+Date.now(), time:new Date().toISOString(), toType:data.toType,
@@ -1709,7 +1719,7 @@ async function svCheck(){
     const t0 = performance.now();
     try{
       const r = await api("adminList", {}, k), ms = Math.round(performance.now() - t0);
-      svState[k] = r.ok ? {status:"ok", ms, n:(r.items||[]).length, active:r.active||""} : {status: r.code==="BAD_ADMIN_PIN" ? "pin" : "bad", ms, err:r.error};
+      svState[k] = r.ok ? {status:"ok", ms, n:(r.items||[]).filter(m=>!m.deleted).length, active:r.active||"", sync:r.sync} : {status: r.code==="BAD_ADMIN_PIN" ? "pin" : "bad", ms, err:r.error};
     }catch(e){ svState[k] = {status:"down"}; }
   }));
 }
@@ -1737,6 +1747,19 @@ function svRender(){
     }
     box.appendChild(card);
   });
+  /* đồng bộ: Azure chủ động đồng bộ với Google 2 phút/lần */
+  const sy = svState.azure && svState.azure.sync, wrap = document.createElement("div"); wrap.className = "sv-sync";
+  if (BACKENDS.azure && BACKENDS.google){
+    const mins = sy && sy.at ? Math.max(0, Math.round((Date.now() - sy.at) / 60000)) : null;
+    const good = sy && sy.status === "ok" && mins != null && mins <= 6;
+    wrap.innerHTML = `<span class="sv-dot ${!sy ? "" : good ? "ok" : "bad"}"></span><span>${esc(!sy ? t("adminServerChecking") : mins == null ? t("adminSyncNever") : good ? t("adminSyncOk",{m:mins}) : t("adminSyncBad",{m:mins, err:sy.status}))}</span>`;
+    const b = document.createElement("button"); b.className = "btn"; b.type = "button"; b.textContent = t("adminSyncNow");
+    b.onclick = async ()=>{ b.disabled = true; b.textContent = t("adminSyncing");
+      try{ const r = await api("adminSyncNow", {}, "azure"); toast(r.ok ? t("adminSyncDone",{a:(r.pulled||{}).added||0, b:(r.pushed||{}).added||0}) : (r.error || t("adminSaveError"))); }catch(e){ toast(t("netError")); }
+      await svCheck(); svRender(); try{ const res = await api("adminList"); adminItems = (res.items||[]).sort((a,b)=>String(b.time).localeCompare(String(a.time))); }catch(e){} refresh(true); };
+    wrap.appendChild(b);
+    box.appendChild(wrap);
+  }
 }
 async function svSwitch(k, btn){
   btn.disabled = true; btn.textContent = t("adminServerSwitching");
@@ -1757,7 +1780,7 @@ function renderAdmin(){
     $("#aDepts").hidden = true; $("#aList").hidden = true; $(".a-search").hidden = true; $("#aShow").hidden = true; $("#dpSave").hidden = true;
     $$("#aTabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===adminTab));
     $("#aInfo").textContent = t("adminServerInfo",{name:BACKEND_NAMES[CUR]||""});
-    $("#aCntPending").textContent = adminItems.filter(m=>!m.approved).length; $("#aCntApproved").textContent = adminItems.filter(m=>m.approved).length; $("#aCntFeatured").textContent = adminItems.filter(m=>m.featured).length;
+    { const live = adminItems.filter(m=>!m.deleted); $("#aCntPending").textContent = live.filter(m=>!m.approved).length; $("#aCntApproved").textContent = live.filter(m=>m.approved).length; $("#aCntFeatured").textContent = live.filter(m=>m.featured).length; $("#aCntTrash").textContent = adminItems.length - live.length; }
     if (dpRows) $("#aCntDepts").textContent = dpRows.length;
     svRender(); svCheck().then(()=>{ if (adminTab==="srv") svRender(); });
     return;
@@ -1771,8 +1794,9 @@ function renderAdmin(){
     $$("#aTabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===adminTab));
     dpRender();
   }
-  const c = { pending: adminItems.filter(m=>!m.approved), approved: adminItems.filter(m=>m.approved), featured: adminItems.filter(m=>m.featured) };
-  $("#aCntPending").textContent = c.pending.length; $("#aCntApproved").textContent = c.approved.length; $("#aCntFeatured").textContent = c.featured.length;
+  const live = adminItems.filter(m=>!m.deleted);
+  const c = { pending: live.filter(m=>!m.approved), approved: live.filter(m=>m.approved), featured: live.filter(m=>m.featured), trash: adminItems.filter(m=>m.deleted) };
+  $("#aCntPending").textContent = c.pending.length; $("#aCntApproved").textContent = c.approved.length; $("#aCntFeatured").textContent = c.featured.length; $("#aCntTrash").textContent = c.trash.length;
   $$("#aTabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===adminTab));
   $("#aInfo").textContent = t("adminInfo",{n:c.featured.length});
   $("#aShow").disabled = !c.featured.length;
@@ -1785,10 +1809,14 @@ function renderAdmin(){
     const li = document.createElement("li"); if (m.featured) li.className = "is-feat";
     li.innerHTML = `<div class="a-meta">${miniIcon(m)}<b>${esc(recipient(m))}</b> · ${esc(timeAgo(m.time))}</div>
       <div class="a-text">${esc(m.text)}</div>
-      <div class="a-acts"><button class="ap ${m.approved?"on":""}">${m.approved?"✓ ":""}${esc(t("adminApprove"))}</button><button class="ft ${m.featured?"on":""}">${m.featured?"★":"☆"} ${esc(t("adminFeature"))}</button></div>`;
-    const [ap, ft] = li.querySelectorAll("button");
-    ap.onclick = ()=>adminSet(m, {approved: !m.approved}, li);
-    ft.onclick = ()=>adminSet(m, {featured: !m.featured}, li);
+      <div class="a-acts">${m.deleted ? `<button class="rs">↺ ${esc(t("adminRestore"))}</button>` :
+        `<button class="ap ${m.approved?"on":""}">${m.approved?"✓ ":""}${esc(t("adminApprove"))}</button><button class="ft ${m.featured?"on":""}">${m.featured?"★":"☆"} ${esc(t("adminFeature"))}</button><button class="dl">🗑 ${esc(t("adminDelete"))}</button>`}</div>`;
+    if (m.deleted) li.querySelector(".rs").onclick = ()=>adminSet(m, {deleted:false}, li);
+    else {
+      li.querySelector(".ap").onclick = ()=>adminSet(m, {approved: !m.approved}, li);
+      li.querySelector(".ft").onclick = ()=>adminSet(m, {featured: !m.featured}, li);
+      li.querySelector(".dl").onclick = ()=>adminSet(m, {deleted:true}, li);
+    }
     ul.appendChild(li);
   });
 }
@@ -1797,7 +1825,7 @@ async function adminSet(m, change, li){
   try{
     const res = await api("adminSet", Object.assign({id:m.id}, change));
     if (!res.ok) throw new Error();
-    m.approved = res.approved; m.featured = res.featured;
+    m.approved = res.approved; m.featured = res.featured; if (typeof res.deleted === "boolean") m.deleted = res.deleted;
     renderAdmin(); refresh(true);
   }catch(e){ toast(t("adminSaveError")); li.querySelectorAll("button").forEach(b=>b.disabled = false); }
 }

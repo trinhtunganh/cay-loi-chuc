@@ -14,7 +14,7 @@ const HEADERS = {
   'Cache-Control': 'no-store'
 };
 
-module.exports = async function (context, req) {
+async function http(context, req) {
   if (req.method === 'OPTIONS') { context.res = { status: 204, headers: HEADERS }; return; }
   if (req.method === 'GET') { context.res = { status: 200, headers: HEADERS, body: JSON.stringify({ ok: true, message: 'Cây Tri Ân API (Azure) đang chạy.' }) }; return; }
   const h = req.headers || {};
@@ -25,3 +25,6 @@ module.exports = async function (context, req) {
   const out = await getCore().handle(String(raw), ip);
   context.res = { status: 200, headers: HEADERS, body: JSON.stringify(out) };
 };
+
+module.exports = http;
+module.exports.getCore = getCore;
