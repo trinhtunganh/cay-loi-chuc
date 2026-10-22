@@ -15,7 +15,8 @@ Khi `backend.apiUrl` trong `config.js` còn trống, web chạy **bản xem trư
 - Thẻ trạng thái: tổng số lời chúc và tiến độ "còn bao nhiêu lời chúc để cây lớn tiếp"
 - Gợi ý "chạm vào lá" cho người mới, màn hình chờ khi cây chưa có lời chúc, nút gửi cố định trên điện thoại
 - Lá tự bật lời chúc; cột "Lời chúc mới nhất" trên màn rộng (từ 1500px)
-- Tìm lời chúc theo tên hoặc phòng ban, lọc theo màu
+- Ô tìm kiếm ở đầu danh sách lời chúc: lọc theo tên người nhận hoặc nội dung, kèm bộ lọc phòng ban
+- Dãy phòng ban có biểu tượng lá, hoa giống trên cây và số lời chúc của từng phòng
 - Form gửi có gợi ý câu mở đầu, nút mời đồng nghiệp cùng gửi
 - Đếm ngược ngày, giờ, phút, giây đến 00:00 ngày 21/11/2026
 - Chế độ trình chiếu toàn màn hình cho buổi tiệc (phím ← → để chuyển)

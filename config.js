@@ -81,11 +81,7 @@ window.SITE_CONFIG = {
     btnSend:          "Gửi lời chúc",
     btnShow:          "Trình chiếu",
 
-    searchPlaceholder:"Tìm lời chúc gửi bạn: nhập tên hoặc phòng ban",
-    searchCount:      "{n} lời chúc",
-    searchBrowse:     "Xem lần lượt",
-    searchNone:       "Chưa có lời chúc nào khớp",
-    legendCompany:    "{company} (hoa)",
+    legendCompany:    "Cả công ty",
 
     statusCount:      "lời chúc đã được gửi",
     statusNext:       "Thêm {n} lời chúc để cây thành “{next}”",
@@ -99,6 +95,12 @@ window.SITE_CONFIG = {
     feedTitle:        "Lời chúc mới nhất",
     feedLive:         "Trực tiếp",
     feedEmpty:        "Chưa có lời chúc nào. Hãy là người đầu tiên!",
+    feedSearchPlaceholder: "Tìm tên người nhận hoặc nội dung lời chúc",
+    feedAllDepts:     "Tất cả phòng ban",
+    feedResults:      "Kết quả lọc",
+    feedCount:        "{n} lời chúc",
+    feedReset:        "Xóa bộ lọc",
+    feedNoMatch:      "Chưa có lời chúc nào khớp. Bạn thử từ khóa khác nhé.",
 
     toCompany:        "Gửi {company}",
     toDept:           "Gửi {to}",
