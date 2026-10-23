@@ -2,7 +2,7 @@
  * CÂY TRI ÂN — Backend Google Apps Script
  * Lưu lời chúc giấu tên vào Google Sheet và chỉ trả về lời chúc đã được duyệt.
  *
- * - Không lưu email, tên hay bất kỳ thông tin nào của người gửi.
+ * - Chỉ lưu Account VGR của người gửi (để trao thưởng, chỉ Ban tổ chức xem được), không công khai.
  * - Cài đặt nằm ở Project Settings > Script properties:
  *     PIN           mã PIN để vào trang (mặc định VinRobotics2026)
  *     AUTO_APPROVE  "true" = lời chúc lên cây ngay (mặc định), "false" = chờ duyệt
@@ -14,8 +14,9 @@
  */
 
 const SHEET_NAME = 'LoiChuc';
-const HEADERS = ['ID', 'Thời gian', 'Loại người nhận', 'Phòng ban', 'Tên người nhận', 'Nội dung', 'Đã duyệt', 'Tiêu biểu', 'Cập nhật', 'Đã xóa'];
-const COL = { approved: 7, featured: 8, updated: 9, deleted: 10 };
+const HEADERS = ['ID', 'Thời gian', 'Loại người nhận', 'Phòng ban', 'Tên người nhận', 'Nội dung', 'Đã duyệt', 'Tiêu biểu', 'Cập nhật', 'Đã xóa', 'Account VGR', 'Giải thưởng', 'Thời điểm trúng'];
+const COL = { approved: 7, featured: 8, updated: 9, deleted: 10, account: 11, prize: 12, wonAt: 13 };
+const ACCOUNT_RE = /^[A-Za-z0-9._@\-]{2,60}$/;
 const TYPE_LABELS = { company: 'Cả công ty', dept: 'Phòng ban', person: 'Đồng nghiệp' };
 const DEFAULTS = { PIN: 'VinRobotics2026', ADMIN_PIN: 'VRAdmin2026', AUTO_APPROVE: 'true' };
 const MAX_TEXT = 500;
@@ -30,7 +31,7 @@ function setup() {
   const sh = getSheet();
   const props = PropertiesService.getScriptProperties();
   Object.keys(DEFAULTS).forEach(k => { if (!props.getProperty(k)) props.setProperty(k, DEFAULTS[k]); });
-  CacheService.getScriptCache().removeAll(['props', 'sheet_ok', 'sheet_ok2']);
+  CacheService.getScriptCache().removeAll(['props', 'sheet_ok', 'sheet_ok2', 'sheet_ok3']);
   Logger.log('Xong. Sheet "%s" đã sẵn sàng. PIN: %s. PIN quản trị: %s. Tự duyệt: %s', sh.getName(), props.getProperty('PIN'), props.getProperty('ADMIN_PIN'), props.getProperty('AUTO_APPROVE'));
 }
 
@@ -160,6 +161,8 @@ function submit(body) {
   if (toType === 'dept' && !toDept) return { ok: false, error: 'Vui lòng chọn phòng ban.' };
   if (toType === 'person' && !toName) return { ok: false, error: 'Vui lòng nhập tên người nhận.' };
   if (text.length < 5) return { ok: false, error: 'Lời chúc cần ít nhất 5 ký tự.' };
+  const account = clean(body.account, MAX_NAME);
+  if (!ACCOUNT_RE.test(account)) return { ok: false, error: 'Vui lòng nhập Account VGR hợp lệ (không dấu, không khoảng trắng).' };
 
   const approved = prop('AUTO_APPROVE').toLowerCase() === 'true';
   /* appendRow của Google Sheet tự đảm bảo không ghi đè khi nhiều người gửi cùng lúc,
@@ -176,7 +179,10 @@ function submit(body) {
     approved,
     false,
     Date.now(),
-    false
+    false,
+    safeCell(account),
+    '',
+    ''
   ]);
   if (approved) removeBig('approved_list');
   return { ok: true, id: id, approved: approved };
@@ -194,7 +200,10 @@ function rowToItem(r, labelToType) {
     approved: r[6] === true,
     featured: r[7] === true,
     updated: Number(r[8]) || Date.parse(time) || 0,
-    deleted: r[9] === true
+    deleted: r[9] === true,
+    account: String(r[10] || ''),
+    prize: String(r[11] || ''),
+    wonAt: Number(r[12]) || 0
   };
 }
 /** Bản gửi cho trình duyệt nhân viên: bỏ các trường chỉ dùng nội bộ. */
@@ -230,10 +239,14 @@ function adminSet(body) {
     if (typeof body.featured === 'boolean') { set(COL.featured, body.featured); if (body.featured) set(COL.approved, true); }
     if (typeof body.approved === 'boolean') { set(COL.approved, body.approved); if (!body.approved) set(COL.featured, false); }
     if (typeof body.deleted === 'boolean') { set(COL.deleted, body.deleted); if (body.deleted) set(COL.featured, false); }
+    if (typeof body.prize === 'string') {   // quay thưởng: ghi giải; chuỗi rỗng = hủy kết quả
+      const pz = clean(body.prize, MAX_NAME);
+      sh.getRange(row, COL.prize, 1, 2).setValues([[safeCell(pz), pz ? (Number(body.wonAt) || Date.now()) : '']]);
+    }
     sh.getRange(row, COL.updated).setValue(Date.now());
     removeBig('approved_list');
     const v = sh.getRange(row, 1, 1, HEADERS.length).getValues()[0];
-    return { ok: true, approved: v[6] === true, featured: v[7] === true, deleted: v[9] === true };
+    return { ok: true, approved: v[6] === true, featured: v[7] === true, deleted: v[9] === true, prize: String(v[11] || ''), wonAt: Number(v[12]) || 0 };
   } finally {
     lock.releaseLock();
   }
@@ -348,7 +361,8 @@ function peerUpsert(body) {
         if (!/^[\w-]{1,40}$/.test(id) || !TYPE_LABELS[m.toType]) return;
         const vals = [
           TYPE_LABELS[m.toType], safeCell(clean(m.toDept, MAX_NAME)), safeCell(clean(m.toName, MAX_NAME)), safeCell(clean(m.text, MAX_TEXT)),
-          m.approved === true, m.featured === true, Number(m.updated) || Date.now(), m.deleted === true
+          m.approved === true, m.featured === true, Number(m.updated) || Date.now(), m.deleted === true,
+          safeCell(clean(m.account, MAX_NAME)), safeCell(clean(m.prize, MAX_NAME)), Number(m.wonAt) || ''
         ];
         const l = local[id];
         if (!l) { sh.appendRow([id, new Date(m.time || Date.now())].concat(vals)); added++; }
@@ -393,8 +407,8 @@ function getSheet() {
     sh.setColumnWidth(2, 150);
   }
   const cache = CacheService.getScriptCache();
-  if (!cache.get('sheet_ok2')) {
-    if (sh.getRange(1, COL.deleted).getValue() !== HEADERS[COL.deleted - 1]) {   // sheet cũ thiếu cột mới
+  if (!cache.get('sheet_ok3')) {
+    if (sh.getRange(1, COL.wonAt).getValue() !== HEADERS[COL.wonAt - 1]) {   // sheet cũ thiếu cột mới
       sh.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]).setFontWeight('bold').setBackground('#FDE8EC');
     }
     /* Ô tick sẵn cho 2 cột "Đã duyệt", "Tiêu biểu" để lúc gửi lời chúc chỉ cần 1 lệnh ghi */
@@ -407,7 +421,7 @@ function getSheet() {
     if (!sh.getRange(sh.getMaxRows(), COL.deleted).getDataValidation()) {
       del.setDataValidation(SpreadsheetApp.newDataValidation().requireCheckbox().build());
     }
-    cache.put('sheet_ok2', '1', 21600);
+    cache.put('sheet_ok3', '1', 21600);
   }
   return sh;
 }

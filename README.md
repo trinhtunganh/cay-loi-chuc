@@ -21,6 +21,9 @@ Khi `backend.apiUrl` trong `config.js` còn trống, web chạy **bản xem trư
 - Form gửi có gợi ý câu mở đầu, nút mời đồng nghiệp cùng gửi
 - Đầu trang dải đỏ thương hiệu: logo, "Chào mừng sinh nhật dd/mm/yyyy" (lấy từ ngày trong `config.js`), đếm ngược dạng ô số
 - Chế độ trình chiếu toàn màn hình có cây, lá của lời chúc đang chiếu phát sáng (phím ← → để chuyển)
+- Người gửi nhập Account VGR (chỉ Ban tổ chức xem, không hiện công khai)
+- Quay thưởng trong khoảng thời gian tùy chọn; ai đã trúng thì không còn trong danh sách quay
+- Xuất toàn bộ lời chúc kèm trạng thái ra file CSV (mở bằng Excel)
 - Trang quản trị với PIN riêng: bỏ duyệt lời chúc không phù hợp, chọn tay lời chúc tiêu biểu để ưu tiên trình chiếu
 - Phòng ban (tên, thứ tự, màu lá) sửa ngay trong trang quản trị; `config.js` giữ danh sách mặc định
 - Ảnh xem trước khi chia sẻ link qua Zalo, Facebook, Teams

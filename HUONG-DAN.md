@@ -52,6 +52,11 @@ Mở web, bấm **"Ban tổ chức? Đăng nhập quản trị"** ở màn hình
 - Trình chiếu tự ưu tiên lời chúc tiêu biểu khi có; ở góc trên có nút chuyển **★ Tiêu biểu / Tất cả**.
 - Phiên quản trị chỉ lưu trong tab trình duyệt đang mở; đóng tab là đăng xuất.
 
+### Quay thưởng và xuất dữ liệu
+
+- **Quay thưởng:** khi đã đăng nhập quản trị, bấm nút hộp quà ở đầu trang (bên trái nút trình chiếu). Chọn tên giải, khoảng thời gian gửi lời chúc, bấm **Quay**. Mỗi lời chúc là 1 lượt; người đã trúng (theo Account VGR) không còn trong danh sách. Bấm **Hủy kết quả này** nếu người trúng vắng mặt.
+- **Xuất dữ liệu:** Quản trị → tab **Lời chúc** → **Xuất Excel (CSV)**: toàn bộ lời chúc kể cả đã xóa, kèm Account VGR, trạng thái, giải thưởng.
+
 ### Hoặc duyệt trực tiếp trong Google Sheet
 
 - **Duyệt lời chúc**: tick cột **Đã duyệt**. Lá xuất hiện trên cây trong khoảng 1 phút.

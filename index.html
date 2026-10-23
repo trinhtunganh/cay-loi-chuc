@@ -69,6 +69,47 @@ header,.overview{position:relative;z-index:6}
 header{display:grid;grid-template-columns:auto auto 1fr auto;gap:26px;align-items:center;padding:14px var(--gutter);margin-bottom:12px;background:linear-gradient(100deg,var(--brand) 0%,#C40026 100%);box-shadow:0 8px 24px rgba(228,0,43,.18);color:#fff}
 .brand{--L:44px;display:flex;align-items:center;min-width:max-content}
 #btnAdmin span{display:none} #btnAdmin{padding-left:14px;padding-right:14px}
+/* Quay thưởng */
+#btnShow span,#btnDraw span{display:none} #btnShow,#btnDraw{padding-left:14px;padding-right:14px}
+.panel.draw{width:min(960px,100%);max-height:min(92vh,900px);display:flex;flex-direction:column;padding:22px 24px 18px}
+.dw-grid{display:grid;grid-template-columns:300px 1fr;gap:18px;margin-top:12px}
+.dw-set{display:flex;flex-direction:column;gap:6px}
+.dw-set input[type=text],.dw-range input{border:1px solid var(--line);border-radius:10px;padding:9px 10px;font:inherit;font-size:14px;min-width:0}
+.dw-range{display:flex;flex-direction:column;gap:6px} .dw-range span{display:none} .dw-range input{width:100%}
+.dw-pre{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.dw-pre button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 10px;font-size:12.5px;cursor:pointer}
+.dw-pre button:hover{border-color:var(--brand);color:var(--brand)}
+.dw-chk{display:flex;align-items:center;gap:8px;font-size:14px;margin-top:6px}
+.dw-info{font-size:13.5px;color:var(--muted);margin:8px 0 0;line-height:1.5} .dw-info b{color:var(--ink)}
+.dw-stage{position:relative;overflow:hidden;border-radius:20px;min-height:280px;padding:26px 28px;color:#fff;background:radial-gradient(120% 140% at 20% 0%,#FF4D6D 0%,#E4002B 45%,#9E001E 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
+.dw-prize-tag{font-size:13px;letter-spacing:2px;text-transform:uppercase;opacity:.9;font-weight:700;min-height:1em}
+.dw-acc{font-size:clamp(34px,5vw,60px);font-weight:900;letter-spacing:.5px;margin:10px 0 6px;font-variant-numeric:tabular-nums;text-shadow:0 4px 18px rgba(0,0,0,.25);word-break:break-all}
+.dw-stage.rolling .dw-acc{filter:blur(.4px);opacity:.92}
+.dw-stage.won .dw-acc{animation:winPop .6s cubic-bezier(.2,1.6,.4,1)}
+@keyframes winPop{0%{transform:scale(.6)}100%{transform:scale(1)}}
+.dw-to{font-size:13.5px;opacity:.9;min-height:1.2em}
+.dw-text{font-size:16px;line-height:1.55;max-width:560px;margin-top:10px;opacity:.95;max-height:7.8em;overflow:hidden}
+.dw-confetti{position:absolute;inset:0;pointer-events:none}
+.dw-confetti i{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;animation:cf 2.2s ease-in forwards}
+@keyframes cf{to{transform:translateY(340px) rotate(540deg);opacity:0}}
+.dw-btns{display:flex;justify-content:flex-end;gap:10px;margin:14px 0 6px}
+.dw-spin{font-size:17px;padding:13px 34px}
+.dw-h{font-size:15px;margin:8px 0 6px}
+.dw-win{list-style:none;margin:0;padding:0;overflow:auto;min-height:60px}
+.dw-win li{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:12px;margin-bottom:6px;font-size:14px}
+.dw-win .pz{font-weight:700;color:var(--brand)} .dw-win .ac{font-weight:700} .dw-win small{color:var(--muted)}
+.dw-win button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 10px;font-size:12.5px;cursor:pointer}
+@media (max-width:760px){ .dw-grid{grid-template-columns:1fr} }
+/* lọc trong danh sách lời chúc của quản trị */
+.a-filt{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 10px}
+.a-filt button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;cursor:pointer;font-size:13.5px}
+.a-filt button b{display:inline-block;min-width:20px;background:#F5EFEF;border-radius:999px;padding:0 6px;font-size:11.5px;margin-left:4px}
+.a-filt button.on{border-color:var(--brand);background:var(--brand-tint);color:var(--brand-dark);font-weight:500}
+.a-filt button.on b{background:var(--brand);color:#fff}
+.a-filt .a-exp{margin-left:auto;font-weight:600;color:#1F7A45;border-color:#BFE3CC;background:#F2FBF5}
+.a-acc{font-weight:600;color:var(--ink-2)}
+.a-prize{background:#FFF3D6;color:#9A6400;border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:700}
+
 .brand .logo-img{height:var(--L);width:auto;flex:0 0 auto}
 header .logo-img{filter:brightness(0) invert(1)}
 .h-title{border-left:1px solid rgba(255,255,255,.38);padding-left:24px;font-size:20px;font-weight:700;letter-spacing:.3px;line-height:1.2;min-width:0}
@@ -443,7 +484,8 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
   </div>
   <div class="actions">
     <button class="btn" id="btnAdmin" hidden title="Quản trị" aria-label="Quản trị"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span data-t="adminButton"></span></button>
-    <button class="btn" id="btnShow">
+    <button class="btn" id="btnDraw" hidden title="Quay thưởng" aria-label="Quay thưởng"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v9H5v-9"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg><span data-t="drawTitle"></span></button>
+    <button class="btn" id="btnShow" title="Trình chiếu" aria-label="Trình chiếu">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span data-t="btnShow"></span></button>
     <button class="btn primary js-send">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21c-4-3-8-6.5-8-11a5 5 0 0 1 8-4 5 5 0 0 1 8 4c0 4.5-4 8-8 11z"/></svg><span data-t="btnSend"></span></button>
@@ -556,6 +598,11 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
       <p class="sub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
         <span data-t="formPrivacy"></span></p>
       <div class="field">
+        <label class="lbl" for="acc" data-t="accLabel"></label>
+        <input type="text" id="acc" maxlength="60" autocomplete="username" autocapitalize="off" spellcheck="false" data-ph="accPlaceholder">
+        <div class="hint"><span data-t="accHint"></span></div>
+      </div>
+      <div class="field">
         <span class="lbl" data-t="formTo"></span>
         <div class="seg-ctl" role="radiogroup">
           <label><input type="radio" name="toType" value="company" checked><span class="ico">🌸</span><span data-t="optCompany"></span><small data-t="optCompanySub"></small></label>
@@ -629,6 +676,43 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 </div>
 
 <!-- Quản trị: bảng điều khiển -->
+<div class="modal" id="drawPanel" role="dialog" aria-modal="true" aria-labelledby="drawTitle">
+  <div class="panel draw">
+    <div class="a-head">
+      <h2 id="drawTitle">🎁 <span data-t="drawTitle"></span></h2>
+      <button class="a-x" data-close aria-label="Đóng">×</button>
+    </div>
+    <div class="dw-grid">
+      <div class="dw-set">
+        <label class="lbl" for="dwPrize" data-t="drawPrize"></label>
+        <input id="dwPrize" type="text" maxlength="60">
+        <label class="lbl" data-t="drawRange"></label>
+        <div class="dw-range"><input id="dwFrom" type="datetime-local"><span>→</span><input id="dwTo" type="datetime-local"></div>
+        <div class="dw-pre">
+          <button type="button" data-pre="1h" data-t="drawPre1h"></button>
+          <button type="button" data-pre="today" data-t="drawPreToday"></button>
+          <button type="button" data-pre="7d" data-t="drawPre7d"></button>
+          <button type="button" data-pre="all" data-t="drawPreAll"></button>
+        </div>
+        <label class="dw-chk"><input type="checkbox" id="dwApproved" checked> <span data-t="drawOnlyApproved"></span></label>
+        <p class="dw-info" id="dwInfo"></p>
+      </div>
+      <div class="dw-stage" id="dwStage">
+        <div class="dw-prize-tag" id="dwPrizeTag"></div>
+        <div class="dw-acc" id="dwAcc">?</div>
+        <div class="dw-to" id="dwTo2"></div>
+        <div class="dw-text" id="dwText"></div>
+        <div class="dw-confetti" id="dwConfetti"></div>
+      </div>
+    </div>
+    <div class="dw-btns">
+      <button class="btn ghost" id="dwUndo" hidden data-t="drawUndo"></button>
+      <button class="btn primary dw-spin" id="dwSpin" data-t="drawSpin"></button>
+    </div>
+    <h3 class="dw-h" data-t="drawWinners"></h3>
+    <ul class="dw-win" id="dwWinners"></ul>
+  </div>
+</div>
 <div class="modal" id="adminPanel" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
   <div class="panel admin">
     <div class="a-head">
@@ -637,10 +721,7 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
     </div>
     <p class="a-note" id="aNote" hidden data-t="adminPreviewNote"></p>
     <div class="a-tabs" id="aTabs" role="tablist">
-      <button data-tab="pending" role="tab"><span data-t="adminTabPending"></span> <b id="aCntPending">0</b></button>
-      <button data-tab="approved" role="tab"><span data-t="adminTabApproved"></span> <b id="aCntApproved">0</b></button>
-      <button data-tab="featured" role="tab">★ <span data-t="adminTabFeatured"></span> <b id="aCntFeatured">0</b></button>
-      <button data-tab="trash" role="tab">🗑 <span data-t="adminTabTrash"></span> <b id="aCntTrash">0</b></button>
+      <button data-tab="list" role="tab">💬 <span data-t="adminTabList"></span> <b id="aCntAll">0</b></button>
       <button data-tab="depts" role="tab"><span data-t="adminTabDepts"></span> <b id="aCntDepts">0</b></button>
       <button data-tab="srv" role="tab" id="aTabSrv"><span data-t="adminTabServer"></span></button>
       <button data-tab="pin" role="tab">🔑 <span data-t="adminTabPin"></span></button>
@@ -677,6 +758,7 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
       <ul class="dp-list" id="dpList"></ul>
       <button class="dp-add" id="dpAdd" type="button" data-t="adminDeptAdd"></button>
     </div>
+    <div class="a-filt" id="aFilt"></div>
     <div class="f-search a-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="aQ" type="search" data-ph="adminSearch" autocomplete="off"></div>
     <ul class="a-list" id="aList"></ul>
     <div class="a-foot">
@@ -854,7 +936,7 @@ function previewApi(action, data){
       const toType = x<.33 || !dept ? "company" : x<.68 || !names.length ? "dept" : "person";
       return { id:"p"+i, time:new Date(Date.now()-r()*6*864e5).toISOString(), toType,
         toDept: toType==="company" ? "" : dept, toName: toType==="person" ? names[Math.floor(r()*names.length)] : "",
-        text: texts[Math.floor(r()*texts.length)], approved: i < (P.count||60) - 6, featured: i % 11 === 3 };
+        text: texts[Math.floor(r()*texts.length)], approved: i < (P.count||60) - 6, featured: i % 11 === 3, account: "nv" + String(100 + i % 40) };
     });
   }
   const pub = () => sample.filter(m=>m.approved && !m.deleted);
@@ -872,7 +954,8 @@ function previewApi(action, data){
     if (typeof data.featured === "boolean"){ m.featured = data.featured; if (data.featured) m.approved = true; }
     if (typeof data.approved === "boolean"){ m.approved = data.approved; if (!data.approved) m.featured = false; }
     if (typeof data.deleted === "boolean"){ m.deleted = data.deleted; if (data.deleted) m.featured = false; }
-    return Promise.resolve({ok:true, approved:m.approved, featured:m.featured, deleted:!!m.deleted});
+    if (typeof data.prize === "string"){ m.prize = data.prize; m.wonAt = data.prize ? Date.now() : 0; }
+    return Promise.resolve({ok:true, approved:m.approved, featured:m.featured, deleted:!!m.deleted, prize:m.prize||"", wonAt:m.wonAt||0});
   }
   if (action==="submit"){
     const m = { id:"p"+Date.now(), time:new Date().toISOString(), toType:data.toType,
@@ -1462,7 +1545,7 @@ function syncType(){
     box.appendChild(b); });
 }
 $("#msg").addEventListener("input", ()=>{ $("#msgCount").textContent = $("#msg").value.length + "/500"; });
-function openSend(){ $("#sendForm").hidden=false; $("#sendDone").hidden=true; $("#sendErr").textContent=""; hideCard(); openModal("#sendModal"); setTimeout(()=>$("#msg").focus(),60); }
+function openSend(){ if (!$("#acc").value) $("#acc").value = load("cta_acc") || ""; $("#sendForm").hidden=false; $("#sendDone").hidden=true; $("#sendErr").textContent=""; hideCard(); openModal("#sendModal"); setTimeout(()=>($("#acc").value ? $("#msg") : $("#acc")).focus(),60); }
 $$(".js-send").forEach(b=>b.onclick = openSend);
 $("#sendAgain").onclick = ()=>{ $("#sendForm").hidden=false; $("#sendDone").hidden=true; $("#msg").focus(); };
 $("#shareBtn").onclick = async ()=>{
@@ -1473,7 +1556,9 @@ $("#shareBtn").onclick = async ()=>{
 };
 $("#sendBtn").onclick = async ()=>{
   const toType = document.querySelector("input[name=toType]:checked").value;
-  const data = { toType, toDept: $("#toDept").value, toName: $("#toName").value.trim(), text: $("#msg").value.trim() };
+  const data = { toType, toDept: $("#toDept").value, toName: $("#toName").value.trim(), text: $("#msg").value.trim(), account: $("#acc").value.trim() };
+  if (!/^[A-Za-z0-9._@\-]{2,60}$/.test(data.account)){ $("#acc").focus(); return $("#sendErr").textContent = t("errAccount"); }
+  save("cta_acc", data.account);
   if (toType==="person" && !data.toName) return $("#sendErr").textContent = t("errName");
   if (data.text.length < 5) return $("#sendErr").textContent = t("errShort");
   const btn = $("#sendBtn"); btn.disabled = true; btn.textContent = t("btnSubmitting"); $("#sendErr").textContent="";
@@ -1667,7 +1752,7 @@ if (PREVIEW) document.body.classList.add("preview");
 applyTexts(); buildLeafGradients(); setupScene(); buildGrass(); buildLegend(); syncType(); setupCountdown(); setupPetals();
 drawTree(STAGES[0]); currentStage = STAGES[0]; renderLeaves();
 /* ---------- quản trị ---------- */
-let adminItems = [], adminTab = "pending";
+let adminItems = [], adminTab = "list", adminFilter = "all";
 function openAdminGate(){ $("#adminErr").textContent=""; $("#adminPin").value=""; openModal("#adminGate"); setTimeout(()=>$("#adminPin").focus(),60); }
 async function tryAdmin(){
   const v = $("#adminPin").value.trim(); if (!v) return;
@@ -1675,7 +1760,7 @@ async function tryAdmin(){
   try{
     const res = await api("adminVerify");
     if (!res.ok){ ADMIN_PIN = old; $("#adminErr").textContent = t("pinWrong"); return; }
-    saveAdmin(v); $("#adminGate").classList.remove("show"); $("#btnAdmin").hidden = false;
+    saveAdmin(v); $("#adminGate").classList.remove("show"); $("#btnAdmin").hidden = false; $("#btnDraw").hidden = false;
     if (!PIN){ PIN = v; $("#gate").classList.remove("show"); start(); }   /* PIN quản trị cũng vào được trang */
     openAdmin();
   }catch(e){ ADMIN_PIN = old; $("#adminErr").textContent = t("netError"); }
@@ -1690,7 +1775,6 @@ async function openAdmin(){
     adminItems = (res.items||[]).sort((a,b)=>String(b.time).localeCompare(String(a.time)));
     if (Array.isArray(res.depts)) applyDepts(res.depts);
     if (!dpDirty) dpInit();
-    if (adminTab==="pending" && !adminItems.some(m=>!m.approved)) adminTab = "approved";
     renderAdmin();
   }catch(e){ $("#aList").innerHTML = `<li class="a-empty">${esc(t("netError"))}</li>`; }
 }
@@ -1844,11 +1928,128 @@ async function savePin(kind){
 const BACKENDS_NAME = k => BACKEND_NAMES[k] || k;
 $("#pnSaveS").onclick = ()=>savePin("staff");
 $("#pnSaveA").onclick = ()=>savePin("admin");
+/* ---- danh sách lời chúc: lọc theo trạng thái + xuất file ---- */
+const statusOf = m => m.deleted ? t("stTrash") : m.featured ? t("stFeatured") : m.approved ? t("stApproved") : t("stPending");
+function renderFilters(c){
+  const box = $("#aFilt"); box.textContent = "";
+  [["all","fAll"],["pending","fPending"],["approved","fApproved"],["featured","fFeatured"],["won","fWon"],["trash","fTrash"]].forEach(([k,key])=>{
+    const b = document.createElement("button"); b.type = "button"; b.className = adminFilter===k ? "on" : "";
+    b.innerHTML = `${esc(t(key))} <b>${c[k].length}</b>`; b.onclick = ()=>{ adminFilter = k; renderAdmin(); };
+    box.appendChild(b);
+  });
+  const ex = document.createElement("button"); ex.type = "button"; ex.className = "a-exp"; ex.textContent = "⬇ " + t("adminExport"); ex.onclick = exportCsv;
+  box.appendChild(ex);
+}
+/* xuất toàn bộ lời chúc (kể cả đã xóa) ra file CSV mở được bằng Excel */
+function exportCsv(){
+  const cell = v => { const s = String(v == null ? "" : v); return /[",\n\r;]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
+  const fmt = ts => { const d = new Date(ts); return isNaN(d) || !ts ? "" : d.toLocaleString("vi-VN",{timeZone:"Asia/Ho_Chi_Minh"}); };
+  const type = m => m.toType==="company" ? t("optCompany") : m.toType==="dept" ? t("optDept") : t("optPerson");
+  const head = ["Mã","Thời gian","Account VGR","Gửi tới","Phòng ban","Tên người nhận","Nội dung","Trạng thái","Tiêu biểu","Giải thưởng","Thời điểm trúng"];
+  const rows = adminItems.slice().sort((a,b)=>String(a.time).localeCompare(String(b.time))).map(m=>[
+    m.id, fmt(m.time), m.account||"", type(m), m.toDept||"", m.toName||"", m.text||"", statusOf(m), m.featured ? "Có" : "", m.prize||"", m.wonAt ? fmt(m.wonAt) : ""
+  ]);
+  const csv = "\ufeff" + [head].concat(rows).map(r=>r.map(cell).join(",")).join("\r\n");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
+  a.download = `cay-tri-an-loi-chuc-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  toast(t("adminExported",{n:rows.length}));
+}
+
+/* ---- quay thưởng: chỉ quản trị; ai đã trúng thì không còn trong danh sách ---- */
+const pad2 = n => String(n).padStart(2,"0");
+const toLocalInput = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+let dwBusy = false, dwLast = null;
+function dwSetRange(kind){
+  const now = new Date(), to = new Date(now.getTime() + 60e3);
+  let from;
+  if (kind==="1h") from = new Date(now.getTime() - 3600e3);
+  else if (kind==="today"){ from = new Date(now); from.setHours(0,0,0,0); }
+  else if (kind==="7d") from = new Date(now.getTime() - 7*864e5);
+  else { const first = adminItems.reduce((a,m)=>Math.min(a, Date.parse(m.time)||a), now.getTime()); from = new Date(first - 60e3); }
+  $("#dwFrom").value = toLocalInput(from); $("#dwTo").value = toLocalInput(to); dwInfo();
+}
+function dwWinnersSet(){ return new Set(adminItems.filter(m=>m.prize && m.account).map(m=>m.account.toLowerCase())); }
+function dwPool(){
+  const from = Date.parse($("#dwFrom").value), to = Date.parse($("#dwTo").value), onlyOk = $("#dwApproved").checked, won = dwWinnersSet();
+  return adminItems.filter(m=>{
+    const tm = Date.parse(m.time);
+    return !m.deleted && m.account && !won.has(m.account.toLowerCase()) && (!onlyOk || m.approved) && (isNaN(from) || tm >= from) && (isNaN(to) || tm <= to);
+  });
+}
+function dwInfo(){
+  const pool = dwPool(), people = new Set(pool.map(m=>m.account.toLowerCase()));
+  $("#dwInfo").innerHTML = esc(t("drawInfo",{n:pool.length, p:people.size, w:dwWinnersSet().size})).replace(/(\d+)/g,"<b>$1</b>");
+  $("#dwSpin").disabled = dwBusy || !pool.length;
+}
+function dwRenderWinners(){
+  const ul = $("#dwWinners"); ul.textContent = "";
+  const list = adminItems.filter(m=>m.prize).sort((a,b)=>(b.wonAt||0)-(a.wonAt||0));
+  if (!list.length){ ul.innerHTML = `<li class="a-empty">${esc(t("drawNoWinners"))}</li>`; return; }
+  list.forEach(m=>{
+    const li = document.createElement("li");
+    li.innerHTML = `<span class="pz">🎁 ${esc(m.prize)}</span><span><span class="ac">${esc(m.account)}</span> <small>· ${esc(recipient(m))} · ${esc(new Date(m.wonAt||Date.now()).toLocaleString("vi-VN"))}</small></span><button type="button">${esc(t("drawRemove"))}</button>`;
+    li.querySelector("button").onclick = ()=>dwSetPrize(m, "");
+    ul.appendChild(li);
+  });
+}
+async function dwSetPrize(m, prize){
+  const res = await api("adminSet", {id:m.id, prize, wonAt:Date.now()});
+  if (!res || !res.ok) throw new Error((res && res.error) || t("adminSaveError"));
+  m.prize = res.prize != null ? res.prize : prize; m.wonAt = res.wonAt || (prize ? Date.now() : 0);
+  dwRenderWinners(); dwInfo();
+  return true;
+}
+function dwConfetti(){
+  const box = $("#dwConfetti"), colors = ["#FFD15C","#ffffff","#FFC2CE","#7DE0A8","#8FC1FF"];
+  for (let i=0;i<70;i++){ const e = document.createElement("i"); e.style.left = (Math.random()*100)+"%"; e.style.background = colors[i%colors.length];
+    e.style.animationDelay = (Math.random()*.5)+"s"; e.style.animationDuration = (1.6+Math.random()*1.4)+"s"; box.appendChild(e); }
+  setTimeout(()=>{ box.textContent = ""; }, 3600);
+}
+const rnd = n => { const a = new Uint32Array(1); (window.crypto||{}).getRandomValues ? crypto.getRandomValues(a) : (a[0] = Math.floor(Math.random()*4294967296)); return a[0] % n; };
+async function dwSpin(){
+  const pool = dwPool(); if (!pool.length || dwBusy) return;
+  const prize = $("#dwPrize").value.trim() || t("drawPrizeDefault");
+  dwBusy = true; $("#dwSpin").disabled = true; $("#dwUndo").hidden = true;
+  const stage = $("#dwStage"); stage.classList.remove("won"); stage.classList.add("rolling");
+  $("#dwPrizeTag").textContent = prize; $("#dwTo2").textContent = ""; $("#dwText").textContent = "";
+  const winner = pool[rnd(pool.length)];
+  const names = pool.map(m=>m.account), t0 = performance.now(), dur = 4800;
+  await new Promise(done=>{
+    (function tick(){
+      const p = (performance.now() - t0) / dur;
+      if (p >= 1) return done();
+      $("#dwAcc").textContent = names[rnd(names.length)];
+      setTimeout(tick, 40 + Math.pow(p, 2.2) * 420);
+    })();
+  });
+  stage.classList.remove("rolling"); stage.classList.add("won");
+  $("#dwAcc").textContent = winner.account; $("#dwTo2").textContent = recipient(winner) + " · " + timeAgo(winner.time); $("#dwText").textContent = "“" + winner.text + "”";
+  dwConfetti();
+  try{ await dwSetPrize(winner, prize); dwLast = winner; $("#dwUndo").hidden = false; }
+  catch(e){ toast(e.message || t("adminSaveError")); }
+  dwBusy = false; dwInfo();
+}
+async function openDraw(){
+  if (!ADMIN_PIN) return openAdminGate();
+  if (!$("#dwPrize").value) $("#dwPrize").value = t("drawPrizeDefault");
+  openModal("#drawPanel");
+  $("#dwInfo").textContent = "…";
+  try{ const r = await api("adminList"); if (r.ok) adminItems = (r.items||[]).sort((a,b)=>String(b.time).localeCompare(String(a.time))); }catch(e){}
+  if (!$("#dwFrom").value) dwSetRange("all"); else dwInfo();
+  dwRenderWinners();
+}
+$$("#drawPanel [data-pre]").forEach(b=>b.onclick = ()=>dwSetRange(b.dataset.pre));
+["#dwFrom","#dwTo","#dwApproved"].forEach(q=>$(q).addEventListener("change", dwInfo));
+$("#dwSpin").onclick = dwSpin;
+$("#dwUndo").onclick = async ()=>{ if (!dwLast) return; try{ await dwSetPrize(dwLast, ""); $("#dwAcc").textContent = "?"; $("#dwTo2").textContent = ""; $("#dwText").textContent = ""; $("#dwStage").classList.remove("won"); $("#dwUndo").hidden = true; dwLast = null; toast(t("drawUndone")); }catch(e){ toast(e.message); } };
+$("#btnDraw").onclick = openDraw;
+
 function renderAdmin(){
   const isP = adminTab === "pin";
   $("#aPin").hidden = !isP;
   if (isP){
-    ["#aDepts","#aList","#aSrv",".a-search","#aShow","#dpSave"].forEach(q=>$(q).hidden = true);
+    ["#aDepts","#aList","#aSrv",".a-search","#aFilt","#aShow","#dpSave"].forEach(q=>$(q).hidden = true);
     $$("#aTabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===adminTab));
     $("#aInfo").textContent = "";
     pinLoad();
@@ -1857,16 +2058,16 @@ function renderAdmin(){
   const isS = adminTab === "srv";
   $("#aSrv").hidden = !isS;
   if (isS){
-    $("#aDepts").hidden = true; $("#aList").hidden = true; $(".a-search").hidden = true; $("#aShow").hidden = true; $("#dpSave").hidden = true;
+    $("#aDepts").hidden = true; $("#aList").hidden = true; $(".a-search").hidden = true; $("#aFilt").hidden = true; $("#aShow").hidden = true; $("#dpSave").hidden = true;
     $$("#aTabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===adminTab));
     $("#aInfo").textContent = t("adminServerInfo",{name:BACKEND_NAMES[CUR]||""});
-    { const live = adminItems.filter(m=>!m.deleted); $("#aCntPending").textContent = live.filter(m=>!m.approved).length; $("#aCntApproved").textContent = live.filter(m=>m.approved).length; $("#aCntFeatured").textContent = live.filter(m=>m.featured).length; $("#aCntTrash").textContent = adminItems.length - live.length; }
+    $("#aCntAll").textContent = adminItems.filter(m=>!m.deleted).length;
     if (dpRows) $("#aCntDepts").textContent = dpRows.length;
     svRender(); svCheck().then(()=>{ if (adminTab==="srv") svRender(); });
     return;
   }
   const isD = adminTab === "depts";
-  $("#aDepts").hidden = !isD; $("#aList").hidden = isD; $(".a-search").hidden = isD;
+  $("#aDepts").hidden = !isD; $("#aList").hidden = isD; $(".a-search").hidden = isD; $("#aFilt").hidden = isD;
   $("#aShow").hidden = isD; $("#dpSave").hidden = !isD;
   if (!dpRows) dpInit();
   $("#aCntDepts").textContent = dpRows.length;
@@ -1875,19 +2076,20 @@ function renderAdmin(){
     dpRender();
   }
   const live = adminItems.filter(m=>!m.deleted);
-  const c = { pending: live.filter(m=>!m.approved), approved: live.filter(m=>m.approved), featured: live.filter(m=>m.featured), trash: adminItems.filter(m=>m.deleted) };
-  $("#aCntPending").textContent = c.pending.length; $("#aCntApproved").textContent = c.approved.length; $("#aCntFeatured").textContent = c.featured.length; $("#aCntTrash").textContent = c.trash.length;
+  const c = { all: live, pending: live.filter(m=>!m.approved), approved: live.filter(m=>m.approved), featured: live.filter(m=>m.featured), won: adminItems.filter(m=>m.prize), trash: adminItems.filter(m=>m.deleted) };
+  $("#aCntAll").textContent = live.length;
+  if (!isD) renderFilters(c);
   $$("#aTabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===adminTab));
   $("#aInfo").textContent = t("adminInfo",{n:c.featured.length});
   $("#aShow").disabled = !c.featured.length;
   if (isD) return dpFoot();
   const q = norm($("#aQ").value);
-  const list = c[adminTab].filter(m=>!q || norm(m.text).includes(q) || norm(m.toName).includes(q) || norm(m.toDept).includes(q));
+  const list = (c[adminFilter] || c.all).filter(m=>!q || norm(m.text).includes(q) || norm(m.toName).includes(q) || norm(m.toDept).includes(q) || norm(m.account).includes(q));
   const ul = $("#aList"); ul.textContent = "";
   if (!list.length){ ul.innerHTML = `<li class="a-empty">${esc(t("adminEmpty"))}</li>`; return; }
   list.forEach(m=>{
     const li = document.createElement("li"); if (m.featured) li.className = "is-feat";
-    li.innerHTML = `<div class="a-meta">${miniIcon(m)}<b>${esc(recipient(m))}</b> · ${esc(timeAgo(m.time))}</div>
+    li.innerHTML = `<div class="a-meta">${miniIcon(m)}<b>${esc(recipient(m))}</b> · ${esc(timeAgo(m.time))}${m.account ? ` · <span class="a-acc">👤 ${esc(m.account)}</span>` : ""}${m.prize ? ` <span class="a-prize">🎁 ${esc(m.prize)}</span>` : ""}</div>
       <div class="a-text">${esc(m.text)}</div>
       <div class="a-acts">${m.deleted ? `<button class="rs">↺ ${esc(t("adminRestore"))}</button>` :
         `<button class="ap ${m.approved?"on":""}">${m.approved?"✓ ":""}${esc(t("adminApprove"))}</button><button class="ft ${m.featured?"on":""}">${m.featured?"★":"☆"} ${esc(t("adminFeature"))}</button><button class="dl">🗑 ${esc(t("adminDelete"))}</button>`}</div>`;
@@ -1906,6 +2108,7 @@ async function adminSet(m, change, li){
     const res = await api("adminSet", Object.assign({id:m.id}, change));
     if (!res.ok) throw new Error();
     m.approved = res.approved; m.featured = res.featured; if (typeof res.deleted === "boolean") m.deleted = res.deleted;
+    if (typeof res.prize === "string"){ m.prize = res.prize; m.wonAt = res.wonAt || 0; }
     renderAdmin(); refresh(true);
   }catch(e){ toast(t("adminSaveError")); li.querySelectorAll("button").forEach(b=>b.disabled = false); }
 }
@@ -1915,9 +2118,28 @@ $("#adminBtn").onclick = tryAdmin;
 $("#adminPin").addEventListener("keydown", e=>{ if (e.key==="Enter") tryAdmin(); });
 $("#gateAdmin").onclick = openAdminGate;
 $("#btnAdmin").onclick = openAdmin;
-$("#aLogout").onclick = ()=>{ ADMIN_PIN = ""; saveAdmin(""); $("#btnAdmin").hidden = true; closeModals(); };
+$("#aLogout").onclick = ()=>{ ADMIN_PIN = ""; saveAdmin(""); $("#btnAdmin").hidden = true; $("#btnDraw").hidden = true; closeModals(); };
 $("#aShow").onclick = ()=>{ refresh(true).then(()=>startShow("featured")); };
-if (ADMIN_PIN) $("#btnAdmin").hidden = false;
+if (ADMIN_PIN){ $("#btnAdmin").hidden = false; $("#btnDraw").hidden = false; }
+
+/* căn chân chữ "Chào mừng sinh nhật…" thẳng với chân chữ VINROBOTICS trong logo
+   (chữ trong logo nằm từ 34% đến 81% chiều cao ảnh logo) */
+function alignTitle(){
+  const tt = $(".h-title"), logo = $("header .logo-img");
+  if (!tt || !logo) return;
+  tt.style.transform = "";
+  const lr = logo.getBoundingClientRect(), tr = tt.getBoundingClientRect();
+  if (!lr.height || tr.top > lr.bottom || tr.bottom < lr.top) return;   // tiêu đề nằm hàng khác (điện thoại)
+  const probe = document.createElement("span"); probe.style.cssText = "display:inline-block;width:0;height:0;vertical-align:baseline";
+  tt.appendChild(probe); const baseline = probe.getBoundingClientRect().top; probe.remove();
+  const target = lr.top + lr.height * (23.46 / 29);
+  tt.style.transform = `translateY(${(target - baseline).toFixed(1)}px)`;
+}
+alignTitle();
+addEventListener("resize", alignTitle);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(alignTitle);
+$(".logo-img") && $("header .logo-img").addEventListener("load", alignTitle);
+setTimeout(alignTitle, 1500);
 
 if (PIN) start(); else showGate();
 if (location.hash === "#admin") (ADMIN_PIN ? openAdmin : openAdminGate)();

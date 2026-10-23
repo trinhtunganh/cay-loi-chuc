@@ -19,6 +19,7 @@ const crypto = require('crypto');
 const TYPES = { company: 'Cả công ty', dept: 'Phòng ban', person: 'Đồng nghiệp' };
 const DEFAULTS = { PIN: 'VinRobotics2026', ADMIN_PIN: 'VRAdmin2026', AUTO_APPROVE: 'true' };
 const MAX_TEXT = 500, MAX_NAME = 60;
+const ACCOUNT_RE = /^[A-Za-z0-9._@\-]{2,60}$/;
 const LIST_TTL = 10e3, CFG_TTL = 30e3;
 const FAIL_MAX = 15, FAIL_WINDOW = 10 * 60e3;   // sai PIN quá 15 lần/10 phút trên 1 địa chỉ IP thì chặn IP đó
 
@@ -65,7 +66,8 @@ function createCore(tables, env = process.env, deps = {}) {
     id: e.rowKey, time: e.time, toType: TYPES[e.toType] ? e.toType : 'company',
     toDept: e.toDept || '', toName: e.toName || '', text: e.text || '',
     approved: e.approved === true, featured: e.featured === true,
-    updated: Number(e.updatedS) || Date.parse(e.time) || 0, deleted: e.deleted === true
+    updated: Number(e.updatedS) || Date.parse(e.time) || 0, deleted: e.deleted === true,
+    account: e.account || '', prize: e.prize || '', wonAt: Number(e.wonAtS) || 0
   });
   const publicItem = m => ({ id: m.id, time: m.time, toType: m.toType, toDept: m.toDept, toName: m.toName, text: m.text, approved: m.approved, featured: m.featured });
   async function all() {
@@ -103,12 +105,14 @@ function createCore(tables, env = process.env, deps = {}) {
     if (toType === 'dept' && !toDept) return { ok: false, error: 'Vui lòng chọn phòng ban.' };
     if (toType === 'person' && !toName) return { ok: false, error: 'Vui lòng nhập tên người nhận.' };
     if (text.length < 5) return { ok: false, error: 'Lời chúc cần ít nhất 5 ký tự.' };
+    const account = clean(b.account, MAX_NAME);
+    if (!ACCOUNT_RE.test(account)) return { ok: false, error: 'Vui lòng nhập Account VGR hợp lệ (không dấu, không khoảng trắng).' };
     const ok = setting('AUTO_APPROVE').toLowerCase() === 'true';
     const id = crypto.randomBytes(4).toString('hex');
     await wishes.createEntity({
       partitionKey: 'w', rowKey: id, time: new Date().toISOString(), toType,
       toDept: toType === 'company' ? '' : toDept, toName: toType === 'person' ? toName : '',
-      text, approved: ok, featured: false, updatedS: stamp(Date.now()), deleted: false
+      text, approved: ok, featured: false, updatedS: stamp(Date.now()), deleted: false, account, prize: '', wonAtS: ''
     });
     if (ok) listCache = null;
     return { ok: true, id, approved: ok };
@@ -123,11 +127,12 @@ function createCore(tables, env = process.env, deps = {}) {
     if (typeof b.featured === 'boolean') { p.featured = b.featured; if (b.featured) p.approved = true; }
     if (typeof b.approved === 'boolean') { p.approved = b.approved; if (!b.approved) p.featured = false; }
     if (typeof b.deleted === 'boolean') { p.deleted = b.deleted; if (b.deleted) p.featured = false; }
+    if (typeof b.prize === 'string') { const pz = clean(b.prize, MAX_NAME); p.prize = pz; p.wonAtS = pz ? stamp(Number(b.wonAt) || Date.now()) : ''; }
     p.updatedS = stamp(Date.now());
     await wishes.updateEntity(p, 'Merge');
     listCache = null;
     const pick = k => (p[k] != null ? p[k] : e[k] === true);
-    return { ok: true, approved: pick('approved'), featured: pick('featured'), deleted: pick('deleted') };
+    return { ok: true, approved: pick('approved'), featured: pick('featured'), deleted: pick('deleted'), prize: p.prize != null ? p.prize : (e.prize || ''), wonAt: Number(p.wonAtS != null ? p.wonAtS : e.wonAtS) || 0 };
   }
 
   async function setDepts(b) {
@@ -169,7 +174,8 @@ function createCore(tables, env = process.env, deps = {}) {
     partitionKey: 'w', rowKey: String(m.id), time: String(m.time || new Date().toISOString()),
     toType: TYPES[m.toType] ? m.toType : 'company', toDept: clean(m.toDept, MAX_NAME), toName: clean(m.toName, MAX_NAME),
     text: clean(m.text, MAX_TEXT), approved: m.approved === true, featured: m.featured === true,
-    updatedS: stamp(m.updated), deleted: m.deleted === true
+    updatedS: stamp(m.updated), deleted: m.deleted === true,
+    account: clean(m.account, MAX_NAME), prize: clean(m.prize, MAX_NAME), wonAtS: Number(m.wonAt) ? stamp(m.wonAt) : ''
   });
   const settingsOf = c => ({
     DEPARTMENTS: { v: c.DEPARTMENTS || '', at: Number(c.DEPARTMENTS_AT || 0) },
