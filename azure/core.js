@@ -60,6 +60,12 @@ function createCore(tables, env = process.env, deps = {}) {
     try { const a = JSON.parse(v || 'null'); return Array.isArray(a) && a.length ? a : null; } catch (e) { return null; }
   }
   async function active() { return (await getCfg()).ACTIVE || null; }
+  async function anonMode() { return (await getCfg()).ANON === 'true'; }
+  async function setAnon(b) {
+    if (typeof b.anon !== 'boolean') return { ok: false, error: 'Giá trị không hợp lệ.' };
+    await setCfgStamped('ANON', String(b.anon));
+    return { ok: true, anon: b.anon };
+  }
 
   const stamp = n => String(Math.max(0, Math.floor(Number(n) || 0))).padStart(15, '0');
   const toItem = e => ({
@@ -86,7 +92,7 @@ function createCore(tables, env = process.env, deps = {}) {
   /* chỉ gửi phần thay đổi: không đổi → {same}, chỉ thêm mới → phần mới, còn lại → cả danh sách */
   async function listDelta(b) {
     const items = await approved(), ver = hashItems(items);
-    const out = { ok: true, ver, depts: await depts(), active: await active() };
+    const out = { ok: true, ver, depts: await depts(), active: await active(), anon: await anonMode() };
     const since = String(b.since || ''), after = String(b.after || '');
     if (since && since === ver) { out.same = true; return out; }
     if (since && after) {
@@ -105,8 +111,9 @@ function createCore(tables, env = process.env, deps = {}) {
     if (toType === 'dept' && !toDept) return { ok: false, error: 'Vui lòng chọn phòng ban.' };
     if (toType === 'person' && !toName) return { ok: false, error: 'Vui lòng nhập tên người nhận.' };
     if (text.length < 5) return { ok: false, error: 'Lời chúc cần ít nhất 5 ký tự.' };
-    const account = clean(b.account, MAX_NAME);
-    if (!ACCOUNT_RE.test(account)) return { ok: false, error: 'Vui lòng nhập Account VGR hợp lệ (không dấu, không khoảng trắng).' };
+    const anon = await anonMode();   // chế độ ẩn danh: không nhận, không lưu account
+    const account = anon ? '' : clean(b.account, MAX_NAME);
+    if (!anon && !ACCOUNT_RE.test(account)) return { ok: false, error: 'Vui lòng nhập Account VGR hợp lệ (không dấu, không khoảng trắng).' };
     const ok = setting('AUTO_APPROVE').toLowerCase() === 'true';
     const id = crypto.randomBytes(4).toString('hex');
     await wishes.createEntity({
@@ -204,7 +211,8 @@ function createCore(tables, env = process.env, deps = {}) {
     DEPARTMENTS: { v: c.DEPARTMENTS || '', at: Number(c.DEPARTMENTS_AT || 0) },
     ACTIVE: { v: c.ACTIVE || '', at: Number(c.ACTIVE_AT || 0) },
     PIN: { v: c.PIN || '', at: Number(c.PIN_AT || 0) },
-    ADMIN_PIN: { v: c.ADMIN_PIN || '', at: Number(c.ADMIN_PIN_AT || 0) }
+    ADMIN_PIN: { v: c.ADMIN_PIN || '', at: Number(c.ADMIN_PIN_AT || 0) },
+    ANON: { v: c.ANON || '', at: Number(c.ANON_AT || 0) }
   });
   let syncing = null;
   function sync() { return syncing || (syncing = runSync().finally(() => { syncing = null; })); }
@@ -241,7 +249,7 @@ function createCore(tables, env = process.env, deps = {}) {
         }
       }
       const gs = dump.settings || {}, ls = settingsOf(cfg);
-      for (const k of ['DEPARTMENTS', 'ACTIVE', 'PIN', 'ADMIN_PIN']) {
+      for (const k of ['DEPARTMENTS', 'ACTIVE', 'PIN', 'ADMIN_PIN', 'ANON']) {
         const v = gs[k];
         if (v && v.v && Number(v.at) > ls[k].at) { await setCfgStamped(k, v.v, Number(v.at)); ls[k] = { v: v.v, at: Number(v.at) }; }
       }
@@ -293,17 +301,18 @@ function createCore(tables, env = process.env, deps = {}) {
     try {
       await ensure();
       switch (action) {
-        case 'verify':        return { ok: true, active: await active() };
+        case 'verify':        return { ok: true, active: await active(), anon: await anonMode() };
         case 'list':          return await listDelta(body);
         case 'submit':        return await submit(body);
-        case 'adminVerify':   return { ok: true, active: await active() };
-        case 'adminList':     return { ok: true, items: await all(), depts: await depts(), active: await active(), sync: await syncStatus(), staffPin: setting('PIN') };
+        case 'adminVerify':   return { ok: true, active: await active(), anon: await anonMode() };
+        case 'adminList':     return { ok: true, items: await all(), depts: await depts(), active: await active(), anon: await anonMode(), sync: await syncStatus(), staffPin: setting('PIN') };
         case 'adminSetPins':  return await setPins(body);
         case 'adminSyncNow':  return Object.assign(await sync(), { sync: await syncStatus() });
         case 'adminSet':      return await adminSet(body);
         case 'adminPurge':    return await adminPurge(body);
         case 'adminSetDepts': return await setDepts(body);
         case 'adminSetActive':return await setActive(body);
+        case 'adminSetAnon':  return await setAnon(body);
         default:              return { ok: false, error: 'Thao tác không hợp lệ.' };
       }
     } catch (err) {

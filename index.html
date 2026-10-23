@@ -315,6 +315,16 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 .a-tabs button.on{border-color:var(--brand);background:var(--brand-tint);color:var(--brand-dark);font-weight:500}
 .a-tabs button.on b{background:var(--brand);color:#fff}
 .a-search{margin-bottom:10px}
+.a-anon{display:flex;align-items:center;gap:14px;justify-content:space-between;border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin:0 0 10px;background:#fff}
+.a-anon.on{background:#F4F1FA;border-color:#CDBFE8}
+.a-anon b{display:block;font-size:14.5px}
+.a-anon small{display:block;color:var(--muted);font-size:12.5px;line-height:1.45;margin-top:2px}
+.sw{flex:none;width:48px;height:28px;border-radius:999px;border:0;background:#D9CFD1;position:relative;cursor:pointer;transition:background .2s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);transition:transform .2s}
+.sw[aria-checked="true"]{background:#6B4FB8}
+.sw[aria-checked="true"]::after{transform:translateX(20px)}
+.sw:disabled{opacity:.5;cursor:wait}
+body.anon #accField{display:none}
 .a-list{list-style:none;margin:0;padding:0 4px 0 0;overflow:auto;flex:1;min-height:0}
 .a-list li{display:grid;grid-template-columns:1fr auto;gap:6px 16px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;margin-bottom:8px;background:#fff}
 .a-list li.is-feat{border-color:#F2C46B;background:#FFFBF0}
@@ -607,8 +617,8 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
     <div id="sendForm">
       <h2 id="sendTitle" data-t="formTitle"></h2>
       <p class="sub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
-        <span data-t="formPrivacy"></span></p>
-      <div class="field">
+        <span id="formPrivacy" data-t="formPrivacy"></span></p>
+      <div class="field" id="accField">
         <label class="lbl" for="acc" data-t="accLabel"></label>
         <input type="text" id="acc" maxlength="60" autocomplete="username" autocapitalize="off" spellcheck="false" data-ph="accPlaceholder">
         <div class="hint"><span data-t="accHint"></span></div>
@@ -768,6 +778,7 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
       <ul class="dp-list" id="dpList"></ul>
       <button class="dp-add" id="dpAdd" type="button" data-t="adminDeptAdd"></button>
     </div>
+    <div class="a-anon" id="aAnon"><div><b>🕶 <span data-t="adminAnon"></span></b><small id="aAnonTxt"></small></div><button type="button" class="sw" id="aAnonSw" role="switch" aria-checked="false" aria-label="Chế độ ẩn danh"></button></div>
     <div class="a-filt" id="aFilt"></div>
     <div class="f-search a-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="aQ" type="search" data-ph="adminSearch" autocomplete="off"></div>
     <ul class="a-list" id="aList"></ul>
@@ -908,7 +919,24 @@ function applyTexts(){
 let PIN = load("cta_pin") || "";
 let ADMIN_PIN = (()=>{ try{ return sessionStorage.getItem("cta_admin") || ""; }catch(e){ return ""; } })();
 function saveAdmin(v){ try{ v ? sessionStorage.setItem("cta_admin", v) : sessionStorage.removeItem("cta_admin"); }catch(e){} }
+/* chế độ ẩn danh do Ban tổ chức bật/tắt; máy chủ báo kèm trong mọi phản hồi */
+let ANON = (()=>{ const v = load("cta_anon"); return v ? v === "1" : CFG.anonymous === true; })();
+function setAnonMode(v){
+  v = v === true;
+  const changed = v !== ANON; ANON = v; save("cta_anon", v ? "1" : "0");
+  document.body.classList.toggle("anon", v);
+  const fp = $("#formPrivacy"); if (fp){ fp.dataset.t = v ? "formPrivacyAnon" : "formPrivacy"; fp.textContent = t(fp.dataset.t); }
+  const sw = $("#aAnonSw"); if (sw) sw.setAttribute("aria-checked", String(v));
+  const box = $("#aAnon"); if (box) box.classList.toggle("on", v);
+  const tx = $("#aAnonTxt"); if (tx) tx.textContent = t(v ? "adminAnonOn" : "adminAnonOff");
+  if (changed && $("#drawPanel").classList.contains("show") && typeof dwInfo === "function") dwInfo();
+}
 async function api(action, data={}, which){
+  const res = await apiRaw(action, data, which);
+  if (res && typeof res.anon === "boolean" && (!which || which === CUR)) setAnonMode(res.anon);
+  return res;
+}
+async function apiRaw(action, data={}, which){
   if (PREVIEW) return previewApi(action, data);
   const url = BACKENDS[which || CUR];
   /* quá 20 giây không phản hồi thì bỏ, để cơ chế thử lại tự chạy thay vì treo mãi */
@@ -956,9 +984,10 @@ function previewApi(action, data){
     Object.keys(data.renames||{}).forEach(o=>sample.forEach(m=>{ if (m.toDept===o) m.toDept = data.renames[o]; }));
     save("cta_prev_depts", JSON.stringify(data.depts)); return Promise.resolve({ok:true, depts:data.depts});
   }
-  if (action==="verify" || action==="adminVerify") return Promise.resolve({ok:true});
-  if (action==="list") return Promise.resolve({ok:true, items: pub().map(m=>Object.assign({}, m)), depts: pDepts()});
-  if (action==="adminList") return Promise.resolve({ok:true, items: sample.map(m=>Object.assign({}, m)), depts: pDepts()});
+  if (action==="verify" || action==="adminVerify") return Promise.resolve({ok:true, anon:ANON});
+  if (action==="list") return Promise.resolve({ok:true, items: pub().map(m=>Object.assign({}, m)), depts: pDepts(), anon:ANON});
+  if (action==="adminList") return Promise.resolve({ok:true, items: sample.map(m=>Object.assign({}, m)), depts: pDepts(), anon:ANON});
+  if (action==="adminSetAnon") return Promise.resolve({ok:true, anon:data.anon === true});
   if (action==="adminSet"){
     const m = sample.find(x=>x.id===data.id); if (!m) return Promise.resolve({ok:false});
     if (typeof data.featured === "boolean"){ m.featured = data.featured; if (data.featured) m.approved = true; }
@@ -974,7 +1003,7 @@ function previewApi(action, data){
   }
   if (action==="submit"){
     const m = { id:"p"+Date.now(), time:new Date().toISOString(), toType:data.toType,
-      toDept: data.toType==="company" ? "" : data.toDept, toName: data.toType==="person" ? data.toName : "", text:data.text, approved:true, featured:false };
+      toDept: data.toType==="company" ? "" : data.toDept, toName: data.toType==="person" ? data.toName : "", text:data.text, approved:true, featured:false, account: ANON ? "" : (data.account||"") };
     sample.push(m); return Promise.resolve({ok:true, id:m.id});
   }
 }
@@ -1560,7 +1589,7 @@ function syncType(){
     box.appendChild(b); });
 }
 $("#msg").addEventListener("input", ()=>{ $("#msgCount").textContent = $("#msg").value.length + "/500"; });
-function openSend(){ if (!$("#acc").value) $("#acc").value = load("cta_acc") || ""; $("#sendForm").hidden=false; $("#sendDone").hidden=true; $("#sendErr").textContent=""; hideCard(); openModal("#sendModal"); setTimeout(()=>($("#acc").value ? $("#msg") : $("#acc")).focus(),60); }
+function openSend(){ if (!$("#acc").value) $("#acc").value = load("cta_acc") || ""; $("#sendForm").hidden=false; $("#sendDone").hidden=true; $("#sendErr").textContent=""; hideCard(); openModal("#sendModal"); setTimeout(()=>($("#acc").value || ANON ? $("#msg") : $("#acc")).focus(),60); }
 $$(".js-send").forEach(b=>b.onclick = openSend);
 $("#sendAgain").onclick = ()=>{ $("#sendForm").hidden=false; $("#sendDone").hidden=true; $("#msg").focus(); };
 $("#shareBtn").onclick = async ()=>{
@@ -1571,9 +1600,11 @@ $("#shareBtn").onclick = async ()=>{
 };
 $("#sendBtn").onclick = async ()=>{
   const toType = document.querySelector("input[name=toType]:checked").value;
-  const data = { toType, toDept: $("#toDept").value, toName: $("#toName").value.trim(), text: $("#msg").value.trim(), account: $("#acc").value.trim() };
-  if (!/^[A-Za-z0-9._@\-]{2,60}$/.test(data.account)){ $("#acc").focus(); return $("#sendErr").textContent = t("errAccount"); }
-  save("cta_acc", data.account);
+  const data = { toType, toDept: $("#toDept").value, toName: $("#toName").value.trim(), text: $("#msg").value.trim(), account: ANON ? "" : $("#acc").value.trim() };
+  if (!ANON){
+    if (!/^[A-Za-z0-9._@\-]{2,60}$/.test(data.account)){ $("#acc").focus(); return $("#sendErr").textContent = t("errAccount"); }
+    save("cta_acc", data.account);
+  }
   if (toType==="person" && !data.toName) return $("#sendErr").textContent = t("errName");
   if (data.text.length < 5) return $("#sendErr").textContent = t("errShort");
   const btn = $("#sendBtn"); btn.disabled = true; btn.textContent = t("btnSubmitting"); $("#sendErr").textContent="";
@@ -1764,7 +1795,7 @@ function start(){
 
 /* ---------- khởi động ---------- */
 if (PREVIEW) document.body.classList.add("preview");
-applyTexts(); buildLeafGradients(); setupScene(); buildGrass(); buildLegend(); syncType(); setupCountdown(); setupPetals();
+applyTexts(); setAnonMode(ANON); buildLeafGradients(); setupScene(); buildGrass(); buildLegend(); syncType(); setupCountdown(); setupPetals();
 drawTree(STAGES[0]); currentStage = STAGES[0]; renderLeaves();
 /* ---------- quản trị ---------- */
 let adminItems = [], adminTab = "list", adminFilter = "all";
@@ -2002,6 +2033,7 @@ function dwInfo(){
   if (noAcc) why.push(t("drawNoAcc",{n:noAcc}));
   if (notOk) why.push(t("drawNotApproved",{n:notOk}));
   if (!inRange.length) why.push(t("drawNoneInRange"));
+  if (ANON) why.unshift(t("drawAnonWarn"));
   if (why.length) html += `<br><span class="dw-why">${esc(why.join(" "))}</span>`;
   $("#dwInfo").innerHTML = html;
   $("#dwSpin").disabled = dwBusy || !pool.length;
@@ -2113,7 +2145,7 @@ function renderAdmin(){
   const isP = adminTab === "pin";
   $("#aPin").hidden = !isP;
   if (isP){
-    ["#aDepts","#aList","#aSrv",".a-search","#aFilt","#aShow","#dpSave"].forEach(q=>$(q).hidden = true);
+    ["#aDepts","#aList","#aSrv",".a-search","#aFilt","#aShow","#dpSave","#aAnon"].forEach(q=>$(q).hidden = true);
     $$("#aTabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===adminTab));
     $("#aInfo").textContent = "";
     pinLoad();
@@ -2122,7 +2154,7 @@ function renderAdmin(){
   const isS = adminTab === "srv";
   $("#aSrv").hidden = !isS;
   if (isS){
-    $("#aDepts").hidden = true; $("#aList").hidden = true; $(".a-search").hidden = true; $("#aFilt").hidden = true; $("#aShow").hidden = true; $("#dpSave").hidden = true;
+    $("#aDepts").hidden = true; $("#aList").hidden = true; $(".a-search").hidden = true; $("#aFilt").hidden = true; $("#aShow").hidden = true; $("#dpSave").hidden = true; $("#aAnon").hidden = true;
     $$("#aTabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===adminTab));
     $("#aInfo").textContent = t("adminServerInfo",{name:BACKEND_NAMES[CUR]||""});
     $("#aCntAll").textContent = adminItems.filter(m=>!m.deleted).length;
@@ -2131,7 +2163,7 @@ function renderAdmin(){
     return;
   }
   const isD = adminTab === "depts";
-  $("#aDepts").hidden = !isD; $("#aList").hidden = isD; $(".a-search").hidden = isD; $("#aFilt").hidden = isD;
+  $("#aDepts").hidden = !isD; $("#aList").hidden = isD; $(".a-search").hidden = isD; $("#aFilt").hidden = isD; $("#aAnon").hidden = isD;
   $("#aShow").hidden = isD; $("#dpSave").hidden = !isD;
   if (!dpRows) dpInit();
   $("#aCntDepts").textContent = dpRows.length;
@@ -2195,6 +2227,18 @@ async function adminPurge(m, li, btn){
     renderAdmin(); toast(t("adminPurged"));
   }catch(e){ toast(e.message || t("adminSaveError")); li.querySelectorAll("button").forEach(b=>b.disabled = false); btn.classList.remove("arm"); btn.textContent = "✕ " + t("adminPurge"); }
 }
+$("#aAnonSw").onclick = async ()=>{
+  const sw = $("#aAnonSw"), want = !ANON; sw.disabled = true;
+  try{
+    const res = await api("adminSetAnon", {anon: want});
+    if (!res || !res.ok) throw new Error(res && res.error === "Thao tác không hợp lệ." ? t("adminAnonOld") : (res && res.error) || t("adminSaveError"));
+    setAnonMode(res.anon);
+    /* máy chủ còn lại: cập nhật luôn để khi tự chuyển máy chủ vẫn giống nhau (đồng bộ cũng sẽ làm việc này) */
+    Object.keys(BACKENDS).filter(k=>k !== CUR).forEach(k=>{ apiRaw("adminSetAnon", {anon: want}, k).catch(()=>{}); });
+    toast(t(res.anon ? "toastAnonOn" : "toastAnonOff"));
+  }catch(e){ toast(e.message || t("adminSaveError")); }
+  finally{ sw.disabled = false; }
+};
 $$("#aTabs button").forEach(b=>b.onclick = ()=>{ adminTab = b.dataset.tab; renderAdmin(); });
 $("#aQ").addEventListener("input", renderAdmin);
 $("#adminBtn").onclick = tryAdmin;

@@ -9,6 +9,7 @@
  *     ADMIN_PIN     mã PIN riêng của Ban tổ chức để duyệt và chọn lời chúc tiêu biểu
  *     DEPARTMENTS   danh sách phòng ban (JSON), tự lưu khi Ban tổ chức sửa trong trang Quản trị
  *     ACTIVE        máy chủ cả công ty đang dùng (google/azure), đổi trong Quản trị → Máy chủ
+ *     ANON          true = chế độ ẩn danh (không hỏi Account VGR), đổi trong Quản trị → Lời chúc
  *     SYNC_KEY      khóa bí mật dùng chung với máy chủ Azure để 2 máy chủ đồng bộ dữ liệu
  * - Sheet tự được tạo ở lần chạy đầu tiên, không cần chuẩn bị gì.
  */
@@ -75,14 +76,15 @@ function doPost(e) {
 
   try {
     switch (body.action) {
-      case 'adminVerify': return json({ ok: true, active: activeBackend() });
-      case 'adminList':   return json({ ok: true, items: listAll(), depts: getDepts(), active: activeBackend(), staffPin: prop('PIN') });
+      case 'adminVerify': return json({ ok: true, active: activeBackend(), anon: anonMode() });
+      case 'adminList':   return json({ ok: true, items: listAll(), depts: getDepts(), active: activeBackend(), anon: anonMode(), staffPin: prop('PIN') });
       case 'adminSetPins': return json(setPins(body));
       case 'adminSet':    return json(adminSet(body));
       case 'adminPurge':  return json(adminPurge(body));
       case 'adminSetDepts': return json(setDepts(body));
       case 'adminSetActive': return json(setActive(body));
-      case 'verify': return json({ ok: true, active: activeBackend() });
+      case 'adminSetAnon': return json(setAnon(body));
+      case 'verify': return json({ ok: true, active: activeBackend(), anon: anonMode() });
       case 'list':   return json(listDelta(body));
       case 'submit': return json(submit(body));
       default:       return json({ ok: false, error: 'Thao tác không hợp lệ.' });
@@ -125,7 +127,7 @@ function listApproved() {
 function listDelta(body) {
   const items = listApproved();
   const ver = hashItems(items);
-  const out = { ok: true, ver: ver, depts: getDepts(), active: activeBackend() };
+  const out = { ok: true, ver: ver, depts: getDepts(), active: activeBackend(), anon: anonMode() };
   const since = String(body.since || ''), after = String(body.after || '');
   if (since && since === ver) { out.same = true; return out; }
   if (since && after) {
@@ -162,8 +164,9 @@ function submit(body) {
   if (toType === 'dept' && !toDept) return { ok: false, error: 'Vui lòng chọn phòng ban.' };
   if (toType === 'person' && !toName) return { ok: false, error: 'Vui lòng nhập tên người nhận.' };
   if (text.length < 5) return { ok: false, error: 'Lời chúc cần ít nhất 5 ký tự.' };
-  const account = clean(body.account, MAX_NAME);
-  if (!ACCOUNT_RE.test(account)) return { ok: false, error: 'Vui lòng nhập Account VGR hợp lệ (không dấu, không khoảng trắng).' };
+  const anon = anonMode();   // chế độ ẩn danh: không nhận, không lưu account
+  const account = anon ? '' : clean(body.account, MAX_NAME);
+  if (!anon && !ACCOUNT_RE.test(account)) return { ok: false, error: 'Vui lòng nhập Account VGR hợp lệ (không dấu, không khoảng trắng).' };
 
   const approved = prop('AUTO_APPROVE').toLowerCase() === 'true';
   /* appendRow của Google Sheet tự đảm bảo không ghi đè khi nhiều người gửi cùng lúc,
@@ -347,6 +350,15 @@ function setActive(body) {
   return { ok: true, active: v };
 }
 
+/** Chế độ ẩn danh (ANON=true): người gửi không cần nhập Account VGR và account không được lưu. */
+function anonMode() { return allProps().ANON === 'true'; }
+function setAnon(body) {
+  if (typeof body.anon !== 'boolean') return { ok: false, error: 'Giá trị không hợp lệ.' };
+  PropertiesService.getScriptProperties().setProperties({ ANON: String(body.anon), ANON_AT: String(Date.now()) });
+  CacheService.getScriptCache().remove('props');
+  return { ok: true, anon: body.anon };
+}
+
 /** Quản trị: đổi mã PIN nhân viên và/hoặc PIN quản trị. Có hiệu lực ngay. */
 function setPins(body) {
   const pin = String(body.newPin || '').trim(), ap = String(body.newAdminPin || '').trim();
@@ -370,7 +382,8 @@ function peerSettings(p) {
     DEPARTMENTS: { v: p.DEPARTMENTS || '', at: Number(p.DEPARTMENTS_AT || 0) },
     ACTIVE: { v: p.ACTIVE || '', at: Number(p.ACTIVE_AT || 0) },
     PIN: { v: p.PIN || '', at: Number(p.PIN_AT || 0) },
-    ADMIN_PIN: { v: p.ADMIN_PIN || '', at: Number(p.ADMIN_PIN_AT || 0) }
+    ADMIN_PIN: { v: p.ADMIN_PIN || '', at: Number(p.ADMIN_PIN_AT || 0) },
+    ANON: { v: p.ANON || '', at: Number(p.ANON_AT || 0) }
   };
 }
 function peerDump(body) {
@@ -417,7 +430,7 @@ function peerUpsert(body) {
     }
     /* cài đặt: bên nào đổi sau thì thắng */
     const s = body.settings || {}, props = PropertiesService.getScriptProperties(), cur = peerSettings(props.getProperties()), upd = {};
-    ['DEPARTMENTS', 'ACTIVE', 'PIN', 'ADMIN_PIN'].forEach(k => {
+    ['DEPARTMENTS', 'ACTIVE', 'PIN', 'ADMIN_PIN', 'ANON'].forEach(k => {
       const v = s[k];
       if (v && Number(v.at) > cur[k].at && typeof v.v === 'string' && v.v) { upd[k] = v.v; upd[k + '_AT'] = String(Number(v.at)); }
     });
