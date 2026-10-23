@@ -275,7 +275,9 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 .dp{display:flex;flex-direction:column;flex:1;min-height:0}
 .sv{display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto}
 .pn{display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto}
-.pn-box{display:flex;flex-direction:column;gap:8px;max-width:460px;border:1px solid var(--line);border-radius:16px;padding:16px 18px;background:#fff}
+.pn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;align-items:start}
+.pn-h{margin:0;font-size:16px} .pn-sub{margin:0 0 4px;font-size:13px;color:var(--muted);line-height:1.5}
+.pn-box{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:16px;padding:16px 18px;background:#fff}
 .pn-box input{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:15px}
 .pn-box input:focus{outline:none;border-color:var(--brand)}
 .pn-box .lbl{margin-top:6px}
@@ -645,15 +647,25 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
     </div>
     <div class="pn" id="aPin" hidden>
       <p class="dp-hint" data-t="adminPinHint"></p>
-      <div class="pn-box">
-        <div class="pn-cur"><span data-t="adminPinCurrent"></span> <b id="pnCur">…</b></div>
-        <label class="lbl" for="pnStaff" data-t="adminPinStaff"></label>
-        <input id="pnStaff" type="text" maxlength="40" autocomplete="off" data-ph="adminPinStaffPh">
-        <label class="lbl" for="pnAdmin" data-t="adminPinAdmin"></label>
-        <input id="pnAdmin" type="password" maxlength="60" autocomplete="new-password" data-ph="adminPinAdminPh">
-        <input id="pnAdmin2" type="password" maxlength="60" autocomplete="new-password" data-ph="adminPinAdmin2Ph">
-        <p class="pn-err" id="pnErr"></p>
-        <button class="btn primary" id="pnSave" type="button" data-t="adminPinSave"></button>
+      <div class="pn-grid">
+        <div class="pn-box">
+          <h3 class="pn-h" data-t="adminPinStaffTitle"></h3>
+          <p class="pn-sub" data-t="adminPinStaffSub"></p>
+          <div class="pn-cur"><span data-t="adminPinCurrent"></span> <b id="pnCur">…</b></div>
+          <label class="lbl" for="pnStaff" data-t="adminPinStaff"></label>
+          <input id="pnStaff" type="text" maxlength="40" autocomplete="off" data-ph="adminPinStaffPh">
+          <p class="pn-err" id="pnErrS"></p>
+          <button class="btn primary" id="pnSaveS" type="button" data-t="adminPinSaveStaff"></button>
+        </div>
+        <div class="pn-box">
+          <h3 class="pn-h" data-t="adminPinAdminTitle"></h3>
+          <p class="pn-sub" data-t="adminPinAdminSub"></p>
+          <label class="lbl" for="pnAdmin" data-t="adminPinAdmin"></label>
+          <input id="pnAdmin" type="password" maxlength="60" autocomplete="new-password" data-ph="adminPinAdminPh">
+          <input id="pnAdmin2" type="password" maxlength="60" autocomplete="new-password" data-ph="adminPinAdmin2Ph">
+          <p class="pn-err" id="pnErrA"></p>
+          <button class="btn primary" id="pnSaveA" type="button" data-t="adminPinSaveAdmin"></button>
+        </div>
       </div>
     </div>
     <div class="sv" id="aSrv" hidden>
@@ -1801,30 +1813,37 @@ async function pinLoad(){
   $("#pnCur").textContent = staffPin || "…";
   try{ const r = await api("adminList"); if (r.ok && r.staffPin){ staffPin = r.staffPin; $("#pnCur").textContent = staffPin; } }catch(e){}
 }
-$("#pnSave").onclick = async ()=>{
-  const pin = $("#pnStaff").value.trim(), ap = $("#pnAdmin").value.trim(), ap2 = $("#pnAdmin2").value.trim(), err = $("#pnErr");
+/* đổi 1 loại PIN: ghi lên cả 2 máy chủ cùng một mốc thời gian, máy chủ đang dùng trước */
+async function savePin(kind){
+  const isA = kind === "admin", err = $(isA ? "#pnErrA" : "#pnErrS"), btn = $(isA ? "#pnSaveA" : "#pnSaveS");
+  const val = (isA ? $("#pnAdmin") : $("#pnStaff")).value.trim();
   err.textContent = "";
-  if (!pin && !ap) return err.textContent = t("adminPinNone");
-  if (pin && (pin.length < 4 || pin.length > 40)) return err.textContent = t("adminPinStaffBad");
-  if (ap && ap.length < 8) return err.textContent = t("adminPinAdminBad");
-  if (ap && ap !== ap2) return err.textContent = t("adminPinMismatch");
-  if ((pin || staffPin) && (pin || staffPin) === (ap || ADMIN_PIN)) return err.textContent = t("adminPinSame");
-  const btn = $("#pnSave"); btn.disabled = true; btn.textContent = t("adminPinSaving");
-  /* ghi lên cả 2 máy chủ cùng một mốc thời gian; máy chủ chính trước */
-  const at = Date.now(), order = [CUR].concat(Object.keys(BACKENDS).filter(k=>k!==CUR)), res = {};
-  for (const k of (PREVIEW ? [""] : order)){
-    try{ const r = await api("adminSetPins", {newPin:pin, newAdminPin:ap, at}, k || undefined); res[k] = r; }catch(e){ res[k] = {ok:false, error:t("netError")}; }
+  if (!val) return err.textContent = t("adminPinNone");
+  if (!isA && (val.length < 4 || val.length > 40)) return err.textContent = t("adminPinStaffBad");
+  if (isA && val.length < 8) return err.textContent = t("adminPinAdminBad");
+  if (isA && val !== $("#pnAdmin2").value.trim()) return err.textContent = t("adminPinMismatch");
+  if (val === (isA ? staffPin : ADMIN_PIN)) return err.textContent = t("adminPinSame");
+  btn.disabled = true; const label = btn.textContent; btn.textContent = t("adminPinSaving");
+  const at = Date.now(), order = PREVIEW ? [""] : [CUR].concat(Object.keys(BACKENDS).filter(k=>k!==CUR)), res = {};
+  for (const k of order){
+    try{ res[k] = await api("adminSetPins", Object.assign({at}, isA ? {newAdminPin:val} : {newPin:val}), k || undefined); }
+    catch(e){ res[k] = {ok:false, error:t("netError")}; }
   }
-  const main = res[PREVIEW ? "" : CUR];
-  btn.disabled = false; btn.textContent = t("adminPinSave");
-  if (!main || !main.ok) return err.textContent = (main && main.error) || t("adminSaveError");
-  if (ap){ ADMIN_PIN = ap; saveAdmin(ap); }
-  if (pin){ staffPin = pin; if (PIN && PIN !== ADMIN_PIN) { PIN = pin; save("cta_pin", pin); } }
-  $("#pnStaff").value = ""; $("#pnAdmin").value = ""; $("#pnAdmin2").value = "";
-  $("#pnCur").textContent = staffPin;
-  const allOk = Object.values(res).every(r=>r && r.ok);
-  toast(t(allOk ? "adminPinSaved" : "adminPinSavedPartly"));
-};
+  btn.disabled = false; btn.textContent = label;
+  const oldServer = r => r && !r.ok && /không hợp lệ/i.test(r.error||"");
+  const main = res[order[0]];
+  if (!main || !main.ok){
+    err.textContent = oldServer(main) ? t("adminPinOldServer",{name:BACKEND_NAMES[CUR]||""}) : ((main && main.error) || t("adminSaveError"));
+    return;
+  }
+  if (isA){ ADMIN_PIN = val; saveAdmin(val); $("#pnAdmin").value = ""; $("#pnAdmin2").value = ""; }
+  else { if (PIN && PIN === staffPin){ PIN = val; save("cta_pin", val); } staffPin = val; $("#pnStaff").value = ""; $("#pnCur").textContent = staffPin; }
+  const others = order.slice(1).filter(k=>!(res[k] && res[k].ok));
+  toast(others.length ? t("adminPinSavedPartly",{name:others.map(k=>BACKENDS_NAME(k)).join(", ")}) : t(isA ? "adminPinSavedAdmin" : "adminPinSavedStaff"));
+}
+const BACKENDS_NAME = k => BACKEND_NAMES[k] || k;
+$("#pnSaveS").onclick = ()=>savePin("staff");
+$("#pnSaveA").onclick = ()=>savePin("admin");
 function renderAdmin(){
   const isP = adminTab === "pin";
   $("#aPin").hidden = !isP;
