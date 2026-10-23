@@ -73,8 +73,9 @@ header{display:grid;grid-template-columns:auto auto 1fr auto;gap:26px;align-item
 #btnShow span,#btnDraw span{display:none} #btnShow,#btnDraw{padding-left:14px;padding-right:14px}
 .panel.draw{width:min(960px,100%);max-height:min(92vh,900px);display:flex;flex-direction:column;padding:22px 24px 18px}
 .panel.draw>*{flex:none}
-.dw-grid{display:grid;grid-template-columns:300px 1fr;gap:18px;margin-top:12px}
-.dw-set{display:flex;flex-direction:column;gap:6px}
+.dw-grid{display:grid;grid-template-columns:310px 1fr;gap:20px;margin-top:12px;align-items:stretch}
+.dw-main{display:flex;flex-direction:column;min-width:0}
+.dw-set{display:flex;flex-direction:column;gap:6px;min-height:0}
 .dw-set input[type=text],.dw-range input{border:1px solid var(--line);border-radius:10px;padding:9px 10px;font:inherit;font-size:14px;min-width:0}
 .dw-range{display:flex;flex-direction:column;gap:6px} .dw-range span{display:none} .dw-range input{width:100%}
 .dw-pre{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
@@ -113,14 +114,18 @@ header{display:grid;grid-template-columns:auto auto 1fr auto;gap:26px;align-item
 .dw-confetti{position:absolute;inset:0;pointer-events:none}
 .dw-confetti i{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;animation:cf 2.2s ease-in forwards}
 @keyframes cf{to{transform:translateY(340px) rotate(540deg);opacity:0}}
-.dw-btns{display:flex;justify-content:flex-end;gap:10px;margin:14px 0 6px}
+.dw-btns{display:flex;justify-content:flex-end;gap:10px;margin:12px 0 0}
 .dw-spin{font-size:17px;padding:13px 34px}
 .dw-h{font-size:15px;margin:8px 0 6px}
-.dw-win{list-style:none;margin:0;padding:0;overflow:auto;min-height:60px}
-.dw-win li{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:12px;margin-bottom:6px;font-size:14px}
+.dw-wh{margin-top:12px}
+.dw-win{list-style:none;margin:0;padding:0 2px 0 0;overflow:auto;flex:1 1 0;min-height:90px}
+.dw-win li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;padding:7px 10px;border:1px solid var(--line);border-radius:12px;margin-bottom:6px;font-size:13.5px}
+.dw-win li>span:nth-child(2){grid-column:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.dw-win li>button{grid-column:2;grid-row:1 / span 2}
+.dw-win li.a-empty{display:block;border:1px dashed var(--line);color:var(--muted);text-align:center}
 .dw-win .pz{font-weight:700;color:var(--brand)} .dw-win .ac{font-weight:700} .dw-win small{color:var(--muted)}
 .dw-win button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 10px;font-size:12.5px;cursor:pointer}
-@media (max-width:760px){ .dw-grid{grid-template-columns:1fr} }
+@media (max-width:760px){ .dw-grid{grid-template-columns:1fr} .dw-main{order:-1} .dw-win{flex:none;min-height:0;max-height:220px} }
 /* lọc trong danh sách lời chúc của quản trị */
 .a-filt{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 10px}
 .a-filt button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;cursor:pointer;font-size:13.5px}
@@ -734,7 +739,10 @@ body.anon #accField{display:none}
         </div>
         <label class="dw-chk"><input type="checkbox" id="dwApproved" checked> <span data-t="drawOnlyApproved"></span></label>
         <p class="dw-info" id="dwInfo"></p>
+        <h3 class="dw-h dw-wh" data-t="drawWinners"></h3>
+        <ul class="dw-win" id="dwWinners"></ul>
       </div>
+      <div class="dw-main">
       <div class="dw-stage" id="dwStage">
         <div class="dw-prize-tag" id="dwPrizeTag"></div>
         <div class="dw-cloud" id="dwCloud"></div>
@@ -742,15 +750,14 @@ body.anon #accField{display:none}
         <div class="dw-prog"><i id="dwProg"></i></div>
         <div class="dw-confetti" id="dwConfetti"></div>
       </div>
-    </div>
-    <div class="dw-btns">
-      <button class="btn ghost" id="dwUndo" hidden data-t="drawUndo"></button>
-      <button class="btn primary dw-spin" id="dwSpin" data-t="drawSpin"></button>
+      <div class="dw-btns">
+        <button class="btn ghost" id="dwUndo" hidden data-t="drawUndo"></button>
+        <button class="btn primary dw-spin" id="dwSpin" data-t="drawSpin"></button>
+      </div>
+      </div>
     </div>
     <h3 class="dw-h" id="dwListH"></h3>
     <div class="dw-tbl-wrap"><table class="dw-tbl"><thead><tr><th>#</th><th data-t="drawColTime"></th><th>Account</th><th data-t="drawColTo"></th><th data-t="drawColText"></th><th data-t="drawColStatus"></th></tr></thead><tbody id="dwTbl"></tbody></table></div>
-    <h3 class="dw-h" data-t="drawWinners"></h3>
-    <ul class="dw-win" id="dwWinners"></ul>
   </div>
 </div>
 <div class="modal" id="adminPanel" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
@@ -2127,7 +2134,7 @@ function dwRenderWinners(){
   if (!list.length){ ul.innerHTML = `<li class="a-empty">${esc(t("drawNoWinners"))}</li>`; return; }
   list.forEach(m=>{
     const li = document.createElement("li");
-    li.innerHTML = `<span class="pz">🎁 ${esc(m.prize)}</span><span><span class="ac">${esc(m.account)}</span> <small>· ${esc(recipient(m))} · ${esc(new Date(m.wonAt||Date.now()).toLocaleString("vi-VN"))}</small></span><button type="button">${esc(t("drawRemove"))}</button>`;
+    li.innerHTML = `<span class="pz">🎁 ${esc(m.prize)}</span><span><span class="ac">${esc(m.account)}</span> <small>· ${esc(recipient(m))} · ${esc(new Date(m.wonAt||Date.now()).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"}))}</small></span><button type="button">${esc(t("drawRemove"))}</button>`;
     li.querySelector("button").onclick = ()=>dwSetPrize(m, "");
     ul.appendChild(li);
   });
