@@ -72,6 +72,7 @@ header{display:grid;grid-template-columns:auto auto 1fr auto;gap:26px;align-item
 /* Quay thưởng */
 #btnShow span,#btnDraw span{display:none} #btnShow,#btnDraw{padding-left:14px;padding-right:14px}
 .panel.draw{width:min(960px,100%);max-height:min(92vh,900px);display:flex;flex-direction:column;padding:22px 24px 18px}
+.panel.draw>*{flex:none}
 .dw-grid{display:grid;grid-template-columns:300px 1fr;gap:18px;margin-top:12px}
 .dw-set{display:flex;flex-direction:column;gap:6px}
 .dw-set input[type=text],.dw-range input{border:1px solid var(--line);border-radius:10px;padding:9px 10px;font:inherit;font-size:14px;min-width:0}
@@ -84,15 +85,28 @@ header{display:grid;grid-template-columns:auto auto 1fr auto;gap:26px;align-item
 .dw-why{display:block;margin-top:6px;color:#9A6400;background:#FFF6E0;border-radius:8px;padding:6px 8px;font-size:12.5px}
 .dw-stage{position:relative;overflow:hidden;border-radius:20px;min-height:280px;padding:26px 28px;color:#fff;background:radial-gradient(120% 140% at 20% 0%,#FF4D6D 0%,#E4002B 45%,#9E001E 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
 .dw-prize-tag{font-size:13px;letter-spacing:2px;text-transform:uppercase;opacity:.9;font-weight:700;min-height:1em}
-.dw-cloud{position:relative;align-self:stretch;height:clamp(300px,42vh,460px);margin:12px 0 4px;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:.35em .4em;overflow:hidden;font-size:16px}
-.dw-cloud.scroll{overflow-y:auto;align-content:flex-start}
-.dw-chip{position:relative;display:inline-block;padding:.18em .55em;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-weight:700;line-height:1.25;white-space:nowrap;transition:transform .14s ease,opacity .5s ease,background .14s,color .14s,box-shadow .14s}
+.dw-cloud{position:relative;align-self:stretch;height:clamp(300px,42vh,460px);margin:12px 0 4px;font-size:16px}
+.dw-cloud .dw-empty{position:absolute;inset:0;display:grid;place-items:center}
+.dw-chip{position:absolute;display:inline-block;padding:.18em .55em;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-weight:700;line-height:1.25;white-space:nowrap;transition:transform .14s ease,opacity .5s ease,background .14s,color .14s,box-shadow .14s}
 .dw-stage.rolling .dw-chip{opacity:.6}
-.dw-chip.hot{opacity:1!important;transform:scale(1.9);background:#fff;color:#C40026;z-index:3;box-shadow:0 6px 22px rgba(0,0,0,.3)}
+.dw-chip.hot{transition:none;opacity:1!important;transform:scale(1.9);background:#fff;color:#C40026;z-index:3;box-shadow:0 6px 22px rgba(0,0,0,.3)}
 .dw-stage.done .dw-chip{opacity:.1}
 .dw-chip.win{opacity:1!important;background:#fff;color:#C40026;z-index:4;box-shadow:0 10px 34px rgba(0,0,0,.35);transition:transform .8s cubic-bezier(.2,1.3,.4,1),opacity .3s}
 .dw-empty{font-size:64px;font-weight:900;opacity:.6}
 .dw-result{min-height:2.6em}
+.dw-prog{position:absolute;left:0;right:0;bottom:0;height:7px;background:rgba(255,255,255,.16);opacity:0;transition:opacity .3s}
+.dw-prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,#FFD15C,#fff)}
+.dw-stage.rolling .dw-prog,.dw-stage.done .dw-prog{opacity:1}
+.dw-tbl-wrap{border:1px solid var(--line);border-radius:12px;overflow:auto;max-height:280px;margin-bottom:8px}
+.dw-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.dw-tbl th{position:sticky;top:0;background:#FBF7F7;text-align:left;font-weight:600;padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.dw-tbl td{padding:6px 10px;border-bottom:1px solid #F3ECEC;vertical-align:top}
+.dw-tbl td.tx{max-width:360px;color:var(--ink-2)}
+.dw-tbl td.nw{white-space:nowrap}
+.dw-tbl tr.no td{color:#9b8f91}
+.dw-tbl .st{display:inline-block;border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:600;white-space:nowrap;background:#F1ECEC;color:#7a6d6f}
+.dw-tbl .st.ok{background:#E8F5EC;color:#22603F}
+.dw-tbl .st.won{background:#FFF3D6;color:#9A6400}
 .dw-result[hidden]{display:block;visibility:hidden}
 .dw-to{font-size:13.5px;opacity:.9;min-height:1.2em}
 .dw-text{font-size:16px;line-height:1.55;max-width:560px;margin-top:10px;opacity:.95;max-height:7.8em;overflow:hidden}
@@ -210,6 +224,8 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 #card .q{position:absolute;right:44px;top:10px;width:30px;height:25px;color:var(--brand);opacity:.1;pointer-events:none}
 #card .to{font-size:11.5px;font-weight:700;color:var(--accent,var(--brand));letter-spacing:.2px;text-transform:uppercase;padding-right:40px}
 #card blockquote{margin:6px 0 8px;font-size:15px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word;max-height:30vh;overflow:auto;color:var(--ink-2)}
+#card .from{font-size:13px;font-weight:600;color:var(--ink-2);text-align:right;margin:-2px 0 8px}
+#card .from:empty{display:none}
 #card .meta{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--muted);gap:8px}
 #card .nav{display:flex;gap:6px}
 #card .nav button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 11px;cursor:pointer;font-size:12px}
@@ -597,6 +613,7 @@ body.anon #accField{display:none}
   <button class="close" id="cardClose" aria-label="Đóng">×</button>
   <div class="to" id="cardTo"></div>
   <blockquote id="cardText"></blockquote>
+  <div class="from" id="cardFrom"></div>
   <div class="meta">
     <span id="cardMeta"></span>
     <span class="peek-hint" data-t="cardPeekHint"></span>
@@ -722,6 +739,7 @@ body.anon #accField{display:none}
         <div class="dw-prize-tag" id="dwPrizeTag"></div>
         <div class="dw-cloud" id="dwCloud"></div>
         <div class="dw-result" id="dwResult" hidden><div class="dw-to" id="dwTo2"></div><div class="dw-text" id="dwText"></div></div>
+        <div class="dw-prog"><i id="dwProg"></i></div>
         <div class="dw-confetti" id="dwConfetti"></div>
       </div>
     </div>
@@ -729,6 +747,8 @@ body.anon #accField{display:none}
       <button class="btn ghost" id="dwUndo" hidden data-t="drawUndo"></button>
       <button class="btn primary dw-spin" id="dwSpin" data-t="drawSpin"></button>
     </div>
+    <h3 class="dw-h" id="dwListH"></h3>
+    <div class="dw-tbl-wrap"><table class="dw-tbl"><thead><tr><th>#</th><th data-t="drawColTime"></th><th>Account</th><th data-t="drawColTo"></th><th data-t="drawColText"></th><th data-t="drawColStatus"></th></tr></thead><tbody id="dwTbl"></tbody></table></div>
     <h3 class="dw-h" data-t="drawWinners"></h3>
     <ul class="dw-win" id="dwWinners"></ul>
   </div>
@@ -985,7 +1005,7 @@ function previewApi(action, data){
     save("cta_prev_depts", JSON.stringify(data.depts)); return Promise.resolve({ok:true, depts:data.depts});
   }
   if (action==="verify" || action==="adminVerify") return Promise.resolve({ok:true, anon:ANON});
-  if (action==="list") return Promise.resolve({ok:true, items: pub().map(m=>Object.assign({}, m)), depts: pDepts(), anon:ANON});
+  if (action==="list") return Promise.resolve({ok:true, items: pub().map(m=>{ const o = Object.assign({}, m); delete o.account; if (!ANON && m.account) o.from = m.account; return o; }), depts: pDepts(), anon:ANON});
   if (action==="adminList") return Promise.resolve({ok:true, items: sample.map(m=>Object.assign({}, m)), depts: pDepts(), anon:ANON});
   if (action==="adminSetAnon") return Promise.resolve({ok:true, anon:data.anon === true});
   if (action==="adminSet"){
@@ -1389,6 +1409,7 @@ function showCard(m, mode, list){
   const c = $("#card"); c.style.setProperty("--accent", colorOf(m));
   $("#cardTo").innerHTML = esc(recipient(m)) + (m.featured ? ` <span class="feat">★ ${esc(t("featuredBadge"))}</span>` : "");
   $("#cardText").textContent = m.text;
+  $("#cardFrom").textContent = !ANON && m.from ? t("cardFrom",{from:m.from}) : "";
   $("#cardMeta").textContent = timeAgo(m.time) + (mode==="open" && cardList.length>1 ? ` · ${cardIdx+1}/${cardList.length}` : "");
   c.classList.toggle("peek", mode==="peek");
   $$(".leaf.spot").forEach(e=>e.classList.remove("spot"));
@@ -1527,7 +1548,7 @@ function feedItem(m){
   to.innerHTML = miniIcon(m); to.appendChild(document.createTextNode(recipient(m)));
   if (m.featured) to.insertAdjacentHTML("beforeend", `<span class="feat">★ ${esc(t("featuredBadge"))}</span>`);
   const tx = document.createElement("div"); tx.className="f-text"; tx.innerHTML = highlight(m.text, feedQ);
-  const tm = document.createElement("div"); tm.className="f-time"; tm.textContent = timeAgo(m.time);
+  const tm = document.createElement("div"); tm.className="f-time"; tm.textContent = (!ANON && m.from ? t("feedFrom",{from:m.from}) + " · " : "") + timeAgo(m.time);
   li.append(to, tx, tm); li.onclick = ()=>showCard(m,"open", feedFiltered || items);
   return li;
 }
@@ -1565,7 +1586,12 @@ function anyModal(){ return !!document.querySelector(".modal.show"); }
 function openModal(id){ $(id).classList.add("show"); }
 function closeModals(){ $$(".modal.show").forEach(m=>{ if (m.id!=="gate") m.classList.remove("show"); }); }
 $$("[data-close]").forEach(b=>b.onclick = closeModals);
-$$(".modal").forEach(m=>m.addEventListener("click", e=>{ if (e.target===m && m.id!=="gate") closeModals(); }));
+/* chỉ đóng khi bấm hẳn vào nền mờ: kéo chọn chữ trong ô nhập rồi thả chuột ra ngoài không làm đóng cửa sổ */
+$$(".modal").forEach(m=>{
+  let downOnBg = false;
+  m.addEventListener("pointerdown", e=>{ downOnBg = e.target === m; });
+  m.addEventListener("click", e=>{ if (e.target===m && downOnBg && m.id!=="gate") closeModals(); downOnBg = false; });
+});
 function buildDeptSelect(){ const sel = $("#toDept"), v = sel.value; sel.textContent = ""; DEPARTMENTS.forEach(d=>{ const o=document.createElement("option"); o.value=o.textContent=d; sel.appendChild(o); }); if (DEPARTMENTS.includes(v)) sel.value = v; }
 buildDeptSelect();
 /* áp dụng danh sách phòng ban do Ban tổ chức cấu hình (lưu trên máy chủ) */
@@ -2038,6 +2064,19 @@ function dwInfo(){
   $("#dwInfo").innerHTML = html;
   $("#dwSpin").disabled = dwBusy || !pool.length;
   if (!dwBusy && !dwShowingWin) dwRenderCloud(pool);
+  dwRenderTable(inRange, pool);
+}
+/* bảng kê lời chúc trong khoảng thời gian đã chọn, kèm lý do nếu không được quay */
+function dwRenderTable(inRange, pool){
+  const ok = new Set(pool.map(m=>m.id)), won = dwWinnersSet(), body = $("#dwTbl");
+  const list = inRange.slice().sort((a,b)=>String(b.time).localeCompare(String(a.time)));
+  $("#dwListH").textContent = t("drawListTitle",{n:list.length, k:pool.length});
+  const fmt = ts => { const d = new Date(ts); return isNaN(d) ? "" : d.toLocaleString("vi-VN",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}); };
+  const status = m => ok.has(m.id) ? ["ok", t("drawStOk")] : m.prize ? ["won", "🎁 " + m.prize] : !m.account ? ["", t("drawStNoAcc")]
+    : won.has(m.account.toLowerCase()) ? ["won", t("drawStWon")] : !m.approved ? ["", t("drawStPending")] : ["", "—"];
+  if (!list.length){ body.innerHTML = `<tr><td colspan="6" class="a-empty">${esc(t("drawNoneInRange"))}</td></tr>`; return; }
+  body.innerHTML = list.slice(0, 600).map((m,i)=>{ const [c, s] = status(m);
+    return `<tr class="${c==="ok"?"":"no"}"><td>${i+1}</td><td class="nw">${esc(fmt(m.time))}</td><td class="nw"><b>${esc(m.account||"—")}</b></td><td class="nw">${esc(recipient(m))}</td><td class="tx">${esc(m.text)}</td><td><span class="st ${c}">${esc(s)}</span></td></tr>`; }).join("");
 }
 /* "đám mây" account: mỗi người một ô, chữ tự co cho vừa khung đỏ */
 function dwAccounts(pool){
@@ -2047,22 +2086,39 @@ function dwAccounts(pool){
 }
 function dwRenderCloud(pool){
   const box = $("#dwCloud"), stage = $("#dwStage"), accs = dwAccounts(pool);
-  stage.classList.remove("done","rolling"); $("#dwResult").hidden = true; box.textContent = ""; box.classList.remove("scroll");
+  stage.classList.remove("done","rolling"); $("#dwResult").hidden = true; box.textContent = ""; dwProgReset();
   if (!accs.length){ box.innerHTML = '<span class="dw-empty">?</span>'; box.style.fontSize = ""; return; }
-  const frag = document.createDocumentFragment();
-  accs.forEach(([k, name])=>{ const s = document.createElement("span"); s.className = "dw-chip"; s.dataset.k = k; s.textContent = name; frag.appendChild(s); });
+  const n = accs.length;
+  box.style.fontSize = (n <= 12 ? 22 : n <= 30 ? 18 : n <= 70 ? 15 : n <= 140 ? 12 : 10.5) + "px";
+  const frag = document.createDocumentFragment(), chips = [];
+  accs.forEach(([k, name])=>{ const s = document.createElement("span"); s.className = "dw-chip"; s.dataset.k = k; s.textContent = name; frag.appendChild(s); chips.push(s); });
   box.appendChild(frag);
-  let size = 26;
-  for (; size > 10; size -= 2){ box.style.fontSize = size + "px"; if (box.scrollHeight <= box.clientHeight + 1 && box.scrollWidth <= box.clientWidth + 1) break; }
-  if (box.scrollHeight > box.clientHeight + 1) box.classList.add("scroll");
+  /* rải ngẫu nhiên: mỗi ô thử nhiều vị trí, lấy chỗ ít chồng lên ô khác nhất */
+  const W = box.clientWidth, H = box.clientHeight, placed = [], gap = 4;
+  chips.forEach(c=>{
+    const w = c.offsetWidth, h = c.offsetHeight;
+    let best = null, bestOv = Infinity;
+    for (let k = 0; k < 70 && bestOv > 0; k++){
+      const x = Math.random() * Math.max(0, W - w), y = Math.random() * Math.max(0, H - h);
+      let ov = 0;
+      for (const p of placed){
+        const ox = Math.min(x + w + gap, p.x + p.w) - Math.max(x, p.x - gap), oy = Math.min(y + h + gap, p.y + p.h) - Math.max(y, p.y - gap);
+        if (ox > 0 && oy > 0) ov += ox * oy;
+      }
+      if (ov < bestOv){ bestOv = ov; best = {x, y}; }
+    }
+    c.style.left = best.x + "px"; c.style.top = best.y + "px";
+    placed.push({x:best.x, y:best.y, w, h});
+  });
 }
+function dwProgReset(){ const p = $("#dwProg"); p.style.transition = "none"; p.style.width = "0"; }
+function dwProgRun(ms){ const p = $("#dwProg"); dwProgReset(); void p.offsetWidth; p.style.transition = `width ${ms}ms linear`; p.style.width = "100%"; }
+const DW_SPIN_MS = 5000;
 function dwChipFor(acc){ return [...$$("#dwCloud .dw-chip")].find(c=>c.dataset.k === String(acc).toLowerCase()); }
 function dwCenterWin(chip){
-  const box = $("#dwCloud");
-  if (box.classList.contains("scroll")) box.scrollTop = Math.max(0, chip.offsetTop - box.clientHeight/2 + chip.offsetHeight/2);
-  const b = box.getBoundingClientRect(), c = chip.getBoundingClientRect();
-  const s = Math.max(1, Math.min(4, (b.width * .8) / c.width, (b.height * .45) / c.height));
-  const dx = (b.left + b.width/2) - (c.left + c.width/2), dy = (b.top + b.height/2) - (c.top + c.height/2);
+  const box = $("#dwCloud"), W = box.clientWidth, H = box.clientHeight, w = chip.offsetWidth, h = chip.offsetHeight;
+  const s = Math.max(1, Math.min(4, (W * .8) / w, (H * .45) / h));
+  const dx = W/2 - (chip.offsetLeft + w/2), dy = H/2 - (chip.offsetTop + h/2);
   chip.style.transform = `translate(${dx}px,${dy}px) scale(${s})`;
 }
 function dwRenderWinners(){
@@ -2098,19 +2154,19 @@ async function dwSpin(){
   const stage = $("#dwStage"); stage.classList.add("rolling");
   $("#dwPrizeTag").textContent = prize; $("#dwTo2").textContent = ""; $("#dwText").textContent = "";
   const winner = pool[rnd(pool.length)];
-  const chips = [...$$("#dwCloud .dw-chip")], box = $("#dwCloud"), t0 = performance.now(), dur = 5200;
-  const visible = c => !box.classList.contains("scroll") || (c.offsetTop >= box.scrollTop && c.offsetTop + c.offsetHeight <= box.scrollTop + box.clientHeight);
+  const chips = [...$$("#dwCloud .dw-chip")], t0 = performance.now(), dur = DW_SPIN_MS;
+  dwProgRun(dur);
   let hot = null;
   await new Promise(done=>{
     (function tick(){
       const p = (performance.now() - t0) / dur;
       if (p >= 1) return done();
       if (hot) hot.classList.remove("hot");
-      const vis = chips.filter(visible), from = vis.length ? vis : chips;
+      const from = chips;
       let next = from[rnd(from.length)];
       if (next === hot && from.length > 1) next = from[(from.indexOf(next) + 1) % from.length];
       hot = next; hot.classList.add("hot");
-      setTimeout(tick, 55 + Math.pow(p, 2.4) * 460);
+      setTimeout(tick, Math.min(55 + Math.pow(p, 2.4) * 460, Math.max(16, dur - (performance.now() - t0))));
     })();
   });
   if (hot) hot.classList.remove("hot");

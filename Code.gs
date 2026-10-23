@@ -150,7 +150,12 @@ function readApproved() {
   const rows = sh.getRange(2, 1, last - 1, HEADERS.length).getValues();
   const labelToType = {};
   Object.keys(TYPE_LABELS).forEach(k => labelToType[TYPE_LABELS[k]] = k);
-  return rows.filter(r => r[0] && r[6] === true && r[9] !== true).map(r => publicItem(rowToItem(r, labelToType)));
+  const anon = anonMode();   // không ẩn danh: hiện account người gửi (trường "from")
+  return rows.filter(r => r[0] && r[6] === true && r[9] !== true).map(r => {
+    const m = rowToItem(r, labelToType), p = publicItem(m);
+    if (!anon && m.account) p.from = m.account;
+    return p;
+  });
 }
 
 function submit(body) {
@@ -356,6 +361,7 @@ function setAnon(body) {
   if (typeof body.anon !== 'boolean') return { ok: false, error: 'Giá trị không hợp lệ.' };
   PropertiesService.getScriptProperties().setProperties({ ANON: String(body.anon), ANON_AT: String(Date.now()) });
   CacheService.getScriptCache().remove('props');
+  removeBig('approved_list');
   return { ok: true, anon: body.anon };
 }
 
@@ -436,7 +442,7 @@ function peerUpsert(body) {
     });
     if (Object.keys(upd).length) props.setProperties(upd);
     CacheService.getScriptCache().removeAll(['props']);
-    if (added || changed || removed) removeBig('approved_list');
+    if (added || changed || removed || upd.ANON) removeBig('approved_list');
     return { ok: true, added: added, changed: changed, removed: removed, settings: Object.keys(upd) };
   } finally {
     lock.releaseLock();

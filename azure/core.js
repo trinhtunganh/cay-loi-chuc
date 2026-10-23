@@ -64,6 +64,7 @@ function createCore(tables, env = process.env, deps = {}) {
   async function setAnon(b) {
     if (typeof b.anon !== 'boolean') return { ok: false, error: 'Giá trị không hợp lệ.' };
     await setCfgStamped('ANON', String(b.anon));
+    listCache = null;
     return { ok: true, anon: b.anon };
   }
 
@@ -83,7 +84,8 @@ function createCore(tables, env = process.env, deps = {}) {
   }
   async function approved() {
     if (listCache && Date.now() - listCache.at < LIST_TTL) return listCache.v;
-    const v = (await all()).filter(m => m.approved && !m.deleted).map(publicItem);
+    const anon = await anonMode();   // không ẩn danh: hiện account người gửi (trường "from")
+    const v = (await all()).filter(m => m.approved && !m.deleted).map(m => { const p = publicItem(m); if (!anon && m.account) p.from = m.account; return p; });
     listCache = { at: Date.now(), v };
     return v;
   }
@@ -251,7 +253,7 @@ function createCore(tables, env = process.env, deps = {}) {
       const gs = dump.settings || {}, ls = settingsOf(cfg);
       for (const k of ['DEPARTMENTS', 'ACTIVE', 'PIN', 'ADMIN_PIN', 'ANON']) {
         const v = gs[k];
-        if (v && v.v && Number(v.at) > ls[k].at) { await setCfgStamped(k, v.v, Number(v.at)); ls[k] = { v: v.v, at: Number(v.at) }; }
+        if (v && v.v && Number(v.at) > ls[k].at) { await setCfgStamped(k, v.v, Number(v.at)); ls[k] = { v: v.v, at: Number(v.at) }; if (k === 'ANON') listCache = null; }
       }
       if (pulled.added || pulled.changed || pulled.removed) listCache = null;
       /* 2. gửi thay đổi của Azure sang Google */
