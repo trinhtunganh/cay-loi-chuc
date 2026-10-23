@@ -27,7 +27,9 @@ function createCore(tables, env = process.env, deps = {}) {
   let ready = null, listCache = null, cfgCache = null;
   const fails = new Map();
 
-  const setting = k => (env[k] != null && env[k] !== '' ? String(env[k]) : DEFAULTS[k]);
+  /* PIN đổi trong Quản trị (bảng CaiDat) được ưu tiên hơn biến môi trường */
+  let pinCfg = {};
+  const setting = k => (pinCfg[k] ? String(pinCfg[k]) : env[k] != null && env[k] !== '' ? String(env[k]) : DEFAULTS[k]);
   const clean = (v, max) => String(v || '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').trim().slice(0, max);
 
   function ensure() {
@@ -171,7 +173,9 @@ function createCore(tables, env = process.env, deps = {}) {
   });
   const settingsOf = c => ({
     DEPARTMENTS: { v: c.DEPARTMENTS || '', at: Number(c.DEPARTMENTS_AT || 0) },
-    ACTIVE: { v: c.ACTIVE || '', at: Number(c.ACTIVE_AT || 0) }
+    ACTIVE: { v: c.ACTIVE || '', at: Number(c.ACTIVE_AT || 0) },
+    PIN: { v: c.PIN || '', at: Number(c.PIN_AT || 0) },
+    ADMIN_PIN: { v: c.ADMIN_PIN || '', at: Number(c.ADMIN_PIN_AT || 0) }
   });
   let syncing = null;
   function sync() { return syncing || (syncing = runSync().finally(() => { syncing = null; })); }
@@ -201,7 +205,7 @@ function createCore(tables, env = process.env, deps = {}) {
         }
       }
       const gs = dump.settings || {}, ls = settingsOf(cfg);
-      for (const k of ['DEPARTMENTS', 'ACTIVE']) {
+      for (const k of ['DEPARTMENTS', 'ACTIVE', 'PIN', 'ADMIN_PIN']) {
         const v = gs[k];
         if (v && v.v && Number(v.at) > ls[k].at) { await setCfgStamped(k, v.v, Number(v.at)); ls[k] = { v: v.v, at: Number(v.at) }; }
       }
@@ -218,6 +222,19 @@ function createCore(tables, env = process.env, deps = {}) {
     await setCfg('SYNC_OK', err ? 'Lỗi: ' + err.slice(0, 200) : 'ok');
     return { ok: !err, error: err || undefined, pulled, pushed: pushed && { added: pushed.added, changed: pushed.changed }, ms: Date.now() - started };
   }
+  /* đổi PIN: lưu vào bảng CaiDat, có dấu thời gian để đồng bộ sang Google */
+  async function setPins(b) {
+    const pin = String(b.newPin || '').trim(), ap = String(b.newAdminPin || '').trim();
+    if (!pin && !ap) return { ok: false, error: 'Chưa nhập mã PIN mới.' };
+    if (pin && (pin.length < 4 || pin.length > 40)) return { ok: false, error: 'PIN nhân viên cần 4–40 ký tự.' };
+    if (ap && (ap.length < 8 || ap.length > 60)) return { ok: false, error: 'PIN quản trị cần 8–60 ký tự.' };
+    if ((pin || setting('PIN')) === (ap || setting('ADMIN_PIN'))) return { ok: false, error: 'PIN nhân viên và PIN quản trị phải khác nhau.' };
+    const at = Number(b.at) || Date.now();
+    if (pin) await setCfgStamped('PIN', pin, at);
+    if (ap) await setCfgStamped('ADMIN_PIN', ap, at);
+    pinCfg = await getCfg(true);
+    return { ok: true, pin: !!pin, adminPin: !!ap };
+  }
   async function syncStatus() { const c = await getCfg(); return { at: Number(c.SYNC_AT || 0), status: c.SYNC_OK || '' }; }
 
   /** Xử lý 1 yêu cầu. ip dùng để chặn dò PIN theo từng máy, không lưu lại. */
@@ -228,6 +245,7 @@ function createCore(tables, env = process.env, deps = {}) {
     if (f && now - f.at > FAIL_WINDOW) fails.delete(ip);
     if (f && f.n >= FAIL_MAX && now - f.at <= FAIL_WINDOW) return { ok: false, error: 'Nhập sai PIN quá nhiều lần. Vui lòng thử lại sau 10 phút.' };
 
+    try { await ensure(); pinCfg = await getCfg(); } catch (e) { console.error(e); }
     const action = String(body.action || ''), isAdmin = action.indexOf('admin') === 0;
     const given = String((isAdmin ? body.adminPin : body.pin) || '').trim();
     const okPin = isAdmin ? given === setting('ADMIN_PIN') : (given === setting('PIN') || given === setting('ADMIN_PIN'));
@@ -243,7 +261,8 @@ function createCore(tables, env = process.env, deps = {}) {
         case 'list':          return await listDelta(body);
         case 'submit':        return await submit(body);
         case 'adminVerify':   return { ok: true, active: await active() };
-        case 'adminList':     return { ok: true, items: await all(), depts: await depts(), active: await active(), sync: await syncStatus() };
+        case 'adminList':     return { ok: true, items: await all(), depts: await depts(), active: await active(), sync: await syncStatus(), staffPin: setting('PIN') };
+        case 'adminSetPins':  return await setPins(body);
         case 'adminSyncNow':  return Object.assign(await sync(), { sync: await syncStatus() });
         case 'adminSet':      return await adminSet(body);
         case 'adminSetDepts': return await setDepts(body);

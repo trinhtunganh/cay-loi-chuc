@@ -274,6 +274,14 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 .a-text{grid-column:1;font-size:15px;line-height:1.5;color:var(--ink-2);white-space:pre-wrap;word-wrap:break-word}
 .dp{display:flex;flex-direction:column;flex:1;min-height:0}
 .sv{display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto}
+.pn{display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto}
+.pn-box{display:flex;flex-direction:column;gap:8px;max-width:460px;border:1px solid var(--line);border-radius:16px;padding:16px 18px;background:#fff}
+.pn-box input{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:15px}
+.pn-box input:focus{outline:none;border-color:var(--brand)}
+.pn-box .lbl{margin-top:6px}
+.pn-cur{font-size:14px;color:var(--muted)} .pn-cur b{color:var(--ink);font-size:16px;letter-spacing:.5px}
+.pn-err{color:var(--brand);font-size:13px;margin:2px 0 0;min-height:1em}
+.pn-box .btn{align-self:flex-start;margin-top:4px}
 .sv-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
 .sv-card{border:1px solid var(--line);border-radius:16px;padding:16px 18px;background:#fff;display:flex;flex-direction:column;gap:10px}
 .sv-card.on{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-tint)}
@@ -633,6 +641,20 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
       <button data-tab="trash" role="tab">🗑 <span data-t="adminTabTrash"></span> <b id="aCntTrash">0</b></button>
       <button data-tab="depts" role="tab"><span data-t="adminTabDepts"></span> <b id="aCntDepts">0</b></button>
       <button data-tab="srv" role="tab" id="aTabSrv"><span data-t="adminTabServer"></span></button>
+      <button data-tab="pin" role="tab">🔑 <span data-t="adminTabPin"></span></button>
+    </div>
+    <div class="pn" id="aPin" hidden>
+      <p class="dp-hint" data-t="adminPinHint"></p>
+      <div class="pn-box">
+        <div class="pn-cur"><span data-t="adminPinCurrent"></span> <b id="pnCur">…</b></div>
+        <label class="lbl" for="pnStaff" data-t="adminPinStaff"></label>
+        <input id="pnStaff" type="text" maxlength="40" autocomplete="off" data-ph="adminPinStaffPh">
+        <label class="lbl" for="pnAdmin" data-t="adminPinAdmin"></label>
+        <input id="pnAdmin" type="password" maxlength="60" autocomplete="new-password" data-ph="adminPinAdminPh">
+        <input id="pnAdmin2" type="password" maxlength="60" autocomplete="new-password" data-ph="adminPinAdmin2Ph">
+        <p class="pn-err" id="pnErr"></p>
+        <button class="btn primary" id="pnSave" type="button" data-t="adminPinSave"></button>
+      </div>
     </div>
     <div class="sv" id="aSrv" hidden>
       <p class="dp-hint" data-t="adminServerHint"></p>
@@ -825,6 +847,7 @@ function previewApi(action, data){
   }
   const pub = () => sample.filter(m=>m.approved && !m.deleted);
   const pDepts = () => { try{ return JSON.parse(load("cta_prev_depts") || "null"); }catch(e){ return null; } };
+  if (action==="adminSetPins"){ return Promise.resolve({ok:true, pin:!!data.newPin, adminPin:!!data.newAdminPin}); }
   if (action==="adminSetDepts"){
     Object.keys(data.renames||{}).forEach(o=>sample.forEach(m=>{ if (m.toDept===o) m.toDept = data.renames[o]; }));
     save("cta_prev_depts", JSON.stringify(data.depts)); return Promise.resolve({ok:true, depts:data.depts});
@@ -1773,7 +1796,45 @@ async function svSwitch(k, btn){
   try{ const res = await api("adminList"); adminItems = (res.items||[]).sort((a,b)=>String(b.time).localeCompare(String(a.time))); if (Array.isArray(res.depts)) applyDepts(res.depts); dpInit(); }catch(e){}
   renderAdmin();
 }
+let staffPin = "";
+async function pinLoad(){
+  $("#pnCur").textContent = staffPin || "…";
+  try{ const r = await api("adminList"); if (r.ok && r.staffPin){ staffPin = r.staffPin; $("#pnCur").textContent = staffPin; } }catch(e){}
+}
+$("#pnSave").onclick = async ()=>{
+  const pin = $("#pnStaff").value.trim(), ap = $("#pnAdmin").value.trim(), ap2 = $("#pnAdmin2").value.trim(), err = $("#pnErr");
+  err.textContent = "";
+  if (!pin && !ap) return err.textContent = t("adminPinNone");
+  if (pin && (pin.length < 4 || pin.length > 40)) return err.textContent = t("adminPinStaffBad");
+  if (ap && ap.length < 8) return err.textContent = t("adminPinAdminBad");
+  if (ap && ap !== ap2) return err.textContent = t("adminPinMismatch");
+  if ((pin || staffPin) && (pin || staffPin) === (ap || ADMIN_PIN)) return err.textContent = t("adminPinSame");
+  const btn = $("#pnSave"); btn.disabled = true; btn.textContent = t("adminPinSaving");
+  /* ghi lên cả 2 máy chủ cùng một mốc thời gian; máy chủ chính trước */
+  const at = Date.now(), order = [CUR].concat(Object.keys(BACKENDS).filter(k=>k!==CUR)), res = {};
+  for (const k of (PREVIEW ? [""] : order)){
+    try{ const r = await api("adminSetPins", {newPin:pin, newAdminPin:ap, at}, k || undefined); res[k] = r; }catch(e){ res[k] = {ok:false, error:t("netError")}; }
+  }
+  const main = res[PREVIEW ? "" : CUR];
+  btn.disabled = false; btn.textContent = t("adminPinSave");
+  if (!main || !main.ok) return err.textContent = (main && main.error) || t("adminSaveError");
+  if (ap){ ADMIN_PIN = ap; saveAdmin(ap); }
+  if (pin){ staffPin = pin; if (PIN && PIN !== ADMIN_PIN) { PIN = pin; save("cta_pin", pin); } }
+  $("#pnStaff").value = ""; $("#pnAdmin").value = ""; $("#pnAdmin2").value = "";
+  $("#pnCur").textContent = staffPin;
+  const allOk = Object.values(res).every(r=>r && r.ok);
+  toast(t(allOk ? "adminPinSaved" : "adminPinSavedPartly"));
+};
 function renderAdmin(){
+  const isP = adminTab === "pin";
+  $("#aPin").hidden = !isP;
+  if (isP){
+    ["#aDepts","#aList","#aSrv",".a-search","#aShow","#dpSave"].forEach(q=>$(q).hidden = true);
+    $$("#aTabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===adminTab));
+    $("#aInfo").textContent = "";
+    pinLoad();
+    return;
+  }
   const isS = adminTab === "srv";
   $("#aSrv").hidden = !isS;
   if (isS){

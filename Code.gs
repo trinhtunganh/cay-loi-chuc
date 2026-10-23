@@ -75,7 +75,8 @@ function doPost(e) {
   try {
     switch (body.action) {
       case 'adminVerify': return json({ ok: true, active: activeBackend() });
-      case 'adminList':   return json({ ok: true, items: listAll(), depts: getDepts(), active: activeBackend() });
+      case 'adminList':   return json({ ok: true, items: listAll(), depts: getDepts(), active: activeBackend(), staffPin: prop('PIN') });
+      case 'adminSetPins': return json(setPins(body));
       case 'adminSet':    return json(adminSet(body));
       case 'adminSetDepts': return json(setDepts(body));
       case 'adminSetActive': return json(setActive(body));
@@ -298,13 +299,30 @@ function setActive(body) {
   return { ok: true, active: v };
 }
 
+/** Quản trị: đổi mã PIN nhân viên và/hoặc PIN quản trị. Có hiệu lực ngay. */
+function setPins(body) {
+  const pin = String(body.newPin || '').trim(), ap = String(body.newAdminPin || '').trim();
+  if (!pin && !ap) return { ok: false, error: 'Chưa nhập mã PIN mới.' };
+  if (pin && (pin.length < 4 || pin.length > 40)) return { ok: false, error: 'PIN nhân viên cần 4–40 ký tự.' };
+  if (ap && (ap.length < 8 || ap.length > 60)) return { ok: false, error: 'PIN quản trị cần 8–60 ký tự.' };
+  if ((pin || prop('PIN')) === (ap || prop('ADMIN_PIN'))) return { ok: false, error: 'PIN nhân viên và PIN quản trị phải khác nhau.' };
+  const now = String(Number(body.at) || Date.now()), upd = {};
+  if (pin) { upd.PIN = pin; upd.PIN_AT = now; }
+  if (ap) { upd.ADMIN_PIN = ap; upd.ADMIN_PIN_AT = now; }
+  PropertiesService.getScriptProperties().setProperties(upd);
+  CacheService.getScriptCache().remove('props');
+  return { ok: true, pin: !!pin, adminPin: !!ap };
+}
+
 /* ---------- Đồng bộ với máy chủ Azure ----------
    Azure chủ động gọi 2 phút/lần: lấy thay đổi của Google (peerDump) và gửi thay đổi của Azure sang
    (peerUpsert). Mỗi lời chúc có cùng mã ở 2 nơi; bên nào sửa sau ("Cập nhật" lớn hơn) thì thắng. */
 function peerSettings(p) {
   return {
     DEPARTMENTS: { v: p.DEPARTMENTS || '', at: Number(p.DEPARTMENTS_AT || 0) },
-    ACTIVE: { v: p.ACTIVE || '', at: Number(p.ACTIVE_AT || 0) }
+    ACTIVE: { v: p.ACTIVE || '', at: Number(p.ACTIVE_AT || 0) },
+    PIN: { v: p.PIN || '', at: Number(p.PIN_AT || 0) },
+    ADMIN_PIN: { v: p.ADMIN_PIN || '', at: Number(p.ADMIN_PIN_AT || 0) }
   };
 }
 function peerDump(body) {
@@ -339,7 +357,7 @@ function peerUpsert(body) {
     }
     /* cài đặt: bên nào đổi sau thì thắng */
     const s = body.settings || {}, props = PropertiesService.getScriptProperties(), cur = peerSettings(props.getProperties()), upd = {};
-    ['DEPARTMENTS', 'ACTIVE'].forEach(k => {
+    ['DEPARTMENTS', 'ACTIVE', 'PIN', 'ADMIN_PIN'].forEach(k => {
       const v = s[k];
       if (v && Number(v.at) > cur[k].at && typeof v.v === 'string' && v.v) { upd[k] = v.v; upd[k + '_AT'] = String(Number(v.at)); }
     });
