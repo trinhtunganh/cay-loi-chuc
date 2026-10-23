@@ -81,6 +81,7 @@ header{display:grid;grid-template-columns:auto auto 1fr auto;gap:26px;align-item
 .dw-pre button:hover{border-color:var(--brand);color:var(--brand)}
 .dw-chk{display:flex;align-items:center;gap:8px;font-size:14px;margin-top:6px}
 .dw-info{font-size:13.5px;color:var(--muted);margin:8px 0 0;line-height:1.5} .dw-info b{color:var(--ink)}
+.dw-why{display:block;margin-top:6px;color:#9A6400;background:#FFF6E0;border-radius:8px;padding:6px 8px;font-size:12.5px}
 .dw-stage{position:relative;overflow:hidden;border-radius:20px;min-height:280px;padding:26px 28px;color:#fff;background:radial-gradient(120% 140% at 20% 0%,#FF4D6D 0%,#E4002B 45%,#9E001E 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
 .dw-prize-tag{font-size:13px;letter-spacing:2px;text-transform:uppercase;opacity:.9;font-weight:700;min-height:1em}
 .dw-acc{font-size:clamp(34px,5vw,60px);font-weight:900;letter-spacing:.5px;margin:10px 0 6px;font-variant-numeric:tabular-nums;text-shadow:0 4px 18px rgba(0,0,0,.25);word-break:break-all}
@@ -1979,7 +1980,17 @@ function dwPool(){
 }
 function dwInfo(){
   const pool = dwPool(), people = new Set(pool.map(m=>m.account.toLowerCase()));
-  $("#dwInfo").innerHTML = esc(t("drawInfo",{n:pool.length, p:people.size, w:dwWinnersSet().size})).replace(/(\d+)/g,"<b>$1</b>");
+  /* giải thích vì sao lời chúc không vào danh sách quay */
+  const from = Date.parse($("#dwFrom").value), to = Date.parse($("#dwTo").value), onlyOk = $("#dwApproved").checked;
+  const inRange = adminItems.filter(m=>{ const tm = Date.parse(m.time); return !m.deleted && (isNaN(from) || tm >= from) && (isNaN(to) || tm <= to); });
+  const noAcc = inRange.filter(m=>!m.account).length, notOk = onlyOk ? inRange.filter(m=>m.account && !m.approved).length : 0;
+  let html = esc(t("drawInfo",{n:pool.length, p:people.size, w:dwWinnersSet().size})).replace(/(\d+)/g,"<b>$1</b>");
+  const why = [];
+  if (noAcc) why.push(t("drawNoAcc",{n:noAcc}));
+  if (notOk) why.push(t("drawNotApproved",{n:notOk}));
+  if (!inRange.length) why.push(t("drawNoneInRange"));
+  if (why.length) html += `<br><span class="dw-why">${esc(why.join(" "))}</span>`;
+  $("#dwInfo").innerHTML = html;
   $("#dwSpin").disabled = dwBusy || !pool.length;
 }
 function dwRenderWinners(){
