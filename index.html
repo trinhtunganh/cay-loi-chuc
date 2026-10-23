@@ -84,10 +84,16 @@ header{display:grid;grid-template-columns:auto auto 1fr auto;gap:26px;align-item
 .dw-why{display:block;margin-top:6px;color:#9A6400;background:#FFF6E0;border-radius:8px;padding:6px 8px;font-size:12.5px}
 .dw-stage{position:relative;overflow:hidden;border-radius:20px;min-height:280px;padding:26px 28px;color:#fff;background:radial-gradient(120% 140% at 20% 0%,#FF4D6D 0%,#E4002B 45%,#9E001E 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
 .dw-prize-tag{font-size:13px;letter-spacing:2px;text-transform:uppercase;opacity:.9;font-weight:700;min-height:1em}
-.dw-acc{font-size:clamp(34px,5vw,60px);font-weight:900;letter-spacing:.5px;margin:10px 0 6px;font-variant-numeric:tabular-nums;text-shadow:0 4px 18px rgba(0,0,0,.25);word-break:break-all}
-.dw-stage.rolling .dw-acc{filter:blur(.4px);opacity:.92}
-.dw-stage.won .dw-acc{animation:winPop .6s cubic-bezier(.2,1.6,.4,1)}
-@keyframes winPop{0%{transform:scale(.6)}100%{transform:scale(1)}}
+.dw-cloud{position:relative;align-self:stretch;height:clamp(300px,42vh,460px);margin:12px 0 4px;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:.35em .4em;overflow:hidden;font-size:16px}
+.dw-cloud.scroll{overflow-y:auto;align-content:flex-start}
+.dw-chip{position:relative;display:inline-block;padding:.18em .55em;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-weight:700;line-height:1.25;white-space:nowrap;transition:transform .14s ease,opacity .5s ease,background .14s,color .14s,box-shadow .14s}
+.dw-stage.rolling .dw-chip{opacity:.6}
+.dw-chip.hot{opacity:1!important;transform:scale(1.9);background:#fff;color:#C40026;z-index:3;box-shadow:0 6px 22px rgba(0,0,0,.3)}
+.dw-stage.done .dw-chip{opacity:.1}
+.dw-chip.win{opacity:1!important;background:#fff;color:#C40026;z-index:4;box-shadow:0 10px 34px rgba(0,0,0,.35);transition:transform .8s cubic-bezier(.2,1.3,.4,1),opacity .3s}
+.dw-empty{font-size:64px;font-weight:900;opacity:.6}
+.dw-result{min-height:2.6em}
+.dw-result[hidden]{display:block;visibility:hidden}
 .dw-to{font-size:13.5px;opacity:.9;min-height:1.2em}
 .dw-text{font-size:16px;line-height:1.55;max-width:560px;margin-top:10px;opacity:.95;max-height:7.8em;overflow:hidden}
 .dw-confetti{position:absolute;inset:0;pointer-events:none}
@@ -107,7 +113,6 @@ header{display:grid;grid-template-columns:auto auto 1fr auto;gap:26px;align-item
 .a-filt button b{display:inline-block;min-width:20px;background:#F5EFEF;border-radius:999px;padding:0 6px;font-size:11.5px;margin-left:4px}
 .a-filt button.on{border-color:var(--brand);background:var(--brand-tint);color:var(--brand-dark);font-weight:500}
 .a-filt button.on b{background:var(--brand);color:#fff}
-.a-filt .a-exp{margin-left:auto;font-weight:600;color:#1F7A45;border-color:#BFE3CC;background:#F2FBF5}
 .a-acc{font-weight:600;color:var(--ink-2)}
 .a-prize{background:#FFF3D6;color:#9A6400;border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:700}
 
@@ -300,6 +305,9 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 .a-head h2{margin:0}
 .a-x{border:0;background:transparent;font-size:26px;cursor:pointer;color:var(--muted);width:38px;height:38px;border-radius:50%}
 .a-x:hover{background:var(--brand-tint)}
+.a-hbtn{display:flex;align-items:center;gap:2px}
+.a-xls{border:0;background:transparent;cursor:pointer;width:38px;height:38px;border-radius:50%;display:grid;place-items:center}
+.a-xls:hover{background:#E8F5EC}
 .a-note{margin:6px 0 0;font-size:13px;color:#B9781E;background:#FFF3D6;border-radius:10px;padding:8px 12px}
 .a-tabs{display:flex;gap:6px;margin:14px 0 10px;flex-wrap:wrap}
 .a-tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;cursor:pointer;font-size:14px}
@@ -360,6 +368,8 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 @media (max-width:640px){ .dp-list li{grid-template-columns:18px 30px 1fr auto;gap:8px} .dp-cnt{display:none} }
 .a-acts{grid-column:2;grid-row:1 / span 2;display:flex;flex-direction:column;gap:6px;align-items:stretch;justify-content:center}
 .a-acts .dl{color:#C40026}
+.a-acts .pg{color:#fff;background:#C40026;border-color:#C40026}
+.a-acts .pg.arm{background:#7A0018;border-color:#7A0018;white-space:normal;line-height:1.25}
 .a-acts button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;cursor:pointer;font-size:13px;white-space:nowrap;display:flex;align-items:center;gap:6px;justify-content:center}
 .a-acts button:disabled{opacity:.5;cursor:wait}
 .a-acts .ap.on{background:#E8F5EC;border-color:#7DB65A;color:#22603F;font-weight:500}
@@ -700,9 +710,8 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
       </div>
       <div class="dw-stage" id="dwStage">
         <div class="dw-prize-tag" id="dwPrizeTag"></div>
-        <div class="dw-acc" id="dwAcc">?</div>
-        <div class="dw-to" id="dwTo2"></div>
-        <div class="dw-text" id="dwText"></div>
+        <div class="dw-cloud" id="dwCloud"></div>
+        <div class="dw-result" id="dwResult" hidden><div class="dw-to" id="dwTo2"></div><div class="dw-text" id="dwText"></div></div>
         <div class="dw-confetti" id="dwConfetti"></div>
       </div>
     </div>
@@ -718,7 +727,7 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
   <div class="panel admin">
     <div class="a-head">
       <h2 id="adminTitle" data-t="adminTitle"></h2>
-      <button class="a-x" data-close aria-label="Đóng">×</button>
+      <div class="a-hbtn"><button class="a-xls" id="aExport" type="button" title="Xuất Excel (CSV)" aria-label="Xuất Excel (CSV)"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><rect x="9" y="4" width="20" height="24" rx="2.5" fill="#21A366"/><path d="M19 4h7.5A2.5 2.5 0 0 1 29 6.5V16H19z" fill="#33C481"/><path d="M19 16h10v9.5a2.5 2.5 0 0 1-2.5 2.5H19z" fill="#107C41"/><path d="M9 16h10v12h-7.5A2.5 2.5 0 0 1 9 25.5z" fill="#185C37"/><rect x="2.5" y="9" width="15" height="14" rx="2.2" fill="#107C41"/><path d="M7 12.6l6 6.8M13 12.6l-6 6.8" stroke="#fff" stroke-width="2.1" stroke-linecap="round"/></svg></button><button class="a-x" data-close aria-label="Đóng">×</button></div>
     </div>
     <p class="a-note" id="aNote" hidden data-t="adminPreviewNote"></p>
     <div class="a-tabs" id="aTabs" role="tablist">
@@ -957,6 +966,11 @@ function previewApi(action, data){
     if (typeof data.deleted === "boolean"){ m.deleted = data.deleted; if (data.deleted) m.featured = false; }
     if (typeof data.prize === "string"){ m.prize = data.prize; m.wonAt = data.prize ? Date.now() : 0; }
     return Promise.resolve({ok:true, approved:m.approved, featured:m.featured, deleted:!!m.deleted, prize:m.prize||"", wonAt:m.wonAt||0});
+  }
+  if (action==="adminPurge"){
+    const i = sample.findIndex(x=>x.id===data.id); if (i < 0) return Promise.resolve({ok:false, error:"Không tìm thấy lời chúc."});
+    if (!sample[i].deleted) return Promise.resolve({ok:false, error:'Hãy "Ẩn đi" lời chúc trước khi xóa hẳn.'});
+    sample.splice(i, 1); return Promise.resolve({ok:true, purged:data.id});
   }
   if (action==="submit"){
     const m = { id:"p"+Date.now(), time:new Date().toISOString(), toType:data.toType,
@@ -1938,10 +1952,9 @@ function renderFilters(c){
     b.innerHTML = `${esc(t(key))} <b>${c[k].length}</b>`; b.onclick = ()=>{ adminFilter = k; renderAdmin(); };
     box.appendChild(b);
   });
-  const ex = document.createElement("button"); ex.type = "button"; ex.className = "a-exp"; ex.textContent = "⬇ " + t("adminExport"); ex.onclick = exportCsv;
-  box.appendChild(ex);
 }
-/* xuất toàn bộ lời chúc (kể cả đã xóa) ra file CSV mở được bằng Excel */
+$("#aExport").onclick = exportCsv;
+/* xuất toàn bộ lời chúc (kể cả đã ẩn) ra file CSV mở được bằng Excel */
 function exportCsv(){
   const cell = v => { const s = String(v == null ? "" : v); return /[",\n\r;]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
   const fmt = ts => { const d = new Date(ts); return isNaN(d) || !ts ? "" : d.toLocaleString("vi-VN",{timeZone:"Asia/Ho_Chi_Minh"}); };
@@ -1960,7 +1973,7 @@ function exportCsv(){
 /* ---- quay thưởng: chỉ quản trị; ai đã trúng thì không còn trong danh sách ---- */
 const pad2 = n => String(n).padStart(2,"0");
 const toLocalInput = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-let dwBusy = false, dwLast = null;
+let dwBusy = false, dwLast = null, dwShowingWin = false;
 function dwSetRange(kind){
   const now = new Date(), to = new Date(now.getTime() + 60e3);
   let from;
@@ -1992,6 +2005,33 @@ function dwInfo(){
   if (why.length) html += `<br><span class="dw-why">${esc(why.join(" "))}</span>`;
   $("#dwInfo").innerHTML = html;
   $("#dwSpin").disabled = dwBusy || !pool.length;
+  if (!dwBusy && !dwShowingWin) dwRenderCloud(pool);
+}
+/* "đám mây" account: mỗi người một ô, chữ tự co cho vừa khung đỏ */
+function dwAccounts(pool){
+  const seen = new Map();
+  pool.forEach(m=>{ const k = m.account.toLowerCase(); if (!seen.has(k)) seen.set(k, m.account); });
+  return [...seen.entries()];
+}
+function dwRenderCloud(pool){
+  const box = $("#dwCloud"), stage = $("#dwStage"), accs = dwAccounts(pool);
+  stage.classList.remove("done","rolling"); $("#dwResult").hidden = true; box.textContent = ""; box.classList.remove("scroll");
+  if (!accs.length){ box.innerHTML = '<span class="dw-empty">?</span>'; box.style.fontSize = ""; return; }
+  const frag = document.createDocumentFragment();
+  accs.forEach(([k, name])=>{ const s = document.createElement("span"); s.className = "dw-chip"; s.dataset.k = k; s.textContent = name; frag.appendChild(s); });
+  box.appendChild(frag);
+  let size = 26;
+  for (; size > 10; size -= 2){ box.style.fontSize = size + "px"; if (box.scrollHeight <= box.clientHeight + 1 && box.scrollWidth <= box.clientWidth + 1) break; }
+  if (box.scrollHeight > box.clientHeight + 1) box.classList.add("scroll");
+}
+function dwChipFor(acc){ return [...$$("#dwCloud .dw-chip")].find(c=>c.dataset.k === String(acc).toLowerCase()); }
+function dwCenterWin(chip){
+  const box = $("#dwCloud");
+  if (box.classList.contains("scroll")) box.scrollTop = Math.max(0, chip.offsetTop - box.clientHeight/2 + chip.offsetHeight/2);
+  const b = box.getBoundingClientRect(), c = chip.getBoundingClientRect();
+  const s = Math.max(1, Math.min(4, (b.width * .8) / c.width, (b.height * .45) / c.height));
+  const dx = (b.left + b.width/2) - (c.left + c.width/2), dy = (b.top + b.height/2) - (c.top + c.height/2);
+  chip.style.transform = `translate(${dx}px,${dy}px) scale(${s})`;
 }
 function dwRenderWinners(){
   const ul = $("#dwWinners"); ul.textContent = "";
@@ -2022,20 +2062,31 @@ async function dwSpin(){
   const pool = dwPool(); if (!pool.length || dwBusy) return;
   const prize = $("#dwPrize").value.trim() || t("drawPrizeDefault");
   dwBusy = true; $("#dwSpin").disabled = true; $("#dwUndo").hidden = true;
-  const stage = $("#dwStage"); stage.classList.remove("won"); stage.classList.add("rolling");
+  dwShowingWin = false; dwRenderCloud(pool);
+  const stage = $("#dwStage"); stage.classList.add("rolling");
   $("#dwPrizeTag").textContent = prize; $("#dwTo2").textContent = ""; $("#dwText").textContent = "";
   const winner = pool[rnd(pool.length)];
-  const names = pool.map(m=>m.account), t0 = performance.now(), dur = 4800;
+  const chips = [...$$("#dwCloud .dw-chip")], box = $("#dwCloud"), t0 = performance.now(), dur = 5200;
+  const visible = c => !box.classList.contains("scroll") || (c.offsetTop >= box.scrollTop && c.offsetTop + c.offsetHeight <= box.scrollTop + box.clientHeight);
+  let hot = null;
   await new Promise(done=>{
     (function tick(){
       const p = (performance.now() - t0) / dur;
       if (p >= 1) return done();
-      $("#dwAcc").textContent = names[rnd(names.length)];
-      setTimeout(tick, 40 + Math.pow(p, 2.2) * 420);
+      if (hot) hot.classList.remove("hot");
+      const vis = chips.filter(visible), from = vis.length ? vis : chips;
+      let next = from[rnd(from.length)];
+      if (next === hot && from.length > 1) next = from[(from.indexOf(next) + 1) % from.length];
+      hot = next; hot.classList.add("hot");
+      setTimeout(tick, 55 + Math.pow(p, 2.4) * 460);
     })();
   });
-  stage.classList.remove("rolling"); stage.classList.add("won");
-  $("#dwAcc").textContent = winner.account; $("#dwTo2").textContent = recipient(winner) + " · " + timeAgo(winner.time); $("#dwText").textContent = "“" + winner.text + "”";
+  if (hot) hot.classList.remove("hot");
+  const wc = dwChipFor(winner.account);
+  stage.classList.remove("rolling"); stage.classList.add("done");
+  if (wc){ wc.classList.add("win"); dwCenterWin(wc); }
+  dwShowingWin = true;
+  $("#dwTo2").textContent = recipient(winner) + " · " + timeAgo(winner.time); $("#dwText").textContent = "“" + winner.text + "”"; $("#dwResult").hidden = false;
   dwConfetti();
   try{ await dwSetPrize(winner, prize); dwLast = winner; $("#dwUndo").hidden = false; }
   catch(e){ toast(e.message || t("adminSaveError")); }
@@ -2043,6 +2094,7 @@ async function dwSpin(){
 }
 async function openDraw(){
   if (!ADMIN_PIN) return openAdminGate();
+  if (!dwBusy) dwShowingWin = false;
   if (!$("#dwPrize").value) $("#dwPrize").value = t("drawPrizeDefault");
   openModal("#drawPanel");
   $("#dwInfo").textContent = "…";
@@ -2051,9 +2103,10 @@ async function openDraw(){
   dwRenderWinners();
 }
 $$("#drawPanel [data-pre]").forEach(b=>b.onclick = ()=>dwSetRange(b.dataset.pre));
-["#dwFrom","#dwTo","#dwApproved"].forEach(q=>$(q).addEventListener("change", dwInfo));
+["#dwFrom","#dwTo","#dwApproved"].forEach(q=>$(q).addEventListener("change", ()=>{ if (!dwBusy) dwShowingWin = false; dwInfo(); }));
+$$("#drawPanel [data-pre]").forEach(b=>b.addEventListener("click", ()=>{ if (!dwBusy){ dwShowingWin = false; dwInfo(); } }));
 $("#dwSpin").onclick = dwSpin;
-$("#dwUndo").onclick = async ()=>{ if (!dwLast) return; try{ await dwSetPrize(dwLast, ""); $("#dwAcc").textContent = "?"; $("#dwTo2").textContent = ""; $("#dwText").textContent = ""; $("#dwStage").classList.remove("won"); $("#dwUndo").hidden = true; dwLast = null; toast(t("drawUndone")); }catch(e){ toast(e.message); } };
+$("#dwUndo").onclick = async ()=>{ if (!dwLast) return; try{ dwShowingWin = false; await dwSetPrize(dwLast, ""); $("#dwUndo").hidden = true; dwLast = null; toast(t("drawUndone")); }catch(e){ toast(e.message); } };
 $("#btnDraw").onclick = openDraw;
 
 function renderAdmin(){
@@ -2102,9 +2155,12 @@ function renderAdmin(){
     const li = document.createElement("li"); if (m.featured) li.className = "is-feat";
     li.innerHTML = `<div class="a-meta">${miniIcon(m)}<b>${esc(recipient(m))}</b> · ${esc(timeAgo(m.time))}${m.account ? ` · <span class="a-acc">👤 ${esc(m.account)}</span>` : ""}${m.prize ? ` <span class="a-prize">🎁 ${esc(m.prize)}</span>` : ""}</div>
       <div class="a-text">${esc(m.text)}</div>
-      <div class="a-acts">${m.deleted ? `<button class="rs">↺ ${esc(t("adminRestore"))}</button>` :
-        `<button class="ap ${m.approved?"on":""}">${m.approved?"✓ ":""}${esc(t("adminApprove"))}</button><button class="ft ${m.featured?"on":""}">${m.featured?"★":"☆"} ${esc(t("adminFeature"))}</button><button class="dl">🗑 ${esc(t("adminDelete"))}</button>`}</div>`;
-    if (m.deleted) li.querySelector(".rs").onclick = ()=>adminSet(m, {deleted:false}, li);
+      <div class="a-acts">${m.deleted ? `<button class="rs">↺ ${esc(t("adminRestore"))}</button><button class="pg">✕ ${esc(t("adminPurge"))}</button>` :
+        `<button class="ap ${m.approved?"on":""}">${m.approved?"✓ ":""}${esc(t("adminApprove"))}</button><button class="ft ${m.featured?"on":""}">${m.featured?"★":"☆"} ${esc(t("adminFeature"))}</button><button class="dl">🙈 ${esc(t("adminDelete"))}</button>`}</div>`;
+    if (m.deleted){
+      li.querySelector(".rs").onclick = ()=>adminSet(m, {deleted:false}, li);
+      li.querySelector(".pg").onclick = e=>adminPurge(m, li, e.currentTarget);
+    }
     else {
       li.querySelector(".ap").onclick = ()=>adminSet(m, {approved: !m.approved}, li);
       li.querySelector(".ft").onclick = ()=>adminSet(m, {featured: !m.featured}, li);
@@ -2122,6 +2178,22 @@ async function adminSet(m, change, li){
     if (typeof res.prize === "string"){ m.prize = res.prize; m.wonAt = res.wonAt || 0; }
     renderAdmin(); refresh(true);
   }catch(e){ toast(t("adminSaveError")); li.querySelectorAll("button").forEach(b=>b.disabled = false); }
+}
+/* xóa hẳn khỏi cơ sở dữ liệu: bấm 2 lần để chắc chắn, chỉ với lời chúc đã "Ẩn đi" */
+async function adminPurge(m, li, btn){
+  if (!btn.classList.contains("arm")){
+    btn.classList.add("arm"); btn.textContent = t("adminPurgeConfirm");
+    clearTimeout(btn._t); btn._t = setTimeout(()=>{ btn.classList.remove("arm"); btn.textContent = "✕ " + t("adminPurge"); }, 4000);
+    return;
+  }
+  clearTimeout(btn._t);
+  li.querySelectorAll("button").forEach(b=>b.disabled = true);
+  try{
+    const res = await api("adminPurge", {id:m.id});
+    if (!res || !res.ok) throw new Error(res && res.error === "Thao tác không hợp lệ." ? t("adminPurgeOld") : (res && res.error) || t("adminSaveError"));
+    adminItems = adminItems.filter(x=>x.id !== m.id);
+    renderAdmin(); toast(t("adminPurged"));
+  }catch(e){ toast(e.message || t("adminSaveError")); li.querySelectorAll("button").forEach(b=>b.disabled = false); btn.classList.remove("arm"); btn.textContent = "✕ " + t("adminPurge"); }
 }
 $$("#aTabs button").forEach(b=>b.onclick = ()=>{ adminTab = b.dataset.tab; renderAdmin(); });
 $("#aQ").addEventListener("input", renderAdmin);

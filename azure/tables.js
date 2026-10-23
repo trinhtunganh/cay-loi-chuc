@@ -78,7 +78,8 @@ function tableClient(conn, table) {
     async createEntity(e) { await call('POST', table, { body: toWire(e), headers: { Prefer: 'return-no-content' } }); },
     async getEntity(pk, rk) { return clean((await call('GET', entityPath(table, pk, rk))).json); },
     async updateEntity(e) { await call('MERGE', entityPath(table, e.partitionKey, e.rowKey), { body: toWire(e), headers: { 'If-Match': '*' } }); },
-    async upsertEntity(e) { await call('PUT', entityPath(table, e.partitionKey, e.rowKey), { body: toWire(e) }); }
+    async upsertEntity(e) { await call('PUT', entityPath(table, e.partitionKey, e.rowKey), { body: toWire(e) }); },
+    async deleteEntity(pk, rk) { await call('DELETE', entityPath(table, pk, rk), { headers: { 'If-Match': '*' } }); }
   };
 }
 

@@ -163,6 +163,29 @@ function createCore(tables, env = process.env, deps = {}) {
     return { ok: true, active: v };
   }
 
+  /* ---------- xóa hẳn (chỉ lời chúc đã "Ẩn đi"); mã được ghi vào PURGED để Google cũng xóa ---------- */
+  const PURGED_MAX = 2000;
+  const purgedOf = c => { try { const a = JSON.parse(c.PURGED || '[]'); return Array.isArray(a) ? a.map(String) : []; } catch (e) { return []; } };
+  async function addPurged(ids) {
+    const cur = purgedOf(await getCfg(true)), seen = new Set(cur);
+    const add = ids.map(String).filter(x => /^[\w-]{1,40}$/.test(x) && !seen.has(x));
+    if (!add.length) return cur;
+    const out = cur.concat(add).slice(-PURGED_MAX);
+    await setCfg('PURGED', JSON.stringify(out));
+    return out;
+  }
+  async function adminPurge(b) {
+    const id = String(b.id || '');
+    if (!/^[\w-]{1,40}$/.test(id)) return { ok: false, error: 'Thiếu mã lời chúc.' };
+    let e = null;
+    try { e = await wishes.getEntity('w', id); } catch (err) { if (err.statusCode !== 404) throw err; }
+    if (e && e.deleted !== true) return { ok: false, error: 'Hãy "Ẩn đi" lời chúc trước khi xóa hẳn.' };
+    if (e) { try { await wishes.deleteEntity('w', id); } catch (err) { if (err.statusCode !== 404) throw err; } }
+    await addPurged([id]);
+    listCache = null;
+    return { ok: true, purged: id, found: !!e };
+  }
+
   /* ---------- đồng bộ với Google ---------- */
   async function peer(body) {
     if (deps.peer) return deps.peer(body);
@@ -198,9 +221,16 @@ function createCore(tables, env = process.env, deps = {}) {
       const dump = await peer({ action: 'peerDump', key, since: Math.max(0, Number(cfg.SYNC_PULL || 0) - overlap) });
       if (!dump || !dump.ok) throw new Error((dump && dump.error) || 'Google không trả lời');
       const local = new Map((await all()).map(m => [m.id, m]));
+      /* xóa hẳn: hợp danh sách hai bên rồi xóa ở Azure */
+      const purged = await addPurged(Array.isArray(dump.purged) ? dump.purged : []), gone = new Set(purged);
+      for (const id of [...local.keys()]) if (gone.has(id)) {
+        try { await wishes.deleteEntity('w', id); } catch (e) { if (e.statusCode !== 404) throw e; }
+        local.delete(id); pulled.removed = (pulled.removed || 0) + 1;
+      }
       let maxSeen = Number(cfg.SYNC_PULL || 0);
       for (const m of dump.items || []) {
         if (!m || !/^[\w-]{1,40}$/.test(String(m.id || ''))) continue;
+        if (gone.has(String(m.id))) continue;
         maxSeen = Math.max(maxSeen, Number(m.updated) || 0);
         const l = local.get(String(m.id));
         if (!l) {
@@ -215,18 +245,18 @@ function createCore(tables, env = process.env, deps = {}) {
         const v = gs[k];
         if (v && v.v && Number(v.at) > ls[k].at) { await setCfgStamped(k, v.v, Number(v.at)); ls[k] = { v: v.v, at: Number(v.at) }; }
       }
-      if (pulled.added || pulled.changed) listCache = null;
+      if (pulled.added || pulled.changed || pulled.removed) listCache = null;
       /* 2. gửi thay đổi của Azure sang Google */
       const pushSince = Math.max(0, Number(cfg.SYNC_PUSH || 0) - overlap);
       const items = [...local.values()].filter(m => Number(m.updated) >= pushSince);
-      pushed = await peer({ action: 'peerUpsert', key, items, settings: ls });
+      pushed = await peer({ action: 'peerUpsert', key, items, settings: ls, purged });
       if (!pushed || !pushed.ok) throw new Error((pushed && pushed.error) || 'Google không nhận dữ liệu');
       await setCfg('SYNC_PULL', String(maxSeen));
       await setCfg('SYNC_PUSH', String(started));
     } catch (e) { err = String(e && e.message || e); }
     await setCfg('SYNC_AT', String(Date.now()));
     await setCfg('SYNC_OK', err ? 'Lỗi: ' + err.slice(0, 200) : 'ok');
-    return { ok: !err, error: err || undefined, pulled, pushed: pushed && { added: pushed.added, changed: pushed.changed }, ms: Date.now() - started };
+    return { ok: !err, error: err || undefined, pulled, pushed: pushed && { added: pushed.added, changed: pushed.changed, removed: pushed.removed || 0 }, ms: Date.now() - started };
   }
   /* đổi PIN: lưu vào bảng CaiDat, có dấu thời gian để đồng bộ sang Google */
   async function setPins(b) {
@@ -271,6 +301,7 @@ function createCore(tables, env = process.env, deps = {}) {
         case 'adminSetPins':  return await setPins(body);
         case 'adminSyncNow':  return Object.assign(await sync(), { sync: await syncStatus() });
         case 'adminSet':      return await adminSet(body);
+        case 'adminPurge':    return await adminPurge(body);
         case 'adminSetDepts': return await setDepts(body);
         case 'adminSetActive':return await setActive(body);
         default:              return { ok: false, error: 'Thao tác không hợp lệ.' };

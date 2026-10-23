@@ -79,6 +79,7 @@ function doPost(e) {
       case 'adminList':   return json({ ok: true, items: listAll(), depts: getDepts(), active: activeBackend(), staffPin: prop('PIN') });
       case 'adminSetPins': return json(setPins(body));
       case 'adminSet':    return json(adminSet(body));
+      case 'adminPurge':  return json(adminPurge(body));
       case 'adminSetDepts': return json(setDepts(body));
       case 'adminSetActive': return json(setActive(body));
       case 'verify': return json({ ok: true, active: activeBackend() });
@@ -252,6 +253,40 @@ function adminSet(body) {
   }
 }
 
+/** Xóa hẳn khỏi Sheet — chỉ với lời chúc đã "Ẩn đi". Ghi mã vào PURGED để bên Azure cũng xóa khi đồng bộ. */
+function adminPurge(body) {
+  const id = String(body.id || '');
+  if (!/^[\w-]{1,40}$/.test(id)) return { ok: false, error: 'Thiếu mã lời chúc.' };
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sh = getSheet(), last = sh.getLastRow();
+    const rows = last >= 2 ? sh.getRange(2, 1, last - 1, COL.deleted).getValues() : [];
+    let row = -1;
+    for (let i = 0; i < rows.length; i++) if (String(rows[i][0]) === id) { row = i + 2; break; }
+    if (row > 0 && rows[row - 2][COL.deleted - 1] !== true) return { ok: false, error: 'Hãy "Ẩn đi" lời chúc trước khi xóa hẳn.' };
+    if (row > 0) sh.deleteRow(row);
+    addPurged([id]);
+    removeBig('approved_list');
+    return { ok: true, purged: id, found: row > 0 };
+  } finally {
+    lock.releaseLock();
+  }
+}
+const PURGED_MAX = 2000;
+function getPurged(p) { try { const a = JSON.parse((p || allProps()).PURGED || '[]'); return Array.isArray(a) ? a.map(String) : []; } catch (e) { return []; } }
+function addPurged(ids) {
+  const props = PropertiesService.getScriptProperties();
+  const cur = getPurged(props.getProperties()), set = {};
+  cur.forEach(x => set[x] = 1);
+  const add = ids.map(String).filter(x => /^[\w-]{1,40}$/.test(x) && !set[x]);
+  if (!add.length) return cur;
+  const out = cur.concat(add).slice(-PURGED_MAX);
+  props.setProperty('PURGED', JSON.stringify(out));
+  CacheService.getScriptCache().remove('props');
+  return out;
+}
+
 /** Phòng ban do Ban tổ chức cấu hình; null = dùng danh sách trong config.js. */
 function getDepts() {
   const v = allProps().DEPARTMENTS;
@@ -341,15 +376,26 @@ function peerSettings(p) {
 function peerDump(body) {
   const since = Number(body.since || 0);
   const items = listAll().filter(m => m.updated >= since);
-  return { ok: true, items: items, settings: peerSettings(PropertiesService.getScriptProperties().getProperties()), now: Date.now() };
+  const p = PropertiesService.getScriptProperties().getProperties();
+  return { ok: true, items: items, settings: peerSettings(p), purged: getPurged(p), now: Date.now() };
 }
 function peerUpsert(body) {
   const items = Array.isArray(body.items) ? body.items : [];
-  let added = 0, changed = 0;
+  let added = 0, changed = 0, removed = 0;
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
     const sh = getSheet();
+    /* xóa hẳn: hợp danh sách hai bên, xóa các dòng tương ứng */
+    const purged = addPurged(Array.isArray(body.purged) ? body.purged : []), gone = {};
+    purged.forEach(x => gone[x] = 1);
+    {
+      const last = sh.getLastRow();
+      if (last >= 2) {
+        const ids = sh.getRange(2, 1, last - 1, 1).getValues();
+        for (let i = ids.length - 1; i >= 0; i--) if (gone[String(ids[i][0])]) { sh.deleteRow(i + 2); removed++; }
+      }
+    }
     if (items.length) {
       const last = sh.getLastRow();
       const local = {};
@@ -358,7 +404,7 @@ function peerUpsert(body) {
       });
       items.forEach(m => {
         const id = String(m.id || '');
-        if (!/^[\w-]{1,40}$/.test(id) || !TYPE_LABELS[m.toType]) return;
+        if (!/^[\w-]{1,40}$/.test(id) || !TYPE_LABELS[m.toType] || gone[id]) return;
         const vals = [
           TYPE_LABELS[m.toType], safeCell(clean(m.toDept, MAX_NAME)), safeCell(clean(m.toName, MAX_NAME)), safeCell(clean(m.text, MAX_TEXT)),
           m.approved === true, m.featured === true, Number(m.updated) || Date.now(), m.deleted === true,
@@ -377,8 +423,8 @@ function peerUpsert(body) {
     });
     if (Object.keys(upd).length) props.setProperties(upd);
     CacheService.getScriptCache().removeAll(['props']);
-    if (added || changed) removeBig('approved_list');
-    return { ok: true, added: added, changed: changed, settings: Object.keys(upd) };
+    if (added || changed || removed) removeBig('approved_list');
+    return { ok: true, added: added, changed: changed, removed: removed, settings: Object.keys(upd) };
   } finally {
     lock.releaseLock();
   }
