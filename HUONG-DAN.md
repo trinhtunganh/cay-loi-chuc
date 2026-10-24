@@ -56,6 +56,8 @@ Mở web, bấm **"Ban tổ chức? Đăng nhập quản trị"** ở màn hình
 
 - **Quay thưởng:** khi đã đăng nhập quản trị, bấm nút hộp quà ở đầu trang (bên trái nút trình chiếu). Chọn tên giải, khoảng thời gian gửi lời chúc, bấm **Quay**. Mỗi lời chúc là 1 lượt; người đã trúng (theo Account VGR) không còn trong danh sách. Bảng kê bên dưới liệt kê mọi lời chúc trong khoảng thời gian đã chọn, kèm lý do nếu không được quay. Mỗi lượt quay chạy đúng 5 giây (thanh tiến trình ở đáy ô đỏ). Bấm **Hủy kết quả này** nếu người trúng vắng mặt.
 - **Xuất dữ liệu:** Quản trị → biểu tượng Excel ở góc trên bên phải (cạnh dấu ×): toàn bộ lời chúc kể cả đã ẩn, kèm Account VGR, trạng thái, giải thưởng.
+- **Sửa chữ hiển thị:** Quản trị → tab **Nội dung**: sửa mọi dòng chữ trên trang (tiêu đề, form gửi, lời cảm ơn, màn hình PIN, tên các giai đoạn của cây, gợi ý câu mở đầu…) rồi bấm **Lưu nội dung**. Bấm ↺ để về chữ mặc định trong `config.js`. Trang của mọi người tự cập nhật trong khoảng 1 phút.
+- **Gửi lời chúc:** mọi lời chúc gửi cả công ty; mỗi lời chúc thành một bông hoa hoặc chiếc lá màu ngẫu nhiên. Tab Phòng ban và bộ lọc phòng ban đã bỏ.
 - **Chế độ ẩn danh:** Quản trị → tab **Lời chúc** → công tắc **Chế độ ẩn danh**. Bật: form gửi không còn ô Account VGR, máy chủ không lưu account, lời chúc gửi lúc đó không tham gia quay thưởng. Tắt: bắt buộc nhập Account, và account hiện kèm lời chúc (trên thẻ lời chúc và danh sách bên phải). Áp dụng ngay cho mọi người (trang tự cập nhật trong vòng 1 phút).
 - **Ẩn đi / Xóa hẳn:** nút **Ẩn đi** gỡ lời chúc khỏi cây nhưng vẫn giữ lại (bộ lọc **Ẩn đi** → **Khôi phục**). Muốn xóa vĩnh viễn khỏi cả Google Sheet và Azure: vào bộ lọc **Ẩn đi** → **Xóa hẳn** → bấm lần nữa để xác nhận. Không hoàn tác được.
 

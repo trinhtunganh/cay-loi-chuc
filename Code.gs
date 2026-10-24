@@ -9,6 +9,7 @@
  *     ADMIN_PIN     mã PIN riêng của Ban tổ chức để duyệt và chọn lời chúc tiêu biểu
  *     DEPARTMENTS   danh sách phòng ban (JSON), tự lưu khi Ban tổ chức sửa trong trang Quản trị
  *     ACTIVE        máy chủ cả công ty đang dùng (google/azure), đổi trong Quản trị → Máy chủ
+ *     TEXTS_*       chữ hiển thị sửa trong Quản trị → Nội dung (tự tạo)
  *     ANON          true = chế độ ẩn danh (không hỏi Account VGR), đổi trong Quản trị → Lời chúc
  *     SYNC_KEY      khóa bí mật dùng chung với máy chủ Azure để 2 máy chủ đồng bộ dữ liệu
  * - Sheet tự được tạo ở lần chạy đầu tiên, không cần chuẩn bị gì.
@@ -77,14 +78,15 @@ function doPost(e) {
   try {
     switch (body.action) {
       case 'adminVerify': return json({ ok: true, active: activeBackend(), anon: anonMode() });
-      case 'adminList':   return json({ ok: true, items: listAll(), depts: getDepts(), active: activeBackend(), anon: anonMode(), staffPin: prop('PIN') });
+      case 'adminSetTexts': return json(setTexts(body));
+      case 'adminList':   return json({ ok: true, items: listAll(), depts: getDepts(), active: activeBackend(), anon: anonMode(), staffPin: prop('PIN'), texts: textsObj(), tv: textsTv() });
       case 'adminSetPins': return json(setPins(body));
       case 'adminSet':    return json(adminSet(body));
       case 'adminPurge':  return json(adminPurge(body));
       case 'adminSetDepts': return json(setDepts(body));
       case 'adminSetActive': return json(setActive(body));
       case 'adminSetAnon': return json(setAnon(body));
-      case 'verify': return json({ ok: true, active: activeBackend(), anon: anonMode() });
+      case 'verify': return json(withTexts({ ok: true, active: activeBackend(), anon: anonMode() }, body));
       case 'list':   return json(listDelta(body));
       case 'submit': return json(submit(body));
       default:       return json({ ok: false, error: 'Thao tác không hợp lệ.' });
@@ -127,7 +129,7 @@ function listApproved() {
 function listDelta(body) {
   const items = listApproved();
   const ver = hashItems(items);
-  const out = { ok: true, ver: ver, depts: getDepts(), active: activeBackend(), anon: anonMode() };
+  const out = withTexts({ ok: true, ver: ver, depts: getDepts(), active: activeBackend(), anon: anonMode() }, body);
   const since = String(body.since || ''), after = String(body.after || '');
   if (since && since === ver) { out.same = true; return out; }
   if (since && after) {
@@ -355,6 +357,53 @@ function setActive(body) {
   return { ok: true, active: v };
 }
 
+/** Chữ hiển thị do Ban tổ chức sửa trong Quản trị → Nội dung (chỉ lưu những chữ khác mặc định). */
+const TEXTS_CHUNK = 2500, TEXTS_MAX = 30000;
+function cleanTexts(o) {
+  if (!o || typeof o !== 'object' || Array.isArray(o)) return { ok: false, error: 'Dữ liệu không hợp lệ.' };
+  const out = {};
+  const keys = Object.keys(o).slice(0, 400);
+  for (let i = 0; i < keys.length; i++) {
+    const k = keys[i], v = o[k];
+    if (!/^[A-Za-z][A-Za-z0-9_]{0,40}$/.test(k) || typeof v !== 'string') continue;
+    out[k] = v.replace(/[\u0000-\u0009\u000B-\u001F\u007F]/g, '').slice(0, 2000);
+  }
+  const json = JSON.stringify(out);
+  if (json.length > TEXTS_MAX) return { ok: false, error: 'Nội dung quá dài, bạn rút gọn bớt nhé.' };
+  return { ok: true, obj: out, json: json };
+}
+function getTextsRaw(p) {
+  p = p || allProps();
+  const n = Number(p.TEXTS_N || 0); let s = '';
+  for (let i = 0; i < n; i++) s += p['TEXTS_' + i] || '';
+  return s || '{}';
+}
+function textsTv(p) { return String(Number((p || allProps()).TEXTS_AT || 0)); }
+function textsObj(p) { try { return JSON.parse(getTextsRaw(p)); } catch (e) { return {}; } }
+function writeTexts(json, at) {
+  const props = PropertiesService.getScriptProperties(), old = Number(props.getProperty('TEXTS_N') || 0), parts = [];
+  for (let i = 0; i < json.length; i += TEXTS_CHUNK) parts.push(json.slice(i, i + TEXTS_CHUNK));
+  const upd = { TEXTS_N: String(parts.length), TEXTS_AT: String(at) };
+  parts.forEach((x, i) => upd['TEXTS_' + i] = x);
+  props.setProperties(upd);
+  for (let i = parts.length; i < old; i++) props.deleteProperty('TEXTS_' + i);
+  CacheService.getScriptCache().remove('props');
+}
+function setTexts(body) {
+  const r = cleanTexts(body.texts);
+  if (!r.ok) return r;
+  const at = Date.now();
+  writeTexts(r.json, at);
+  return { ok: true, tv: String(at), texts: r.obj };
+}
+/** gắn chữ tùy chỉnh vào phản hồi: chỉ gửi nội dung khi trình duyệt chưa có bản mới nhất */
+function withTexts(out, body) {
+  const p = allProps(), tv = textsTv(p);
+  out.tv = tv;
+  if (String((body && body.tv) || '') !== tv) out.texts = textsObj(p);
+  return out;
+}
+
 /** Chế độ ẩn danh (ANON=true): người gửi không cần nhập Account VGR và account không được lưu. */
 function anonMode() { return allProps().ANON === 'true'; }
 function setAnon(body) {
@@ -389,7 +438,8 @@ function peerSettings(p) {
     ACTIVE: { v: p.ACTIVE || '', at: Number(p.ACTIVE_AT || 0) },
     PIN: { v: p.PIN || '', at: Number(p.PIN_AT || 0) },
     ADMIN_PIN: { v: p.ADMIN_PIN || '', at: Number(p.ADMIN_PIN_AT || 0) },
-    ANON: { v: p.ANON || '', at: Number(p.ANON_AT || 0) }
+    ANON: { v: p.ANON || '', at: Number(p.ANON_AT || 0) },
+    TEXTS: { v: getTextsRaw(p), at: Number(p.TEXTS_AT || 0) }
   };
 }
 function peerDump(body) {
@@ -436,6 +486,12 @@ function peerUpsert(body) {
     }
     /* cài đặt: bên nào đổi sau thì thắng */
     const s = body.settings || {}, props = PropertiesService.getScriptProperties(), cur = peerSettings(props.getProperties()), upd = {};
+    const tx = s.TEXTS;   // chữ tùy chỉnh: lưu chia nhỏ, xử lý riêng
+    if (tx && Number(tx.at) > cur.TEXTS.at && typeof tx.v === 'string') {
+      let o = null; try { o = JSON.parse(tx.v); } catch (e) {}
+      const r = cleanTexts(o);
+      if (r.ok) { writeTexts(r.json, Number(tx.at)); upd.TEXTS_AT = String(Number(tx.at)); }
+    }
     ['DEPARTMENTS', 'ACTIVE', 'PIN', 'ADMIN_PIN', 'ANON'].forEach(k => {
       const v = s[k];
       if (v && Number(v.at) > cur[k].at && typeof v.v === 'string' && v.v) { upd[k] = v.v; upd[k + '_AT'] = String(Number(v.at)); }

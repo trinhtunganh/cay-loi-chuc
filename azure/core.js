@@ -60,6 +60,34 @@ function createCore(tables, env = process.env, deps = {}) {
     try { const a = JSON.parse(v || 'null'); return Array.isArray(a) && a.length ? a : null; } catch (e) { return null; }
   }
   async function active() { return (await getCfg()).ACTIVE || null; }
+  /* chữ hiển thị do Ban tổ chức sửa trong Quản trị → Nội dung (chỉ lưu những chữ khác mặc định) */
+  const TEXTS_MAX = 30000;
+  function cleanTexts(o) {
+    if (!o || typeof o !== 'object' || Array.isArray(o)) return { ok: false, error: 'Dữ liệu không hợp lệ.' };
+    const out = {};
+    for (const k of Object.keys(o).slice(0, 400)) {
+      const v = o[k];
+      if (!/^[A-Za-z][A-Za-z0-9_]{0,40}$/.test(k) || typeof v !== 'string') continue;
+      out[k] = v.replace(/[\u0000-\u0009\u000B-\u001F\u007F]/g, '').slice(0, 2000);
+    }
+    const json = JSON.stringify(out);
+    if (json.length > TEXTS_MAX) return { ok: false, error: 'Nội dung quá dài, bạn rút gọn bớt nhé.' };
+    return { ok: true, obj: out, json };
+  }
+  const textsObj = c => { try { const o = JSON.parse(c.TEXTS || '{}'); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; } };
+  async function setTexts(b) {
+    const r = cleanTexts(b.texts);
+    if (!r.ok) return r;
+    const at = Date.now();
+    await setCfgStamped('TEXTS', r.json, at);
+    return { ok: true, tv: String(at), texts: r.obj };
+  }
+  async function withTexts(out, b) {
+    const c = await getCfg(), tv = String(Number(c.TEXTS_AT || 0));
+    out.tv = tv;
+    if (String((b && b.tv) || '') !== tv) out.texts = textsObj(c);
+    return out;
+  }
   async function anonMode() { return (await getCfg()).ANON === 'true'; }
   async function setAnon(b) {
     if (typeof b.anon !== 'boolean') return { ok: false, error: 'Giá trị không hợp lệ.' };
@@ -94,7 +122,7 @@ function createCore(tables, env = process.env, deps = {}) {
   /* chỉ gửi phần thay đổi: không đổi → {same}, chỉ thêm mới → phần mới, còn lại → cả danh sách */
   async function listDelta(b) {
     const items = await approved(), ver = hashItems(items);
-    const out = { ok: true, ver, depts: await depts(), active: await active(), anon: await anonMode() };
+    const out = await withTexts({ ok: true, ver, depts: await depts(), active: await active(), anon: await anonMode() }, b);
     const since = String(b.since || ''), after = String(b.after || '');
     if (since && since === ver) { out.same = true; return out; }
     if (since && after) {
@@ -214,7 +242,8 @@ function createCore(tables, env = process.env, deps = {}) {
     ACTIVE: { v: c.ACTIVE || '', at: Number(c.ACTIVE_AT || 0) },
     PIN: { v: c.PIN || '', at: Number(c.PIN_AT || 0) },
     ADMIN_PIN: { v: c.ADMIN_PIN || '', at: Number(c.ADMIN_PIN_AT || 0) },
-    ANON: { v: c.ANON || '', at: Number(c.ANON_AT || 0) }
+    ANON: { v: c.ANON || '', at: Number(c.ANON_AT || 0) },
+    TEXTS: { v: c.TEXTS || '', at: Number(c.TEXTS_AT || 0) }
   });
   let syncing = null;
   function sync() { return syncing || (syncing = runSync().finally(() => { syncing = null; })); }
@@ -251,7 +280,7 @@ function createCore(tables, env = process.env, deps = {}) {
         }
       }
       const gs = dump.settings || {}, ls = settingsOf(cfg);
-      for (const k of ['DEPARTMENTS', 'ACTIVE', 'PIN', 'ADMIN_PIN', 'ANON']) {
+      for (const k of ['DEPARTMENTS', 'ACTIVE', 'PIN', 'ADMIN_PIN', 'ANON', 'TEXTS']) {
         const v = gs[k];
         if (v && v.v && Number(v.at) > ls[k].at) { await setCfgStamped(k, v.v, Number(v.at)); ls[k] = { v: v.v, at: Number(v.at) }; if (k === 'ANON') listCache = null; }
       }
@@ -303,11 +332,11 @@ function createCore(tables, env = process.env, deps = {}) {
     try {
       await ensure();
       switch (action) {
-        case 'verify':        return { ok: true, active: await active(), anon: await anonMode() };
+        case 'verify':        return await withTexts({ ok: true, active: await active(), anon: await anonMode() }, body);
         case 'list':          return await listDelta(body);
         case 'submit':        return await submit(body);
         case 'adminVerify':   return { ok: true, active: await active(), anon: await anonMode() };
-        case 'adminList':     return { ok: true, items: await all(), depts: await depts(), active: await active(), anon: await anonMode(), sync: await syncStatus(), staffPin: setting('PIN') };
+        case 'adminList':     return { ok: true, items: await all(), depts: await depts(), active: await active(), anon: await anonMode(), texts: textsObj(await getCfg()), tv: String(Number((await getCfg()).TEXTS_AT || 0)), sync: await syncStatus(), staffPin: setting('PIN') };
         case 'adminSetPins':  return await setPins(body);
         case 'adminSyncNow':  return Object.assign(await sync(), { sync: await syncStatus() });
         case 'adminSet':      return await adminSet(body);
@@ -315,6 +344,7 @@ function createCore(tables, env = process.env, deps = {}) {
         case 'adminSetDepts': return await setDepts(body);
         case 'adminSetActive':return await setActive(body);
         case 'adminSetAnon':  return await setAnon(body);
+        case 'adminSetTexts': return await setTexts(body);
         default:              return { ok: false, error: 'Thao tác không hợp lệ.' };
       }
     } catch (err) {

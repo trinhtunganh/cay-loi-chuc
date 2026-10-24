@@ -356,6 +356,22 @@ body.anon #accField{display:none}
 .dp{display:flex;flex-direction:column;flex:1;min-height:0}
 .sv{display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto}
 .pn{display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto}
+.tx{display:flex;flex-direction:column;flex:1;min-height:0}
+.tx-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-bottom:6px}
+.tx-q{flex:1 1 240px;margin:0}
+.tx-all{display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--ink-2)}
+.tx-state{font-size:13px;color:var(--muted)} .tx-state.dirty{color:#9A6400;font-weight:600}
+.tx-list{flex:1;min-height:0;overflow:auto;padding-right:4px}
+.tx-g{font-size:13px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);margin:14px 0 6px;font-weight:700}
+.tx-row{display:grid;grid-template-columns:minmax(160px,230px) 1fr 34px;gap:10px;align-items:start;padding:8px 10px;border:1px solid var(--line);border-radius:12px;margin-bottom:6px;background:#fff}
+.tx-row.ovr{border-color:#E8C3CB;background:#FFF9FA}
+.tx-row.dirty{border-color:#E8A33B;background:#FFFBF2}
+.tx-lb b{display:block;font-size:13.5px;font-weight:600}
+.tx-lb small{display:block;font-size:11px;color:var(--muted);margin-top:2px;word-break:break-all}
+.tx-row textarea{font:inherit;font-size:14px;line-height:1.45;border:1px solid var(--line);border-radius:9px;padding:7px 9px;resize:vertical;min-height:36px;width:100%;box-sizing:border-box}
+.tx-row button{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:#fff;cursor:pointer;color:#6b5f61}
+.tx-row button:disabled{opacity:.3;cursor:default}
+@media (max-width:640px){ .tx-row{grid-template-columns:1fr 34px} .tx-lb{grid-column:1 / span 2} }
 .pn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;align-items:start}
 .pn-h{margin:0;font-size:16px} .pn-sub{margin:0 0 4px;font-size:13px;color:var(--muted);line-height:1.5}
 .pn-box{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:16px;padding:16px 18px;background:#fff}
@@ -549,7 +565,7 @@ body.anon #accField{display:none}
       <div class="bar"><i id="gBar"></i></div>
     </div>
   </div>
-  <div class="legend" id="legend" role="group"></div>
+  <div class="legend" id="legend" role="group" hidden></div>
 </section>
 
 <div class="stage">
@@ -609,7 +625,7 @@ body.anon #accField{display:none}
         <input id="q" type="search" data-ph="feedSearchPlaceholder" autocomplete="off" enterkeyhint="search">
         <button class="clear" id="qClear" hidden aria-label="Xóa">✕</button>
       </div>
-      <div class="f-select"><select id="qDept" aria-label="Lọc theo phòng ban"></select></div>
+      <div class="f-select" hidden><select id="qDept" aria-label="Lọc theo phòng ban"></select></div>
     </div>
     <div class="f-count" id="qCountRow" hidden><span id="qCount"></span><button id="qReset" data-t="feedReset"></button></div>
   </div>
@@ -648,7 +664,7 @@ body.anon #accField{display:none}
         <input type="text" id="acc" maxlength="60" autocomplete="username" autocapitalize="off" spellcheck="false" data-ph="accPlaceholder">
         <div class="hint"><span data-t="accHint"></span></div>
       </div>
-      <div class="field">
+      <div class="field" hidden>
         <span class="lbl" data-t="formTo"></span>
         <div class="seg-ctl" role="radiogroup">
           <label><input type="radio" name="toType" value="company" checked><span class="ico">🌸</span><span data-t="optCompany"></span><small data-t="optCompanySub"></small></label>
@@ -705,7 +721,7 @@ body.anon #accField{display:none}
     <div class="field"><input type="password" id="pin" autocomplete="off" data-ph="pinPlaceholder" aria-label="PIN"></div>
     <div class="err" id="pinErr" role="alert"></div>
     <button class="btn primary" id="pinBtn" style="width:100%"></button>
-    <div class="tiny"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span data-t="gateFoot"></span></div>
+    <div class="tiny"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span id="gateFoot" data-t="gateFoot"></span></div>
     <button class="link-btn" id="gateAdmin" data-t="gateAdminLink"></button>
   </div>
 </div>
@@ -772,9 +788,20 @@ body.anon #accField{display:none}
     <p class="a-note" id="aNote" hidden data-t="adminPreviewNote"></p>
     <div class="a-tabs" id="aTabs" role="tablist">
       <button data-tab="list" role="tab">💬 <span data-t="adminTabList"></span> <b id="aCntAll">0</b></button>
-      <button data-tab="depts" role="tab"><span data-t="adminTabDepts"></span> <b id="aCntDepts">0</b></button>
+      <button data-tab="depts" role="tab" hidden><span data-t="adminTabDepts"></span> <b id="aCntDepts">0</b></button>
       <button data-tab="srv" role="tab" id="aTabSrv"><span data-t="adminTabServer"></span></button>
       <button data-tab="pin" role="tab">🔑 <span data-t="adminTabPin"></span></button>
+      <button data-tab="texts" role="tab">📝 <span data-t="adminTabTexts"></span></button>
+    </div>
+    <div class="tx" id="aTexts" hidden>
+      <div class="tx-bar">
+        <div class="f-search tx-q"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="txQ" type="search" data-ph="adminTextsSearch" autocomplete="off"></div>
+        <label class="tx-all"><input type="checkbox" id="txAll"> <span data-t="adminTextsAll"></span></label>
+        <span class="tx-state" id="txState"></span>
+        <button class="btn primary" id="txSave" data-t="adminTextsSave"></button>
+      </div>
+      <p class="dp-hint" id="txHint"></p>
+      <div class="tx-list" id="txList"></div>
     </div>
     <div class="pn" id="aPin" hidden>
       <p class="dp-hint" data-t="adminPinHint"></p>
@@ -842,7 +869,16 @@ body.anon #accField{display:none}
 <script>
 /* Toàn bộ thông tin và chữ hiển thị nằm trong config.js */
 const CFG = window.SITE_CONFIG || {};
-const TXT = CFG.text || {};
+/* chữ hiển thị: mặc định trong config.js, Ban tổ chức sửa được trong Quản trị → Nội dung (lưu trên máy chủ) */
+const DEF_TXT = Object.assign({}, CFG.text || {});
+if (DEF_TXT.ideasCompany == null) DEF_TXT.ideasCompany = ((CFG.ideas || {}).company || []).join("\n");
+const TXT = Object.assign({}, DEF_TXT);
+let TEXTS_TV = "", TEXTS_OVR = {};
+function setOverrides(o){
+  Object.keys(TXT).forEach(k=>{ delete TXT[k]; }); Object.assign(TXT, DEF_TXT); TEXTS_OVR = {};
+  if (o && typeof o === "object") Object.keys(o).forEach(k=>{ if (typeof o[k] === "string"){ TXT[k] = o[k]; TEXTS_OVR[k] = o[k]; } });
+}
+try{ const c = JSON.parse(localStorage.getItem("cta_texts") || "null"); if (c && c.texts){ setOverrides(c.texts); TEXTS_TV = String(c.tv || ""); } }catch(e){}
 const COMPANY = (CFG.company && CFG.company.name) || "";
 const EVT = CFG.event || {};
 const EVENT_NAME = [EVT.title, EVT.titleHighlight].filter(Boolean).join(" ");
@@ -880,6 +916,20 @@ const fill = s => String(s).replace(/\{company\}/g, COMPANY).replace(/\{event\}/
 
 const BRAND = "#E4002B";
 const PALETTE = ["#2F7D57","#1F8A8A","#7DB65A","#D9A441","#E8743B","#3D6FB6","#7B5BA6","#C2185B","#4C9A6A","#00897B","#AFB42B","#5C6BC0"];
+/* mọi lời chúc gửi cả công ty: mỗi lời chúc là hoa hoặc lá, màu ngẫu nhiên nhưng cố định theo mã lời chúc */
+const FLOWER_PALETTE = ["#F2405F","#FF7A59","#F7B32B","#E25FA6","#9B6BD6","#FF5C8A","#F28C28","#4FA3E0","#E4002B","#D65DB1"];
+const isFlower = m => (hash(String(m.id) + "·f") % 100) < 40;
+const wishColor = m => isFlower(m) ? FLOWER_PALETTE[hash(String(m.id) + "·c") % FLOWER_PALETTE.length] : PALETTE[hash(String(m.id) + "·c") % PALETTE.length];
+function petalGrad(c){
+  const id = "pg" + c.slice(1).toLowerCase();
+  if (!GRADS.has(id)){
+    GRADS.add(id);
+    const g = el("radialGradient",{id, cx:"50%", cy:"85%", r:"90%"});
+    g.append(el("stop",{offset:"0%","stop-color":"#FFFFFF"}), el("stop",{offset:"35%","stop-color":shade(c,.55)}), el("stop",{offset:"75%","stop-color":c}), el("stop",{offset:"100%","stop-color":shade(c,-.25)}));
+    $("#leafGrads").appendChild(g);
+  }
+  return `url(#${id})`;
+}
 const deptIndex = d => { const i = DEPARTMENTS.indexOf(d); return i >= 0 ? i % PALETTE.length : hash(d) % PALETTE.length; };
 const deptColor = d => { const c = (DEPT_LIST[DEPARTMENTS.indexOf(d)]||{}).color; return /^#[0-9a-f]{6}$/i.test(c||"") ? c : PALETTE[deptIndex(d)]; };
 /* gradient cho lá theo màu, tạo khi cần */
@@ -922,7 +972,7 @@ function recipient(m){
   if (m.toType==="dept") return t("toDept",{to:target(m)});
   return t("toCompany");
 }
-const colorOf = m => m.toType==="company" ? BRAND : deptColor(m.toDept);
+const colorOf = m => wishColor(m);
 function timeAgo(iso){
   const d = new Date(iso); if (isNaN(d)) return "";
   const s = (Date.now()-d)/1000;
@@ -956,15 +1006,34 @@ function setAnonMode(v){
   const changed = v !== ANON; ANON = v; save("cta_anon", v ? "1" : "0");
   document.body.classList.toggle("anon", v);
   const fp = $("#formPrivacy"); if (fp){ fp.dataset.t = v ? "formPrivacyAnon" : "formPrivacy"; fp.textContent = t(fp.dataset.t); }
+  const gf = $("#gateFoot"); if (gf){ gf.dataset.t = v ? "gateFoot" : "gateFootNamed"; gf.textContent = t(gf.dataset.t); }
   const sw = $("#aAnonSw"); if (sw) sw.setAttribute("aria-checked", String(v));
   const box = $("#aAnon"); if (box) box.classList.toggle("on", v);
   const tx = $("#aAnonTxt"); if (tx) tx.textContent = t(v ? "adminAnonOn" : "adminAnonOff");
   if (changed && $("#drawPanel").classList.contains("show") && typeof dwInfo === "function") dwInfo();
 }
 async function api(action, data={}, which){
+  if (action === "list" || action === "verify") data = Object.assign({tv: TEXTS_TV}, data);
   const res = await apiRaw(action, data, which);
-  if (res && typeof res.anon === "boolean" && (!which || which === CUR)) setAnonMode(res.anon);
+  if (res && (!which || which === CUR)){
+    if (typeof res.anon === "boolean") setAnonMode(res.anon);
+    if (res.texts && typeof res.texts === "object") applyServerTexts(res.texts, res.tv);
+  }
   return res;
+}
+function applyServerTexts(o, tv){
+  const same = JSON.stringify(o) === JSON.stringify(TEXTS_OVR);
+  TEXTS_TV = String(tv || "");
+  save("cta_texts", JSON.stringify({tv: TEXTS_TV, texts: o}));
+  if (same) return;
+  setOverrides(o); refreshTextsUI();
+}
+function refreshTextsUI(){
+  try{
+    applyTexts(); setAnonMode(ANON); syncType();
+    if (loaded){ renderStatus(); applyFilter(new Set(), true); }
+    if (typeof alignTitle === "function") alignTitle();
+  }catch(e){ console.warn(e); }
 }
 async function apiRaw(action, data={}, which){
   if (PREVIEW) return previewApi(action, data);
@@ -1001,7 +1070,7 @@ function previewApi(action, data){
     const P = CFG.previewSamples || {}, texts = (P.texts||[]).map(fill), names = P.names||[], r = rng(11);
     sample = Array.from({length: texts.length ? (P.count||60) : 0}, (_,i)=>{
       const x = r(), dept = DEPARTMENTS[Math.floor(r()*DEPARTMENTS.length)] || "";
-      const toType = x<.33 || !dept ? "company" : x<.68 || !names.length ? "dept" : "person";
+      const toType = "company";   // chỉ còn gửi cả công ty
       return { id:"p"+i, time:new Date(Date.now()-r()*6*864e5).toISOString(), toType,
         toDept: toType==="company" ? "" : dept, toName: toType==="person" ? names[Math.floor(r()*names.length)] : "",
         text: texts[Math.floor(r()*texts.length)], approved: i < (P.count||60) - 6, featured: i % 11 === 3, account: "nv" + String(100 + i % 40) };
@@ -1014,9 +1083,12 @@ function previewApi(action, data){
     Object.keys(data.renames||{}).forEach(o=>sample.forEach(m=>{ if (m.toDept===o) m.toDept = data.renames[o]; }));
     save("cta_prev_depts", JSON.stringify(data.depts)); return Promise.resolve({ok:true, depts:data.depts});
   }
-  if (action==="verify" || action==="adminVerify") return Promise.resolve({ok:true, anon:ANON});
-  if (action==="list") return Promise.resolve({ok:true, items: pub().map(m=>{ const o = Object.assign({}, m); delete o.account; if (!ANON && m.account) o.from = m.account; return o; }), depts: pDepts(), anon:ANON});
-  if (action==="adminList") return Promise.resolve({ok:true, items: sample.map(m=>Object.assign({}, m)), depts: pDepts(), anon:ANON});
+  const pT = (()=>{ try{ return JSON.parse(load("cta_prev_texts") || "null") || {tv:"0", texts:{}}; }catch(e){ return {tv:"0", texts:{}}; } })();
+  const withT = o => Object.assign(o, {tv: pT.tv}, String(data.tv||"") !== pT.tv || action === "adminList" ? {texts: pT.texts} : {});
+  if (action==="adminSetTexts"){ const v = {tv: String(Date.now()), texts: data.texts || {}}; save("cta_prev_texts", JSON.stringify(v)); return Promise.resolve({ok:true, tv:v.tv, texts:v.texts}); }
+  if (action==="verify" || action==="adminVerify") return Promise.resolve(withT({ok:true, anon:ANON}));
+  if (action==="list") return Promise.resolve(withT({ok:true, items: pub().map(m=>{ const o = Object.assign({}, m); delete o.account; if (!ANON && m.account) o.from = m.account; return o; }), depts: pDepts(), anon:ANON}));
+  if (action==="adminList") return Promise.resolve(withT({ok:true, items: sample.map(m=>Object.assign({}, m)), depts: pDepts(), anon:ANON}));
   if (action==="adminSetAnon") return Promise.resolve({ok:true, anon:data.anon === true});
   if (action==="adminSet"){
     const m = sample.find(x=>x.id===data.id); if (!m) return Promise.resolve({ok:false});
@@ -1306,6 +1378,8 @@ const STAGES = (function(){
     scale: n===1 ? 1 : .42 + i*(.58/(n-1)) }));
 })();
 const stageIdx = n => STAGES.reduce((k,x,i)=> n>=x.min ? i : k, 0);
+STAGES.forEach((s,i)=>{ const k = "stageName" + i; DEF_TXT[k] = s.name; if (!(k in TEXTS_OVR)) TXT[k] = s.name; });
+const stageName = i => TXT["stageName" + i] != null ? TXT["stageName" + i] : STAGES[i].name;
 
 let items = [], byId = new Map(), currentStage = null, leafEls = new Map(), loaded = false;
 
@@ -1347,15 +1421,15 @@ function drawTree(stage){
 }
 function leafShape(m, size, r){
   const g = el("g",{class:"shape"});
-  if (m.toType==="company"){
-    const s = size*.62;
+  if (isFlower(m)){
+    const s = size*.62, pc = wishColor(m), pf = petalGrad(pc);
     for (let i=0;i<5;i++){
-      g.appendChild(el("path",{d:`M0,0 C${-s*.55},${-s*.25} ${-s*.6},${-s*.95} 0,${-s*1.05} C${s*.6},${-s*.95} ${s*.55},${-s*.25} 0,0 Z`, fill:"url(#petal)", transform:`rotate(${i*72 + r()*8})`, stroke:"rgba(160,0,30,.18)", "stroke-width":".6"}));
+      g.appendChild(el("path",{d:`M0,0 C${-s*.55},${-s*.25} ${-s*.6},${-s*.95} 0,${-s*1.05} C${s*.6},${-s*.95} ${s*.55},${-s*.25} 0,0 Z`, fill:pf, transform:`rotate(${i*72 + r()*8})`, stroke:shade(pc,-.4), "stroke-opacity":".25", "stroke-width":".6"}));
     }
     g.appendChild(el("circle",{r:(s*.26).toFixed(1), fill:"#FFD36B"}));
     for (let i=0;i<6;i++){ const a=i*60*Math.PI/180; g.appendChild(el("circle",{cx:(Math.cos(a)*s*.2).toFixed(1), cy:(Math.sin(a)*s*.2).toFixed(1), r:(s*.06).toFixed(1), fill:"#B8741A"})); }
   } else {
-    const s = size, c = deptColor(m.toDept), bulge = .36 + r()*.12;
+    const s = size, c = wishColor(m), bulge = .36 + r()*.12;
     g.appendChild(el("path",{d:`M0,0 C${s*.25},${-s*bulge} ${s*.8},${-s*bulge*1.05} ${s*1.25},0 C${s*.8},${s*bulge*1.05} ${s*.25},${s*bulge} 0,0 Z`, fill:leafGrad(c), stroke:shade(c,-.35), "stroke-width":".7", "stroke-opacity":".5"}));
     g.appendChild(el("path",{d:`M${s*.04},0 Q${s*.6},${-s*.04} ${s*1.12},0`, stroke:"rgba(255,255,255,.6)", "stroke-width":"1.1", fill:"none"}));
     for (let i=1;i<=3;i++){ const x=s*(.25*i); g.appendChild(el("path",{d:`M${x},0 l${s*.12},${-s*.13} M${x},0 l${s*.12},${s*.13}`, stroke:"rgba(255,255,255,.35)", "stroke-width":".8", fill:"none"})); }
@@ -1370,18 +1444,18 @@ function placeLeaf(m, stage, cands){
   const side = r()<.5 ? -1 : 1, off = ((s.w+s.w2)/4 + 1 + r()*12) * side;
   const px = x + -Math.sin(s.ang)*off, py = y + Math.cos(s.ang)*off;
   const rot = (s.ang*180/Math.PI) + side*(30+r()*50);
-  const size = (m.toType==="company" ? 22 : 21) / stage.scale;
+  const size = (isFlower(m) ? 22 : 21) / stage.scale;
   return {x:px, y:py, rot, size, r};
 }
 
 function renderStatus(bump){
   const idx = stageIdx(items.length), stage = STAGES[idx], next = STAGES[idx+1];
   $("#countNum").textContent = items.length.toLocaleString("vi-VN");
-  $("#gName").textContent = stage.name;
+  $("#gName").textContent = stageName(idx);
   if (next){
     const pct = (items.length - stage.min) / (next.min - stage.min) * 100;
     $("#gBar").style.width = Math.max(4,pct).toFixed(0)+"%";
-    $("#gNext").textContent = t("statusNext",{n: next.min - items.length, next: next.name});
+    $("#gNext").textContent = t("statusNext",{n: next.min - items.length, next: stageName(idx+1)});
   } else { $("#gBar").style.width = "100%"; $("#gNext").textContent = t("statusDone"); }
   if (bump){ const s=$("#status"); s.classList.remove("bump"); void s.offsetWidth; s.classList.add("bump"); }
   $("#empty").hidden = !(loaded && items.length===0);
@@ -1394,9 +1468,9 @@ function renderLeaves(fresh=new Set()){
   const minDepth = Math.max(1, stage.depth-2);
   const cands = SEGS.filter(s=>s.depth<=stage.depth && s.depth>=Math.min(minDepth, stage.depth));
   const g = $("#leaves"); g.textContent = ""; leafEls.clear();
-  const ordered = items.filter(m=>m.toType!=="company").concat(items.filter(m=>m.toType==="company"));
+  const ordered = items.filter(m=>!isFlower(m)).concat(items.filter(isFlower));
   ordered.forEach(m=>{
-    const pos = placeLeaf(m, stage, cands), isF = m.toType==="company";
+    const pos = placeLeaf(m, stage, cands), isF = isFlower(m);
     const node = el("g",{class:"leaf"+(isF?" flower":"")+(fresh.has(m.id)?" grow":""), transform:`translate(${pos.x.toFixed(1)},${pos.y.toFixed(1)}) rotate(${isF ? (pos.r()*72).toFixed(0) : pos.rot.toFixed(1)})`, tabindex:"0", role:"button", "aria-label":recipient(m)});
     node.dataset.id = m.id; node.dataset.size = pos.size.toFixed(1);
     node.appendChild(leafShape(m, pos.size, pos.r));
@@ -1436,18 +1510,29 @@ function placeCallout(le, scroll){
   if (scroll && (r.top < 80 || r.bottom > innerHeight - 40)){ le.scrollIntoView({block:"center"}); r = le.getBoundingClientRect(); }
   const mr = main.getBoundingClientRect(), st = $(".stage").getBoundingClientRect(), cv = $("#treeScale").getBoundingClientRect();
   const feedEl = $("#feed"), wideFeed = getComputedStyle(feedEl).position === "absolute";
-  const rightEdge = wideFeed ? feedEl.getBoundingClientRect().left - 28 : Math.min(innerWidth, st.right) - 16;
-  const room = rightEdge - cv.right - 24, side = room >= 300;
-  c.style.width = side ? Math.min(400, room).toFixed(0) + "px" : "";
-  const w = c.offsetWidth, h = c.offsetHeight;
+  const rightEdge = wideFeed ? feedEl.getBoundingClientRect().left - 24 : Math.min(innerWidth, st.right) - 16;
+  const leftEdge = Math.max(st.left, 0) + 24;
+  /* tán cây thật = vùng các lá đang có (hẹp hơn khung SVG) */
+  const lb = $("#leaves").getBoundingClientRect();
+  const crown = lb.width > 0 ? { l: Math.max(cv.left, lb.left - 10), r: Math.min(cv.right, lb.right + 10) } : { l: cv.left, r: cv.right };
   const lx = r.left + r.width/2, ly = r.top + r.height/2;
+  const gap = 28, roomR = rightEdge - crown.r - gap, roomL = crown.l - gap - leftEdge;
+  const mid = (crown.l + crown.r) / 2, MIN = 270;
+  /* ưu tiên phía có chiếc lá; phía đó chật quá thì sang phía kia; cả hai đều chật thì đặt dưới cây */
+  let side = lx >= mid ? "right" : "left";
+  if ((side === "right" ? roomR : roomL) < MIN) side = (side === "right" ? roomL : roomR) >= MIN ? (side === "right" ? "left" : "right") : "bottom";
+  const room = side === "right" ? roomR : side === "left" ? roomL : 0;
+  c.style.width = side !== "bottom" ? Math.min(400, room).toFixed(0) + "px" : "";
+  const w = c.offsetWidth, h = c.offsetHeight;
   let L, T, ex, ey, d;
-  if (side){
-    /* màn rộng: khung nằm ở khoảng trời bên phải */
-    L = rightEdge - w;
-    T = Math.max(st.top + 40, 16); T = Math.min(T, innerHeight - h - 16);
-    ex = L; ey = T + h*0.7;
-    d = `M${lx},${ly} C${lx+130},${ly} ${ex-150},${ey} ${ex},${ey}`;
+  if (side !== "bottom"){
+    /* khung nằm ở khoảng trống cùng phía, ngang tầm chiếc lá (lá cao → khung cao, lá thấp → khung thấp) */
+    const top = Math.max(st.top + 12, 12), bot = Math.min(st.bottom, innerHeight) - 12;
+    T = Math.min(Math.max(ly - h * 0.5, top), bot - h);
+    L = side === "right" ? crown.r + gap + Math.max(0, Math.min(40, room - w)) : crown.l - gap - w - Math.max(0, Math.min(40, room - w));
+    ex = side === "right" ? L : L + w; ey = Math.min(Math.max(ly, T + 22), T + h - 22);
+    const k = Math.max(60, Math.abs(ex - lx) * .45) * (side === "right" ? 1 : -1);
+    d = `M${lx},${ly} C${lx + k},${ly} ${ex - k},${ey} ${ex},${ey}`;
   } else {
     /* màn hẹp: khung nằm dưới chân cây, đè lên cỏ */
     L = Math.max(12, (innerWidth - w)/2);
@@ -1455,6 +1540,7 @@ function placeCallout(le, scroll){
     ex = L + w/2; ey = T;
     d = `M${lx},${ly} C${lx},${ly+80} ${ex},${ey-80} ${ex},${ey}`;
   }
+  c.dataset.side = side;
   c.style.left = (L - mr.left).toFixed(0) + "px";
   c.style.top = (T - mr.top).toFixed(0) + "px";
   const acc = getComputedStyle(c).getPropertyValue("--accent").trim() || BRAND;
@@ -1486,9 +1572,11 @@ if (TIMING.spotlight > 0) setInterval(()=>{
 
 /* ---------- biểu tượng nhỏ: lá và hoa giống trên cây ---------- */
 function miniIcon(m){
-  if (m === "__company" || (m && m.toType==="company"))
-    return `<svg class="mi" viewBox="-12 -12 24 24" aria-hidden="true">${[0,72,144,216,288].map(r=>`<path d="M0,0 C-5.5,-2.5 -6,-9.5 0,-10.5 C6,-9.5 5.5,-2.5 0,0Z" fill="#F2405F" stroke="#B80023" stroke-width=".5" transform="rotate(${r})"/>`).join("")}<circle r="2.8" fill="#FFD36B"/></svg>`;
-  const dept = typeof m === "string" ? m : m.toDept, c = deptColor(dept);
+  if (m === "__company" || (m && typeof m === "object" && isFlower(m))){
+    const pc = typeof m === "object" ? wishColor(m) : "#F2405F";
+    return `<svg class="mi" viewBox="-12 -12 24 24" aria-hidden="true">${[0,72,144,216,288].map(r=>`<path d="M0,0 C-5.5,-2.5 -6,-9.5 0,-10.5 C6,-9.5 5.5,-2.5 0,0Z" fill="${pc}" stroke="${shade(pc,-.35)}" stroke-width=".5" transform="rotate(${r})"/>`).join("")}<circle r="2.8" fill="#FFD36B"/></svg>`;
+  }
+  const c = typeof m === "string" ? deptColor(m) : wishColor(m);
   return `<svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate(-35 12 12)"><path d="M1,12 C5,4.5 15,4 23,12 C15,20 5,19.5 1,12Z" fill="${c}" stroke="${shade(c,-.35)}" stroke-width=".6"/><path d="M2.5,12 Q12,11.2 21.5,12" stroke="rgba(255,255,255,.65)" stroke-width="1" fill="none"/></g></svg>`;
 }
 
@@ -1501,7 +1589,7 @@ function filtered(){
     if (activeDept === "__company" && m.toType!=="company") return false;
     if (activeDept && activeDept !== "__company" && m.toDept !== activeDept) return false;
     if (!q) return true;
-    return norm(m.toName).includes(q) || norm(m.toDept).includes(q) || norm(m.text).includes(q) || (m.toType==="company" && norm(COMPANY).includes(q));
+    return norm(m.text).includes(q) || norm(m.from).includes(q) || norm(m.toName).includes(q) || norm(m.toDept).includes(q);
   });
 }
 function applyFilter(fresh, keep){
@@ -1620,7 +1708,7 @@ function syncType(){
   const tp = document.querySelector("input[name=toType]:checked").value;
   $("#fDept").hidden = tp==="company"; $("#fName").hidden = tp!=="person";
   const box = $("#ideas"); box.textContent = "";
-  ((CFG.ideas||{})[tp]||[]).map(fill).forEach(s=>{ const b=document.createElement("button"); b.type="button"; b.textContent = s.trim()+"…";
+  (tp === "company" ? String(TXT.ideasCompany || "").split("\n").filter(x=>x.trim()) : ((CFG.ideas||{})[tp]||[])).map(fill).forEach(s=>{ const b=document.createElement("button"); b.type="button"; b.textContent = s.trim()+"…";
     b.onclick = ()=>{ const ta=$("#msg"); ta.value = s; ta.focus(); ta.setSelectionRange(s.length,s.length); ta.dispatchEvent(new Event("input")); };
     box.appendChild(b); });
 }
@@ -1630,7 +1718,7 @@ $$(".js-send").forEach(b=>b.onclick = openSend);
 $("#sendAgain").onclick = ()=>{ $("#sendForm").hidden=false; $("#sendDone").hidden=true; $("#msg").focus(); };
 $("#shareBtn").onclick = async ()=>{
   const url = location.href.split("#")[0].split("?")[0];
-  const text = t("inviteText",{url});
+  const text = t(ANON ? "inviteText" : "inviteTextNamed",{url});
   try{ if (navigator.share) await navigator.share({title:EVENT_NAME, text, url}); else { await navigator.clipboard.writeText(text); toast(t("inviteCopied")); } }
   catch(e){ if (e && e.name!=="AbortError") toast(url); }
 };
@@ -1689,7 +1777,7 @@ function renderSlide(){
   const le = leafEls.get(m.id);
   if (le){   /* lá đang chiếu nổi lên trên cùng, có vầng sáng */
     le.classList.add("spot"); le.parentNode.appendChild(le);
-    const sz = +le.dataset.size || 20, cx = m.toType==="company" ? 0 : sz*.62;
+    const sz = +le.dataset.size || 20, cx = isFlower(m) ? 0 : sz*.62;
     le.insertBefore(el("circle",{class:"halo", cx:cx.toFixed(1), cy:"0", r:(sz*1.25).toFixed(1)}), le.firstChild);
   }
   setTimeout(()=>{
@@ -2208,6 +2296,15 @@ $("#dwUndo").onclick = async ()=>{ if (!dwLast) return; try{ dwShowingWin = fals
 $("#btnDraw").onclick = openDraw;
 
 function renderAdmin(){
+  const isX = adminTab === "texts";
+  $("#aTexts").hidden = !isX;
+  if (isX){
+    ["#aDepts","#aList","#aSrv",".a-search","#aFilt","#aShow","#dpSave","#aAnon","#aPin"].forEach(q=>$(q).hidden = true);
+    $$("#aTabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===adminTab));
+    $("#aInfo").textContent = "";
+    renderTexts();
+    return;
+  }
   const isP = adminTab === "pin";
   $("#aPin").hidden = !isP;
   if (isP){
@@ -2304,6 +2401,68 @@ $("#aAnonSw").onclick = async ()=>{
     toast(t(res.anon ? "toastAnonOn" : "toastAnonOff"));
   }catch(e){ toast(e.message || t("adminSaveError")); }
   finally{ sw.disabled = false; }
+};
+/* ---- Quản trị → Nội dung: sửa chữ hiển thị, lưu trên máy chủ ---- */
+const TX_GROUPS = [
+  ["Đầu trang", [["pageTitle","Tiêu đề tab trình duyệt"],["headerTitle","Dòng chào trên đầu trang"],["countdownBefore","Chữ trước đồng hồ"],["countdownAfter","Chữ sau đồng hồ"],["countdownToday","Khi đến ngày sinh nhật"],["btnSend","Nút gửi lời chúc"],["btnShow","Nút trình chiếu"]]],
+  ["Cây và tiến độ", [["statusCount","Chữ dưới con số tổng"],["statusNext","Tiến độ tới giai đoạn sau"],["statusDone","Khi cây đã lớn hết"],["__stages",""],["tapHint","Gợi ý chạm vào hoa lá"],["emptyTitle","Khi chưa có lời chúc: tiêu đề"],["emptyText","Khi chưa có lời chúc: nội dung"],["emptyButton","Khi chưa có lời chúc: nút"]]],
+  ["Danh sách và thẻ lời chúc", [["feedTitle","Tiêu đề danh sách"],["feedLive","Nhãn trực tiếp"],["feedEmpty","Danh sách trống"],["feedSearchPlaceholder","Ô tìm kiếm"],["feedNewPill","Nút có lời chúc mới"],["feedNoMatch","Tìm không thấy"],["toCompany","Dòng người nhận"],["cardFrom","Người gửi trên thẻ"],["feedFrom","Người gửi trong danh sách"],["featuredBadge","Nhãn tiêu biểu"]]],
+  ["Form gửi lời chúc", [["formTitle","Tiêu đề form"],["formPrivacy","Dòng bảo mật (khi không ẩn danh)"],["formPrivacyAnon","Dòng bảo mật (khi ẩn danh)"],["accLabel","Nhãn ô Account"],["accPlaceholder","Chữ mờ trong ô Account"],["accHint","Gợi ý dưới ô Account"],["errAccount","Lỗi thiếu Account"],["msgLabel","Nhãn ô lời chúc"],["msgPlaceholder","Chữ mờ trong ô lời chúc"],["ideasCompany","Gợi ý câu mở đầu (mỗi dòng một gợi ý)"],["ideasHint","Dòng dưới các gợi ý"],["btnLater","Nút để sau"],["btnSubmit","Nút gửi"],["errShort","Lỗi lời chúc quá ngắn"],["errSend","Lỗi gửi không được"]]],
+  ["Sau khi gửi", [["doneTitle","Tiêu đề cảm ơn"],["doneText","Nội dung cảm ơn"],["doneTextPending","Nội dung khi cần chờ duyệt"],["btnInvite","Nút mời đồng nghiệp"],["inviteText","Lời mời (khi ẩn danh)"],["inviteTextNamed","Lời mời (khi không ẩn danh)"],["inviteCopied","Thông báo đã chép lời mời"],["btnAgain","Nút gửi thêm"],["btnViewTree","Nút xem cây"]]],
+  ["Màn hình nhập PIN", [["gateHello","Lời chào"],["gateText","Hướng dẫn nhập PIN"],["pinPlaceholder","Chữ mờ trong ô PIN"],["gateButton","Nút vào trang"],["gateFoot","Dòng cuối (khi ẩn danh)"],["gateFootNamed","Dòng cuối (khi không ẩn danh)"],["pinWrong","Lỗi sai PIN"]]],
+  ["Trình chiếu và thông báo", [["showTitle","Tiêu đề trình chiếu"],["showCount","Đếm số lời chúc"],["showEmpty","Khi không có gì để chiếu"],["toastNewOne","Thông báo 1 lời chúc mới"],["toastNewMany","Thông báo nhiều lời chúc mới"]]]
+];
+let txDraft = null;
+function txGroups(){
+  const groups = TX_GROUPS.map(([g, list])=>[g, list.flatMap(([k, l])=> k === "__stages" ? STAGES.map((s,i)=>["stageName"+i, `Tên giai đoạn ${i+1} (từ ${s.min} lời chúc)`]) : [[k, l]])]);
+  if ($("#txAll").checked){
+    const seen = new Set(groups.flatMap(g=>g[1].map(x=>x[0])));
+    groups.push(["Chữ khác (khu quản trị, thông báo lỗi…)", Object.keys(DEF_TXT).filter(k=>!seen.has(k)).map(k=>[k, k])]);
+  }
+  return groups;
+}
+function txState(){
+  const n = Object.keys(txDraft || {}).filter(k=>txDraft[k] !== TXT[k]).length;
+  const s = $("#txState"); s.textContent = n ? t("adminTextsDirty",{n}) : t("adminTextsClean"); s.classList.toggle("dirty", !!n);
+  $("#txSave").disabled = !n;
+}
+function renderTexts(){
+  if (!txDraft) txDraft = Object.assign({}, TXT);
+  $("#txHint").textContent = TXT.adminTextsHint || "";   // giữ nguyên các {…} để người sửa thấy
+  const q = norm($("#txQ").value), box = $("#txList"); box.textContent = "";
+  txGroups().forEach(([g, list])=>{
+    const rows = list.filter(([k, l])=>!q || norm(l).includes(q) || norm(k).includes(q) || norm(txDraft[k] || "").includes(q) || norm(DEF_TXT[k] || "").includes(q));
+    if (!rows.length) return;
+    const h = document.createElement("div"); h.className = "tx-g"; h.textContent = g; box.appendChild(h);
+    rows.forEach(([k, l])=>{
+      const row = document.createElement("div"); row.className = "tx-row"; row.dataset.k = k;
+      row.innerHTML = `<div class="tx-lb"><b>${esc(l)}</b><small>${esc(k)}</small></div><textarea rows="1" spellcheck="false"></textarea><button type="button" title="${esc(t("adminTextsReset"))}" aria-label="${esc(t("adminTextsReset"))}">↺</button>`;
+      const ta = row.querySelector("textarea"), rb = row.querySelector("button");
+      const mark = ()=>{ row.classList.toggle("ovr", txDraft[k] !== DEF_TXT[k]); row.classList.toggle("dirty", txDraft[k] !== TXT[k]); rb.disabled = txDraft[k] === DEF_TXT[k]; };
+      const fit = ()=>{ ta.style.height = "auto"; ta.style.height = Math.min(220, ta.scrollHeight + 2) + "px"; };
+      ta.value = txDraft[k] != null ? txDraft[k] : ""; ta.placeholder = DEF_TXT[k] || "";
+      ta.addEventListener("input", ()=>{ txDraft[k] = ta.value; mark(); fit(); txState(); });
+      rb.onclick = ()=>{ txDraft[k] = DEF_TXT[k] != null ? DEF_TXT[k] : ""; ta.value = txDraft[k]; mark(); fit(); txState(); };
+      mark(); box.appendChild(row); requestAnimationFrame(fit);
+    });
+  });
+  if (!box.children.length) box.innerHTML = `<p class="a-empty">${esc(t("adminEmpty"))}</p>`;
+  txState();
+}
+$("#txQ").addEventListener("input", renderTexts);
+$("#txAll").addEventListener("change", renderTexts);
+$("#txSave").onclick = async ()=>{
+  const btn = $("#txSave"), out = {};
+  Object.keys(Object.assign({}, DEF_TXT, txDraft)).forEach(k=>{ const v = txDraft[k]; if (typeof v === "string" && v !== DEF_TXT[k]) out[k] = v; });
+  btn.disabled = true; btn.textContent = t("adminPinSaving");
+  try{
+    const res = await api("adminSetTexts", {texts: out});
+    if (!res || !res.ok) throw new Error(res && res.error === "Thao tác không hợp lệ." ? t("adminTextsOld") : (res && res.error) || t("adminSaveError"));
+    applyServerTexts(res.texts || out, res.tv);
+    Object.keys(BACKENDS).filter(k=>k !== CUR).forEach(k=>{ apiRaw("adminSetTexts", {texts: out}, k).catch(()=>{}); });
+    txDraft = null; toast(t("adminTextsSaved"));
+  }catch(e){ toast(e.message || t("adminSaveError")); }
+  finally{ btn.textContent = t("adminTextsSave"); renderTexts(); }
 };
 $$("#aTabs button").forEach(b=>b.onclick = ()=>{ adminTab = b.dataset.tab; renderAdmin(); });
 $("#aQ").addEventListener("input", renderAdmin);
