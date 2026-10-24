@@ -142,7 +142,8 @@ header .logo-img{filter:brightness(0) invert(1)}
 .actions{display:flex;gap:8px;justify-content:flex-end}
 header .btn:not(.primary){background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.42)}
 header .btn:not(.primary):hover{background:rgba(255,255,255,.22)}
-header .btn.primary{background:#fff;color:var(--brand);box-shadow:0 6px 16px rgba(80,0,15,.18)}
+header .btn.primary{background:#fff;color:var(--brand);box-shadow:0 6px 16px rgba(80,0,15,.18);transition:background .15s,color .15s,border-color .15s}
+header .btn.primary:hover{background:var(--brand);color:#fff;border-color:#fff}
 
 /* Đếm ngược: bánh sinh nhật + 4 ô số */
 .cd{justify-self:end;display:flex;align-items:center;gap:8px;color:#fff;font-size:14px}
@@ -839,9 +840,8 @@ body.anon #accField{display:none}
     <div class="tx" id="aTexts" hidden>
       <div class="tx-bar">
         <div class="f-search tx-q"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="txQ" type="search" data-ph="adminTextsSearch" autocomplete="off"></div>
-        <label class="tx-all"><input type="checkbox" id="txAll"> <span data-t="adminTextsAll"></span></label>
+        <label class="tx-all"><input type="checkbox" id="txAll" checked> <span data-t="adminTextsAll"></span></label>
         <span class="tx-state" id="txState"></span>
-        <button class="btn primary" id="txSave" data-t="adminTextsSave"></button>
       </div>
       <p class="dp-hint" id="txHint"></p>
       <div class="tx-list" id="txList"></div>
@@ -884,7 +884,7 @@ body.anon #accField{display:none}
     <ul class="a-list" id="aList"></ul>
     <div class="a-foot">
       <span id="aInfo"></span>
-      <div class="row" style="margin:0"><button class="btn" id="aLogout" data-t="adminLogout"></button><button class="btn primary" id="aShow" data-t="adminShowFeatured"></button><button class="btn primary" id="dpSave" hidden data-t="adminDeptSave"></button></div>
+      <div class="row" style="margin:0"><button class="btn" id="aLogout" data-t="adminLogout"></button><button class="btn primary" id="aShow" data-t="adminShowFeatured"></button><button class="btn primary" id="dpSave" hidden data-t="adminDeptSave"></button><button class="btn primary" id="txSave" hidden data-t="adminTextsSave"></button></div>
     </div>
   </div>
 </div>
@@ -2355,6 +2355,7 @@ $("#dwUndo").onclick = async ()=>{ if (!dwLast) return; try{ dwShowingWin = fals
 $("#btnDraw").onclick = openDraw;
 
 function renderAdmin(){
+  $("#txSave").hidden = adminTab !== "texts";
   const isB = adminTab === "backup";
   $("#aBackup").hidden = !isB;
   if (isB){
