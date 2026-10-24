@@ -385,6 +385,7 @@ body.anon #accField{display:none}
 .tx-lb b{display:block;font-size:13.5px;font-weight:600}
 .tx-lb small{display:block;font-size:11px;color:var(--muted);margin-top:2px;word-break:break-all}
 .tx-row textarea{font:inherit;font-size:14px;line-height:1.45;border:1px solid var(--line);border-radius:9px;padding:7px 9px;resize:vertical;min-height:36px;width:100%;box-sizing:border-box}
+.tx-date{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:7px 9px;justify-self:start}
 .tx-row button{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:#fff;cursor:pointer;color:#6b5f61}
 .tx-row button:disabled{opacity:.3;cursor:default}
 @media (max-width:640px){ .tx-row{grid-template-columns:1fr 34px} .tx-lb{grid-column:1 / span 2} }
@@ -913,6 +914,7 @@ body.anon #accField{display:none}
 const CFG = window.SITE_CONFIG || {};
 /* chữ hiển thị: mặc định trong config.js, Ban tổ chức sửa được trong Quản trị → Nội dung (lưu trên máy chủ) */
 const DEF_TXT = Object.assign({}, CFG.text || {});
+if (DEF_TXT.birthday == null) DEF_TXT.birthday = (CFG.event || {}).birthday || "";
 if (DEF_TXT.ideasCompany == null) DEF_TXT.ideasCompany = ((CFG.ideas || {}).company || []).join("\n");
 const TXT = Object.assign({}, DEF_TXT);
 let TEXTS_TV = "", TEXTS_OVR = {};
@@ -941,17 +943,18 @@ let failoverFrom = "", failoverUntil = 0;
 try{ const f = JSON.parse(load("cta_failover") || "null"); if (f && f.until > Date.now()){ failoverFrom = f.from; failoverUntil = f.until; } }catch(e){}
 function markFailover(from){ failoverFrom = from; failoverUntil = Date.now() + 30*60e3; save("cta_failover", JSON.stringify({from, until:failoverUntil})); }
 const otherBackend = () => Object.keys(BACKENDS).find(k => k !== CUR) || "";
-const DATE_SHORT = (()=>{ const d = new Date(EVT.birthday); if (isNaN(d)) return "";
+/* ngày giờ sinh nhật: mặc định event.birthday trong config.js, Ban tổ chức đổi được trong Quản trị → Nội dung */
+const bday = () => TXT.birthday || EVT.birthday || "";
+const dateShort = ()=>{ const d = new Date(bday()); if (isNaN(d)) return "";
   const p = new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Ho_Chi_Minh",day:"2-digit",month:"2-digit"}).formatToParts(d);
-  return p.find(x=>x.type==="day").value + "/" + p.find(x=>x.type==="month").value; })();
-
-const DATE_FULL = (()=>{ const d = new Date(EVT.birthday); if (isNaN(d)) return "";
+  return p.find(x=>x.type==="day").value + "/" + p.find(x=>x.type==="month").value; };
+const dateFull = ()=>{ const d = new Date(bday()); if (isNaN(d)) return "";
   const p = new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Ho_Chi_Minh",day:"2-digit",month:"2-digit",year:"numeric"}).formatToParts(d);
-  return ["day","month","year"].map(k=>p.find(x=>x.type===k).value).join("/"); })();
+  return ["day","month","year"].map(k=>p.find(x=>x.type===k).value).join("/"); };
 
 function t(key, vars={}){
   const s = TXT[key]; if (s == null) return "";
-  const all = Object.assign({company:COMPANY, event:EVENT_NAME, date:DATE_SHORT, dateFull:DATE_FULL}, vars);
+  const all = Object.assign({company:COMPANY, event:EVENT_NAME, date:dateShort(), dateFull:dateFull()}, vars);
   return String(s).replace(/\{(\w+)\}/g, (m,k)=> all[k] != null ? all[k] : m);
 }
 const fill = s => String(s).replace(/\{company\}/g, COMPANY).replace(/\{event\}/g, EVENT_NAME);
@@ -1916,20 +1919,20 @@ document.addEventListener("visibilitychange", ()=>{ if (!document.hidden && star
 
 /* ---------- đếm ngược ---------- */
 function setupCountdown(){
-  const when = new Date(EVT.birthday), box = $("#countdownBox");
-  if (isNaN(when)) { box.hidden = true; return; }
-  const dateStr = when.toLocaleDateString("vi-VN",{timeZone:"Asia/Ho_Chi_Minh",day:"2-digit",month:"2-digit",year:"numeric"});
-  $("#countdownLbl").textContent = t("countdownAfter",{date:dateStr});
-  $("#countdownLbl").hidden = !t("countdownAfter");
-  const pad = n => String(n).padStart(2,"0");
+  const box = $("#countdownBox"), tpl = box.innerHTML, pad = n => String(n).padStart(2,"0");
+  /* đọc lại ngày mỗi giây: Ban tổ chức đổi ngày trong Quản trị là đồng hồ chạy theo ngay */
   (function tick(){
-    const ms = when - Date.now();
-    if (ms > 0){
+    const when = new Date(bday()), ms = when - Date.now();
+    if (isNaN(when) || ms <= -864e5){ box.hidden = true; }
+    else if (ms > 0){
+      if (box.classList.contains("today") || !$("#cdD")){ box.innerHTML = tpl; box.classList.remove("today"); applyTexts(); }
+      box.hidden = false;
+      const lbl = $("#countdownLbl"), after = t("countdownAfter",{date: when.toLocaleDateString("vi-VN",{timeZone:"Asia/Ho_Chi_Minh",day:"2-digit",month:"2-digit",year:"numeric"})});
+      lbl.textContent = after; lbl.hidden = !after;
       const s = Math.floor(ms/1000);
       $("#cdD").textContent = Math.floor(s/86400); $("#cdH").textContent = pad(Math.floor(s%86400/3600));
       $("#cdM").textContent = pad(Math.floor(s%3600/60)); $("#cdS").textContent = pad(s%60);
-    } else if (ms > -864e5){ box.classList.add("today"); box.textContent = t("countdownToday"); return; }
-    else { box.hidden = true; return; }
+    } else { box.hidden = false; box.classList.add("today"); box.textContent = t("countdownToday"); }
     setTimeout(tick, 1000 - (Date.now() % 1000));
   })();
 }
@@ -2546,7 +2549,7 @@ $("#bkNow").onclick = async ()=>{
 
 /* ---- Quản trị → Nội dung: sửa chữ hiển thị, lưu trên máy chủ ---- */
 const TX_GROUPS = [
-  ["Đầu trang", [["pageTitle","Tiêu đề tab trình duyệt"],["headerTitle","Dòng chào trên đầu trang"],["countdownBefore","Chữ trước đồng hồ"],["countdownAfter","Chữ sau đồng hồ"],["countdownToday","Khi đến ngày sinh nhật"],["btnSend","Nút gửi lời chúc"],["btnShow","Nút trình chiếu"]]],
+  ["Đầu trang", [["birthday","Ngày giờ sinh nhật (đồng hồ đếm ngược, {date}, {dateFull})"],["pageTitle","Tiêu đề tab trình duyệt"],["headerTitle","Dòng chào trên đầu trang"],["countdownBefore","Chữ trước đồng hồ"],["countdownAfter","Chữ sau đồng hồ"],["countdownToday","Khi đến ngày sinh nhật"],["btnSend","Nút gửi lời chúc"],["btnShow","Nút trình chiếu"]]],
   ["Cây và tiến độ", [["statusCount","Chữ dưới con số tổng"],["statusNext","Tiến độ tới giai đoạn sau"],["statusDone","Khi cây đã lớn hết"],["__stages",""],["tapHint","Gợi ý chạm vào hoa lá"],["emptyTitle","Khi chưa có lời chúc: tiêu đề"],["emptyText","Khi chưa có lời chúc: nội dung"],["emptyButton","Khi chưa có lời chúc: nút"]]],
   ["Danh sách và thẻ lời chúc", [["feedTitle","Tiêu đề danh sách"],["feedLive","Nhãn trực tiếp"],["feedEmpty","Danh sách trống"],["feedSearchPlaceholder","Ô tìm kiếm"],["feedNewPill","Nút có lời chúc mới"],["feedNoMatch","Tìm không thấy"],["toCompany","Dòng người nhận"],["cardFrom","Người gửi trên thẻ"],["feedFrom","Người gửi trong danh sách"],["featuredBadge","Nhãn tiêu biểu"]]],
   ["Form gửi lời chúc", [["formTitle","Tiêu đề form"],["formPrivacy","Dòng bảo mật (khi không ẩn danh)"],["formPrivacyAnon","Dòng bảo mật (khi ẩn danh)"],["accLabel","Nhãn ô Account"],["accPlaceholder","Chữ mờ trong ô Account"],["accHint","Gợi ý dưới ô Account"],["errAccount","Lỗi thiếu Account"],["msgLabel","Nhãn ô lời chúc"],["msgPlaceholder","Chữ mờ trong ô lời chúc"],["ideasCompany","Gợi ý câu mở đầu (mỗi dòng một gợi ý)"],["ideasHint","Dòng dưới các gợi ý"],["btnLater","Nút để sau"],["btnSubmit","Nút gửi"],["errShort","Lỗi lời chúc quá ngắn"],["errSend","Lỗi gửi không được"]]],
@@ -2578,7 +2581,17 @@ function renderTexts(){
     const h = document.createElement("div"); h.className = "tx-g"; h.textContent = g; box.appendChild(h);
     rows.forEach(([k, l])=>{
       const row = document.createElement("div"); row.className = "tx-row"; row.dataset.k = k;
-      row.innerHTML = `<div class="tx-lb"><b>${esc(l)}</b><small>${esc(k)}</small></div><textarea rows="1" spellcheck="false"></textarea><button type="button" title="${esc(t("adminTextsReset"))}" aria-label="${esc(t("adminTextsReset"))}">↺</button>`;
+      const isDate = k === "birthday";
+      row.innerHTML = `<div class="tx-lb"><b>${esc(l)}</b><small>${esc(isDate ? t("adminTextsDateHint") : k)}</small></div>${isDate ? `<input type="datetime-local" class="tx-date">` : `<textarea rows="1" spellcheck="false"></textarea>`}<button type="button" title="${esc(t("adminTextsReset"))}" aria-label="${esc(t("adminTextsReset"))}">↺</button>`;
+      if (isDate){
+        const inp = row.querySelector("input"), rb = row.querySelector("button");
+        const toLocal = v => { const d = new Date(v); return isNaN(d) ? "" : new Date(d.getTime() + 7*3600e3).toISOString().slice(0,16); };
+        const mark = ()=>{ row.classList.toggle("ovr", txDraft[k] !== DEF_TXT[k]); row.classList.toggle("dirty", txDraft[k] !== TXT[k]); rb.disabled = txDraft[k] === DEF_TXT[k]; };
+        inp.value = toLocal(txDraft[k]);
+        inp.addEventListener("change", ()=>{ txDraft[k] = inp.value ? inp.value + ":00+07:00" : DEF_TXT[k]; mark(); txState(); });
+        rb.onclick = ()=>{ txDraft[k] = DEF_TXT[k]; inp.value = toLocal(txDraft[k]); mark(); txState(); };
+        mark(); box.appendChild(row); return;
+      }
       const ta = row.querySelector("textarea"), rb = row.querySelector("button");
       const mark = ()=>{ row.classList.toggle("ovr", txDraft[k] !== DEF_TXT[k]); row.classList.toggle("dirty", txDraft[k] !== TXT[k]); rb.disabled = txDraft[k] === DEF_TXT[k]; };
       const fit = ()=>{ ta.style.height = "auto"; ta.style.height = Math.min(220, ta.scrollHeight + 2) + "px"; };

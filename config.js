@@ -19,7 +19,7 @@ window.SITE_CONFIG = {
   event: {
     title: "Cây",                 // phần chữ đen của tên sự kiện
     titleHighlight: "Tri Ân",     // phần chữ đỏ của tên sự kiện
-    birthday: "2026-11-21T00:00:00+07:00"   // thời điểm sinh nhật, giờ Việt Nam
+    birthday: "2026-11-21T00:00:00+07:00"   // thời điểm sinh nhật, giờ Việt Nam (mặc định; Ban tổ chức đổi được trong Quản trị → Nội dung)
   },
 
   /* ---------- Kết nối máy chủ (Google Apps Script) ----------
@@ -270,6 +270,7 @@ window.SITE_CONFIG = {
     adminTextsDirty:  "{n} chỗ chưa lưu",
     adminTextsClean:  "Chưa có thay đổi",
     adminTextsReset:  "Về chữ mặc định",
+    adminTextsDateHint:"Giờ Việt Nam",
     adminTextsOld:    "Máy chủ chưa cập nhật bản mới nên chưa lưu được (cần khởi động lại Azure / triển khai lại Google).",
     adminPinHint:     "Hai loại mã PIN đổi riêng. Đổi xong có hiệu lực ngay trên cả hai máy chủ.",
     adminPinStaffTitle:"PIN nhân viên",

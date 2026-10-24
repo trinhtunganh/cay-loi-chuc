@@ -205,9 +205,11 @@ function createCore(tables, env = process.env, deps = {}) {
      ít nhất 3 giờ; quanh ngày sinh nhật (từ 18 giờ trước đến 30 giờ sau) thì 1 giờ; sau sự kiện 6 giờ.
      Giữ 24 bản gần nhất + 1 bản/ngày trong 45 ngày. Mỗi bản ~300 KB với 1.000 lời chúc → vài chục MB, gần như 0 đồng. */
   const BK_CHUNK = 30000, BK_KEEP = 24, BK_DAYS = 45;
-  const BIRTHDAY = Date.parse(env.BIRTHDAY || '2026-11-21T00:00:00+07:00');
+  const BIRTHDAY0 = Date.parse(env.BIRTHDAY || '2026-11-21T00:00:00+07:00');
+  const bdayOf = c => { const v = Date.parse(textsObj(c).birthday || ''); return Number.isFinite(v) ? v : BIRTHDAY0; };   // ngày đổi trong Quản trị → Nội dung
   const backups = tables.backups;
-  function bkInterval(now) {
+  function bkInterval(now, B) {
+    const BIRTHDAY = Number.isFinite(B) ? B : BIRTHDAY0;
     if (now >= BIRTHDAY - 18 * 3600e3 && now <= BIRTHDAY + 30 * 3600e3) return 3600e3;
     return now > BIRTHDAY + 30 * 3600e3 ? 6 * 3600e3 : 3 * 3600e3;
   }
@@ -249,8 +251,8 @@ function createCore(tables, env = process.env, deps = {}) {
   }
   async function autoBackup() {
     await ensure();
-    const now = Date.now(), last = (await bkIndex())[0];
-    if (last && now - Number(last.atS || 0) < bkInterval(now) - 5 * 60e3) return { ok: true, skipped: 'chưa đến giờ' };
+    const now = Date.now(), last = (await bkIndex())[0], B = bdayOf(await getCfg(true));
+    if (last && now - Number(last.atS || 0) < bkInterval(now, B) - 5 * 60e3) return { ok: true, skipped: 'chưa đến giờ' };
     const data = await snapshotData();
     const hash = crypto.createHash('md5').update(JSON.stringify([data.items, data.settings]), 'utf8').digest('hex');
     if (last && last.hash === hash) return { ok: true, skipped: 'dữ liệu không đổi' };
@@ -258,7 +260,7 @@ function createCore(tables, env = process.env, deps = {}) {
   }
   async function bkList() {
     const list = (await bkIndex()).map(e => ({ id: e.rowKey, at: Number(e.atS) || 0, n: Number(e.n) || 0, live: Number(e.live) || 0, size: Number(e.size) || 0, kind: e.kind || 'auto' }));
-    return { ok: true, backups: list, everyMin: Math.round(bkInterval(Date.now()) / 60e3), keep: BK_KEEP, days: BK_DAYS };
+    return { ok: true, backups: list, everyMin: Math.round(bkInterval(Date.now(), bdayOf(await getCfg())) / 60e3), keep: BK_KEEP, days: BK_DAYS };
   }
   async function bkGet(b) {
     const id = String(b.id || '');
