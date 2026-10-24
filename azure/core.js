@@ -8,8 +8,8 @@
  *   AUTO_APPROVE  "true" = lời chúc lên cây ngay (mặc định), "false" = chờ duyệt
  *   GOOGLE_URL    địa chỉ máy chủ Google (…/exec) để đồng bộ 2 chiều
  *   SYNC_KEY      khóa bí mật, đặt giống thuộc tính SYNC_KEY bên Google
- * Dữ liệu nằm trong Storage account của Function App: bảng LoiChuc (lời chúc) và CaiDat
- * (phòng ban, máy chủ đang dùng, mốc đồng bộ).
+ * Dữ liệu nằm trong Storage account của Function App: bảng LoiChuc (lời chúc), CaiDat
+ * (phòng ban, máy chủ đang dùng, mốc đồng bộ) và SaoLuu (các bản sao lưu tự động).
  *
  * Đồng bộ: hàm "sync" chạy 2 phút/lần (thư mục sync/), lấy thay đổi từ Google rồi gửi thay đổi
  * của Azure sang. Mỗi lời chúc có cùng mã ở 2 nơi; bên nào sửa sau (trường updated) thì thắng.
@@ -34,7 +34,7 @@ function createCore(tables, env = process.env, deps = {}) {
   const clean = (v, max) => String(v || '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').trim().slice(0, max);
 
   function ensure() {
-    if (!ready) ready = Promise.all([wishes, settings].map(t => t.createTable().catch(e => { if (e.statusCode !== 409) throw e; })))
+    if (!ready) ready = Promise.all([wishes, settings, tables.backups].filter(Boolean).map(t => t.createTable().catch(e => { if (e.statusCode !== 409) throw e; })))
       .catch(e => { ready = null; throw e; });
     return ready;
   }
@@ -200,6 +200,106 @@ function createCore(tables, env = process.env, deps = {}) {
     return { ok: true, active: v };
   }
 
+  /* ---------- sao lưu / khôi phục ----------
+     Tự sao lưu (thư mục backup/, chạy mỗi giờ): chỉ chụp khi dữ liệu đã đổi so với bản trước, và cách bản trước
+     ít nhất 3 giờ; quanh ngày sinh nhật (từ 18 giờ trước đến 30 giờ sau) thì 1 giờ; sau sự kiện 6 giờ.
+     Giữ 24 bản gần nhất + 1 bản/ngày trong 45 ngày. Mỗi bản ~300 KB với 1.000 lời chúc → vài chục MB, gần như 0 đồng. */
+  const BK_CHUNK = 30000, BK_KEEP = 24, BK_DAYS = 45;
+  const BIRTHDAY = Date.parse(env.BIRTHDAY || '2026-11-21T00:00:00+07:00');
+  const backups = tables.backups;
+  function bkInterval(now) {
+    if (now >= BIRTHDAY - 18 * 3600e3 && now <= BIRTHDAY + 30 * 3600e3) return 3600e3;
+    return now > BIRTHDAY + 30 * 3600e3 ? 6 * 3600e3 : 3 * 3600e3;
+  }
+  async function snapshotData() {
+    const c = await getCfg(true);
+    return { format: 'cay-tri-an-backup', v: 1, at: new Date().toISOString(), source: 'azure', items: await all(),
+      settings: { DEPARTMENTS: c.DEPARTMENTS || '', ANON: c.ANON || '', TEXTS: c.TEXTS || '' } };
+  }
+  async function bkIndex() {
+    const out = [];
+    for await (const e of backups.listEntities({ queryOptions: { filter: "PartitionKey eq 'idx'" } })) out.push(e);
+    return out.sort((a, b) => String(b.rowKey).localeCompare(String(a.rowKey)));
+  }
+  async function bkDelete(e) {
+    for (let i = 0; i < Number(e.chunks || 0); i++) { try { await backups.deleteEntity('s' + e.rowKey, String(i).padStart(3, '0')); } catch (x) { if (x.statusCode !== 404) throw x; } }
+    try { await backups.deleteEntity('idx', e.rowKey); } catch (x) { if (x.statusCode !== 404) throw x; }
+  }
+  async function bkPrune() {
+    const list = await bkIndex(), keep = new Set(), days = new Set(), now = Date.now();
+    list.forEach((e, i) => {
+      const at = Number(e.atS) || 0, day = new Date(at + 7 * 3600e3).toISOString().slice(0, 10);
+      if (i < BK_KEEP) keep.add(e.rowKey);
+      if (!days.has(day) && now - at < BK_DAYS * 864e5) { days.add(day); keep.add(e.rowKey); }
+    });
+    let removed = 0;
+    for (const e of list) if (!keep.has(e.rowKey)) { await bkDelete(e); removed++; }
+    return removed;
+  }
+  async function bkSave(kind, data) {
+    data = data || await snapshotData();
+    const json = JSON.stringify(data), hash = crypto.createHash('md5').update(JSON.stringify([data.items, data.settings]), 'utf8').digest('hex');
+    const at = Date.now(), id = stamp(at), parts = [];
+    for (let i = 0; i < json.length; i += BK_CHUNK) parts.push(json.slice(i, i + BK_CHUNK));
+    for (let i = 0; i < parts.length; i++) await backups.upsertEntity({ partitionKey: 's' + id, rowKey: String(i).padStart(3, '0'), v: parts[i] }, 'Replace');
+    const n = (data.items || []).length;
+    await backups.upsertEntity({ partitionKey: 'idx', rowKey: id, atS: String(at), n, live: (data.items || []).filter(m => !m.deleted).length, chunks: parts.length, size: json.length, hash, kind }, 'Replace');
+    const pruned = await bkPrune();
+    return { ok: true, id, at, n, size: json.length, pruned };
+  }
+  async function autoBackup() {
+    await ensure();
+    const now = Date.now(), last = (await bkIndex())[0];
+    if (last && now - Number(last.atS || 0) < bkInterval(now) - 5 * 60e3) return { ok: true, skipped: 'chưa đến giờ' };
+    const data = await snapshotData();
+    const hash = crypto.createHash('md5').update(JSON.stringify([data.items, data.settings]), 'utf8').digest('hex');
+    if (last && last.hash === hash) return { ok: true, skipped: 'dữ liệu không đổi' };
+    return bkSave('auto', data);
+  }
+  async function bkList() {
+    const list = (await bkIndex()).map(e => ({ id: e.rowKey, at: Number(e.atS) || 0, n: Number(e.n) || 0, live: Number(e.live) || 0, size: Number(e.size) || 0, kind: e.kind || 'auto' }));
+    return { ok: true, backups: list, everyMin: Math.round(bkInterval(Date.now()) / 60e3), keep: BK_KEEP, days: BK_DAYS };
+  }
+  async function bkGet(b) {
+    const id = String(b.id || '');
+    if (!/^\d{15}$/.test(id)) return { ok: false, error: 'Mã bản sao lưu không hợp lệ.' };
+    const parts = [];
+    for await (const e of backups.listEntities({ queryOptions: { filter: `PartitionKey eq 's${id}'` } })) parts.push(e);
+    if (!parts.length) return { ok: false, error: 'Không tìm thấy bản sao lưu.' };
+    parts.sort((x, y) => String(x.rowKey).localeCompare(String(y.rowKey)));
+    try { return { ok: true, data: JSON.parse(parts.map(e => e.v || '').join('')) }; } catch (e) { return { ok: false, error: 'Bản sao lưu bị hỏng.' }; }
+  }
+  /* khôi phục: "merge" = chỉ thêm lại lời chúc bị mất; "replace" = đưa về đúng bản sao lưu (lời chúc không có trong bản → Ẩn đi, không xóa) */
+  async function restore(b) {
+    const data = b.data || {}, items = Array.isArray(data.items) ? data.items.slice(0, 5000) : null, mode = b.mode === 'replace' ? 'replace' : 'merge';
+    if (!items) return { ok: false, error: 'File sao lưu không hợp lệ.' };
+    const safety = await bkSave('before-restore');   // luôn chụp lại hiện trạng trước khi khôi phục
+    const cur = new Map((await all()).map(m => [m.id, m])), gone = new Set(purgedOf(await getCfg(true)));
+    const now = Date.now(), inFile = new Set();
+    let added = 0, changed = 0, hidden = 0;
+    for (const raw of items) {
+      if (!raw || !/^[\w-]{1,40}$/.test(String(raw.id || ''))) continue;
+      const m = Object.assign({}, raw, { updated: now });
+      if (gone.has(String(m.id))) { const base = String(m.id).slice(0, 36); let k = 1; while (gone.has(base + 'r' + k)) k++; m.id = base + 'r' + k; }   // đã xóa hẳn → mã mới, giống nhau ở 2 máy chủ
+      inFile.add(String(m.id));
+      const l = cur.get(String(m.id));
+      if (!l) { await wishes.upsertEntity(entityOf(m), 'Replace'); added++; }
+      else if (mode === 'replace') { await wishes.upsertEntity(entityOf(m), 'Replace'); changed++; }
+    }
+    if (mode === 'replace') for (const [id, l] of cur) if (!inFile.has(id) && !l.deleted) {
+      await wishes.updateEntity({ partitionKey: 'w', rowKey: id, deleted: true, featured: false, updatedS: stamp(now) }, 'Merge'); hidden++;
+    }
+    const done = [];
+    if (b.withSettings && data.settings) {
+      const s = data.settings;
+      try { const d = JSON.parse(s.DEPARTMENTS || 'null'); if (Array.isArray(d) && d.length) { await setCfgStamped('DEPARTMENTS', JSON.stringify(d), now); done.push('DEPARTMENTS'); } } catch (e) {}
+      if (s.ANON === 'true' || s.ANON === 'false') { await setCfgStamped('ANON', s.ANON, now); done.push('ANON'); }
+      if (typeof s.TEXTS === 'string' && s.TEXTS) { let o = null; try { o = JSON.parse(s.TEXTS); } catch (e) {} const r = cleanTexts(o); if (r.ok) { await setCfgStamped('TEXTS', r.json, now); done.push('TEXTS'); } }
+    }
+    listCache = null;
+    return { ok: true, mode, added, changed, hidden, settings: done, safety: safety.id };
+  }
+
   /* ---------- xóa hẳn (chỉ lời chúc đã "Ẩn đi"); mã được ghi vào PURGED để Google cũng xóa ---------- */
   const PURGED_MAX = 2000;
   const purgedOf = c => { try { const a = JSON.parse(c.PURGED || '[]'); return Array.isArray(a) ? a.map(String) : []; } catch (e) { return []; } };
@@ -345,6 +445,10 @@ function createCore(tables, env = process.env, deps = {}) {
         case 'adminSetActive':return await setActive(body);
         case 'adminSetAnon':  return await setAnon(body);
         case 'adminSetTexts': return await setTexts(body);
+        case 'adminBackups':  return await bkList();
+        case 'adminBackupGet':return await bkGet(body);
+        case 'adminBackupNow':return await bkSave('manual');
+        case 'adminRestore':  return await restore(body);
         default:              return { ok: false, error: 'Thao tác không hợp lệ.' };
       }
     } catch (err) {
@@ -353,7 +457,7 @@ function createCore(tables, env = process.env, deps = {}) {
     }
   }
 
-  return { handle, sync };
+  return { handle, sync, autoBackup };
 }
 
 module.exports = { createCore };

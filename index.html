@@ -357,6 +357,22 @@ body.anon #accField{display:none}
 .sv{display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto}
 .pn{display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto}
 .tx{display:flex;flex-direction:column;flex:1;min-height:0}
+.bk-file{align-self:flex-start;cursor:pointer}
+.bk-prev{display:flex;flex-direction:column;gap:8px;border-top:1px dashed var(--line);padding-top:10px;margin-top:4px;font-size:14px}
+.bk-prev b{font-weight:700}
+.bk-opt{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:8px 10px;cursor:pointer}
+.bk-opt b{display:block;font-size:14px} .bk-opt small{display:block;color:var(--muted);font-size:12.5px;line-height:1.4}
+.bk-opt:has(input:checked){border-color:var(--brand);background:var(--brand-tint)}
+#bkGo.arm{background:#7A0018;border-color:#7A0018}
+.bk-auto{margin-top:16px}
+.bk-ah{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.bk-list{list-style:none;margin:8px 0 0;padding:0}
+.bk-list li{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:12px;margin-bottom:6px;font-size:13.5px;background:#fff}
+.bk-list li small{color:var(--muted)}
+.bk-list .k{display:inline-block;border-radius:999px;padding:0 7px;font-size:11.5px;background:#F1ECEC;color:#7a6d6f;margin-left:6px}
+.bk-list .k.manual{background:#E8F0FB;color:#2F5B9A} .bk-list .k.before-restore{background:#FFF3D6;color:#9A6400}
+.bk-list button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 11px;font-size:12.5px;cursor:pointer}
+.bk-list li.a-empty{display:block;color:var(--muted);text-align:center;border-style:dashed}
 .tx-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-bottom:6px}
 .tx-q{flex:1 1 240px;margin:0}
 .tx-all{display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--ink-2)}
@@ -792,6 +808,32 @@ body.anon #accField{display:none}
       <button data-tab="srv" role="tab" id="aTabSrv"><span data-t="adminTabServer"></span></button>
       <button data-tab="pin" role="tab">🔑 <span data-t="adminTabPin"></span></button>
       <button data-tab="texts" role="tab">📝 <span data-t="adminTabTexts"></span></button>
+      <button data-tab="backup" role="tab">💾 <span data-t="adminTabBackup"></span></button>
+    </div>
+    <div class="pn" id="aBackup" hidden>
+      <div class="pn-grid">
+        <div class="pn-box">
+          <h3 class="pn-h" data-t="bkDownTitle"></h3>
+          <p class="pn-sub" data-t="bkDownSub"></p>
+          <button class="btn primary" id="bkDown" data-t="bkDownBtn"></button>
+        </div>
+        <div class="pn-box">
+          <h3 class="pn-h" data-t="bkRestTitle"></h3>
+          <p class="pn-sub" data-t="bkRestSub"></p>
+          <label class="btn bk-file"><input type="file" id="bkFile" accept=".json,application/json" hidden><span data-t="bkPickFile"></span></label>
+          <div class="bk-prev" id="bkPrev" hidden>
+            <div id="bkPrevTxt"></div>
+            <label class="bk-opt"><input type="radio" name="bkMode" value="merge" checked> <span><b data-t="bkMerge"></b><small data-t="bkMergeSub"></small></span></label>
+            <label class="bk-opt"><input type="radio" name="bkMode" value="replace"> <span><b data-t="bkReplace"></b><small data-t="bkReplaceSub"></small></span></label>
+            <label class="dw-chk"><input type="checkbox" id="bkSet"> <span data-t="bkWithSettings"></span></label>
+            <div class="row" style="margin:4px 0 0;justify-content:flex-end"><button class="btn ghost" id="bkCancel" data-t="btnLater"></button><button class="btn primary" id="bkGo" data-t="bkGo"></button></div>
+          </div>
+        </div>
+      </div>
+      <div class="bk-auto">
+        <div class="bk-ah"><div><h3 class="pn-h" data-t="bkAutoTitle"></h3><p class="pn-sub" id="bkPolicy"></p></div><button class="btn" id="bkNow" data-t="bkNow"></button></div>
+        <ul class="bk-list" id="bkList"></ul>
+      </div>
     </div>
     <div class="tx" id="aTexts" hidden>
       <div class="tx-bar">
@@ -1085,6 +1127,20 @@ function previewApi(action, data){
   }
   const pT = (()=>{ try{ return JSON.parse(load("cta_prev_texts") || "null") || {tv:"0", texts:{}}; }catch(e){ return {tv:"0", texts:{}}; } })();
   const withT = o => Object.assign(o, {tv: pT.tv}, String(data.tv||"") !== pT.tv || action === "adminList" ? {texts: pT.texts} : {});
+  if (action==="adminBackups"){ const L = (()=>{ try{ return JSON.parse(load("cta_prev_bk") || "[]"); }catch(e){ return []; } })(); return Promise.resolve({ok:true, backups: L.map(x=>x.meta), everyMin:180, keep:24, days:45}); }
+  if (action==="adminBackupNow" || action==="adminBackupGet"){
+    let L = []; try{ L = JSON.parse(load("cta_prev_bk") || "[]"); }catch(e){}
+    if (action==="adminBackupGet"){ const x = L.find(x=>x.meta.id===data.id); return Promise.resolve(x ? {ok:true, data:x.data} : {ok:false, error:"Không tìm thấy bản sao lưu."}); }
+    const at = Date.now(), d = {format:"cay-tri-an-backup", v:1, at:new Date(at).toISOString(), source:"preview", items: sample.map(m=>Object.assign({}, m)), settings:{}};
+    L.unshift({meta:{id:String(at).padStart(15,"0"), at, n:d.items.length, live:d.items.filter(m=>!m.deleted).length, size:JSON.stringify(d).length, kind:"manual"}, data:d}); save("cta_prev_bk", JSON.stringify(L.slice(0,5)));
+    return Promise.resolve({ok:true, n:d.items.length});
+  }
+  if (action==="adminRestore"){
+    const its = (data.data && data.data.items) || [], have = new Map(sample.map(m=>[m.id,m])), inF = new Set(its.map(m=>m.id)); let a = 0, c = 0, h = 0;
+    its.forEach(m=>{ if (!have.has(m.id)){ sample.push(Object.assign({}, m)); a++; } else if (data.mode==="replace"){ Object.assign(have.get(m.id), m); c++; } });
+    if (data.mode==="replace") sample.forEach(m=>{ if (!inF.has(m.id) && !m.deleted){ m.deleted = true; h++; } });
+    return Promise.resolve({ok:true, added:a, changed:c, hidden:h});
+  }
   if (action==="adminSetTexts"){ const v = {tv: String(Date.now()), texts: data.texts || {}}; save("cta_prev_texts", JSON.stringify(v)); return Promise.resolve({ok:true, tv:v.tv, texts:v.texts}); }
   if (action==="verify" || action==="adminVerify") return Promise.resolve(withT({ok:true, anon:ANON}));
   if (action==="list") return Promise.resolve(withT({ok:true, items: pub().map(m=>{ const o = Object.assign({}, m); delete o.account; if (!ANON && m.account) o.from = m.account; return o; }), depts: pDepts(), anon:ANON}));
@@ -2296,10 +2352,19 @@ $("#dwUndo").onclick = async ()=>{ if (!dwLast) return; try{ dwShowingWin = fals
 $("#btnDraw").onclick = openDraw;
 
 function renderAdmin(){
+  const isB = adminTab === "backup";
+  $("#aBackup").hidden = !isB;
+  if (isB){
+    ["#aDepts","#aList","#aSrv",".a-search","#aFilt","#aShow","#dpSave","#aAnon","#aPin","#aTexts"].forEach(q=>$(q).hidden = true);
+    $$("#aTabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===adminTab));
+    $("#aInfo").textContent = "";
+    bkLoad();
+    return;
+  }
   const isX = adminTab === "texts";
   $("#aTexts").hidden = !isX;
   if (isX){
-    ["#aDepts","#aList","#aSrv",".a-search","#aFilt","#aShow","#dpSave","#aAnon","#aPin"].forEach(q=>$(q).hidden = true);
+    ["#aDepts","#aList","#aSrv",".a-search","#aFilt","#aShow","#dpSave","#aAnon","#aPin","#aBackup"].forEach(q=>$(q).hidden = true);
     $$("#aTabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===adminTab));
     $("#aInfo").textContent = "";
     renderTexts();
@@ -2402,6 +2467,83 @@ $("#aAnonSw").onclick = async ()=>{
   }catch(e){ toast(e.message || t("adminSaveError")); }
   finally{ sw.disabled = false; }
 };
+/* ---- Quản trị → Sao lưu: tải về, khôi phục, bản tự động trên Azure ---- */
+const BK_SRC = BACKENDS.azure ? "azure" : CUR;   // bản tự động chỉ có trên Azure
+let bkPending = null;
+const bkFmt = ts => new Date(ts).toLocaleString("vi-VN",{timeZone:"Asia/Ho_Chi_Minh", hour:"2-digit", minute:"2-digit", day:"2-digit", month:"2-digit", year:"numeric"});
+function bkDownloadJson(data, name){
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 1)], {type:"application/json"}));
+  a.download = name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+const bkName = ts => { const d = new Date(ts + 7*3600e3).toISOString(); return `cay-tri-an-saoluu-${d.slice(0,10)}-${d.slice(11,13)}${d.slice(14,16)}.json`; };
+$("#bkDown").onclick = async ()=>{
+  const btn = $("#bkDown"); btn.disabled = true;
+  try{
+    const r = await api("adminList");
+    if (!r || !r.ok) throw new Error((r && r.error) || t("adminSaveError"));
+    const data = { format:"cay-tri-an-backup", v:1, at:new Date().toISOString(), source: BACKEND_NAMES[CUR] || CUR, items: r.items || [],
+      settings: { DEPARTMENTS: r.depts ? JSON.stringify(r.depts) : "", ANON: typeof r.anon === "boolean" ? String(r.anon) : "", TEXTS: r.texts ? JSON.stringify(r.texts) : "" } };
+    bkDownloadJson(data, bkName(Date.now())); toast(t("bkDownDone",{n:data.items.length}));
+  }catch(e){ toast(e.message || t("netError")); }
+  finally{ btn.disabled = false; }
+};
+function bkSetPending(data, label){
+  if (!data || !Array.isArray(data.items)){ toast(t("bkBadFile")); return; }
+  bkPending = data;
+  const ids = new Set(adminItems.map(m=>m.id)), live = data.items.filter(m=>!m.deleted).length;
+  const missing = data.items.filter(m=>!ids.has(m.id)).length;
+  $("#bkPrevTxt").innerHTML = esc(t("bkPreview",{label, at: bkFmt(Date.parse(data.at) || Date.now()), n: data.items.length, live, miss: missing, cur: adminItems.length})).replace(/(\d+)(?= lời chúc| lời chúc)/g,"<b>$1</b>");
+  $("#bkPrev").hidden = false; $("#bkGo").classList.remove("arm"); $("#bkGo").textContent = t("bkGo");
+  $("#bkPrev").scrollIntoView({block:"nearest"});
+}
+$("#bkFile").addEventListener("change", e=>{
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = ()=>{ try{ const d = JSON.parse(rd.result); if (d.format !== "cay-tri-an-backup") throw 0; bkSetPending(d, f.name); }catch(x){ toast(t("bkBadFile")); } e.target.value = ""; };
+  rd.readAsText(f);
+});
+$("#bkCancel").onclick = ()=>{ bkPending = null; $("#bkPrev").hidden = true; };
+$("#bkGo").onclick = async ()=>{
+  const btn = $("#bkGo"); if (!bkPending) return;
+  if (!btn.classList.contains("arm")){ btn.classList.add("arm"); btn.textContent = t("bkGoConfirm"); clearTimeout(btn._t); btn._t = setTimeout(()=>{ btn.classList.remove("arm"); btn.textContent = t("bkGo"); }, 5000); return; }
+  clearTimeout(btn._t); btn.disabled = true; btn.textContent = t("adminPinSaving");
+  try{
+    const mode = document.querySelector("input[name=bkMode]:checked").value;
+    const res = await api("adminRestore", {data: {items: bkPending.items, settings: bkPending.settings || {}}, mode, withSettings: $("#bkSet").checked});
+    if (!res || !res.ok) throw new Error(res && res.error === "Thao tác không hợp lệ." ? t("bkOld") : (res && res.error) || t("adminSaveError"));
+    toast(t("bkDone",{a:res.added, c:res.changed, h:res.hidden}));
+    bkPending = null; $("#bkPrev").hidden = true;
+    const r = await api("adminList"); if (r.ok){ adminItems = (r.items||[]).sort((a,b)=>String(b.time).localeCompare(String(a.time))); }
+    refresh(true); bkLoad();
+  }catch(e){ toast(e.message || t("adminSaveError")); }
+  finally{ btn.disabled = false; btn.classList.remove("arm"); btn.textContent = t("bkGo"); }
+};
+async function bkLoad(){
+  const ul = $("#bkList"); ul.innerHTML = `<li class="a-empty">…</li>`;
+  try{
+    const r = await api("adminBackups", {}, BK_SRC);
+    if (!r || !r.ok) throw new Error(r && r.error === "Thao tác không hợp lệ." ? t("bkOld") : (r && r.error) || t("netError"));
+    $("#bkPolicy").textContent = t("bkPolicy",{m: r.everyMin >= 60 ? (r.everyMin/60) + " giờ" : r.everyMin + " phút", k: r.keep, d: r.days});
+    ul.textContent = "";
+    if (!r.backups.length){ ul.innerHTML = `<li class="a-empty">${esc(t("bkNone"))}</li>`; return; }
+    r.backups.forEach(b=>{
+      const li = document.createElement("li");
+      const kind = {auto: t("bkKindAuto"), manual: t("bkKindManual"), "before-restore": t("bkKindBefore")}[b.kind] || b.kind;
+      li.innerHTML = `<span><b>${esc(bkFmt(b.at))}</b><span class="k ${esc(b.kind)}">${esc(kind)}</span><br><small>${esc(t("bkRowInfo",{n:b.n, live:b.live, kb: Math.max(1, Math.round(b.size/1024))}))}</small></span><button type="button" class="dl2">${esc(t("bkGet"))}</button><button type="button" class="rs2">${esc(t("bkUse"))}</button>`;
+      const get = async ()=>{ const g = await api("adminBackupGet", {id:b.id}, BK_SRC); if (!g || !g.ok) throw new Error((g && g.error) || t("netError")); return g.data; };
+      li.querySelector(".dl2").onclick = async ()=>{ try{ bkDownloadJson(await get(), bkName(b.at)); }catch(e){ toast(e.message); } };
+      li.querySelector(".rs2").onclick = async ()=>{ try{ bkSetPending(await get(), kind); }catch(e){ toast(e.message); } };
+      ul.appendChild(li);
+    });
+  }catch(e){ $("#bkPolicy").textContent = ""; ul.innerHTML = `<li class="a-empty">${esc(e.message || t("netError"))}</li>`; }
+}
+$("#bkNow").onclick = async ()=>{
+  const btn = $("#bkNow"); btn.disabled = true;
+  try{ const r = await api("adminBackupNow", {}, BK_SRC); if (!r || !r.ok) throw new Error(r && r.error === "Thao tác không hợp lệ." ? t("bkOld") : (r && r.error) || t("netError")); toast(t("bkNowDone",{n:r.n})); bkLoad(); }
+  catch(e){ toast(e.message || t("netError")); }
+  finally{ btn.disabled = false; }
+};
+
 /* ---- Quản trị → Nội dung: sửa chữ hiển thị, lưu trên máy chủ ---- */
 const TX_GROUPS = [
   ["Đầu trang", [["pageTitle","Tiêu đề tab trình duyệt"],["headerTitle","Dòng chào trên đầu trang"],["countdownBefore","Chữ trước đồng hồ"],["countdownAfter","Chữ sau đồng hồ"],["countdownToday","Khi đến ngày sinh nhật"],["btnSend","Nút gửi lời chúc"],["btnShow","Nút trình chiếu"]]],

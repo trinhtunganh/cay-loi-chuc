@@ -79,6 +79,7 @@ function doPost(e) {
     switch (body.action) {
       case 'adminVerify': return json({ ok: true, active: activeBackend(), anon: anonMode() });
       case 'adminSetTexts': return json(setTexts(body));
+      case 'adminRestore': return json(adminRestore(body));
       case 'adminList':   return json({ ok: true, items: listAll(), depts: getDepts(), active: activeBackend(), anon: anonMode(), staffPin: prop('PIN'), texts: textsObj(), tv: textsTv() });
       case 'adminSetPins': return json(setPins(body));
       case 'adminSet':    return json(adminSet(body));
@@ -258,6 +259,61 @@ function adminSet(body) {
     removeBig('approved_list');
     const v = sh.getRange(row, 1, 1, HEADERS.length).getValues()[0];
     return { ok: true, approved: v[6] === true, featured: v[7] === true, deleted: v[9] === true, prize: String(v[11] || ''), wonAt: Number(v[12]) || 0 };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * Khôi phục từ bản sao lưu (file .json tải về từ Quản trị → Sao lưu).
+ * Trước khi khôi phục luôn chép sheet LoiChuc ra một tab "SaoLuu …" để có thể quay lại.
+ * mode "merge": chỉ thêm lại lời chúc bị mất. mode "replace": đưa về đúng bản sao lưu,
+ * lời chúc không có trong bản thì chuyển sang "Ẩn đi" (không xóa).
+ */
+function adminRestore(body) {
+  const data = body.data || {}, items = Array.isArray(data.items) ? data.items.slice(0, 5000) : null, mode = body.mode === 'replace' ? 'replace' : 'merge';
+  if (!items) return { ok: false, error: 'File sao lưu không hợp lệ.' };
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet(), sh = getSheet();
+    const copyName = 'SaoLuu ' + Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyyy-MM-dd HH:mm:ss');
+    sh.copyTo(ss).setName(copyName);
+    const last = sh.getLastRow(), local = {};
+    if (last >= 2) sh.getRange(2, 1, last - 1, COL.deleted).getValues().forEach((r, i) => { if (r[0]) local[String(r[0])] = { row: i + 2, deleted: r[COL.deleted - 1] === true }; });
+    const gone = {}; getPurged(PropertiesService.getScriptProperties().getProperties()).forEach(x => gone[x] = 1);
+    const now = Date.now(), inFile = {};
+    let added = 0, changed = 0, hidden = 0;
+    items.forEach(raw => {
+      let id = String((raw && raw.id) || '');
+      if (!/^[\w-]{1,40}$/.test(id)) return;
+      if (gone[id]) { const base = id.slice(0, 36); let k = 1; while (gone[base + 'r' + k]) k++; id = base + 'r' + k; }   // đã xóa hẳn → mã mới, giống nhau ở 2 máy chủ
+      const m = raw, type = TYPE_LABELS[m.toType] ? m.toType : 'company';
+      const vals = [
+        TYPE_LABELS[type], safeCell(clean(m.toDept, MAX_NAME)), safeCell(clean(m.toName, MAX_NAME)), safeCell(clean(m.text, MAX_TEXT)),
+        m.approved === true, m.featured === true, now, m.deleted === true,
+        safeCell(clean(m.account, MAX_NAME)), safeCell(clean(m.prize, MAX_NAME)), Number(m.wonAt) || ''
+      ];
+      inFile[id] = 1;
+      const l = local[id];
+      if (!l) { sh.appendRow([id, new Date(m.time || now)].concat(vals)); added++; }
+      else if (mode === 'replace') { sh.getRange(l.row, 3, 1, vals.length).setValues([vals]); changed++; }
+    });
+    if (mode === 'replace') Object.keys(local).forEach(id => {
+      const l = local[id];
+      if (inFile[id] || l.deleted) return;
+      sh.getRange(l.row, COL.featured).setValue(false); sh.getRange(l.row, COL.updated).setValue(now); sh.getRange(l.row, COL.deleted).setValue(true); hidden++;
+    });
+    const done = [], s = (body.withSettings && data.settings) || null, upd = {};
+    if (s) {
+      try { const d = JSON.parse(s.DEPARTMENTS || 'null'); if (Array.isArray(d) && d.length) { upd.DEPARTMENTS = JSON.stringify(d); upd.DEPARTMENTS_AT = String(now); done.push('DEPARTMENTS'); } } catch (e) {}
+      if (s.ANON === 'true' || s.ANON === 'false') { upd.ANON = s.ANON; upd.ANON_AT = String(now); done.push('ANON'); }
+      if (Object.keys(upd).length) PropertiesService.getScriptProperties().setProperties(upd);
+      if (typeof s.TEXTS === 'string' && s.TEXTS) { let o = null; try { o = JSON.parse(s.TEXTS); } catch (e) {} const r = cleanTexts(o); if (r.ok) { writeTexts(r.json, now); done.push('TEXTS'); } }
+    }
+    CacheService.getScriptCache().remove('props');
+    removeBig('approved_list');
+    return { ok: true, mode: mode, added: added, changed: changed, hidden: hidden, settings: done, safety: copyName };
   } finally {
     lock.releaseLock();
   }
