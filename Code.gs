@@ -266,7 +266,7 @@ function adminSet(body) {
 }
 
 /* ---------- Cảm xúc (giống Facebook): sheet CamXuc, mỗi dòng = 1 trình duyệt × 1 lời chúc ---------- */
-const RX_SHEET = 'CamXuc', RX_TYPES = ['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry'], CID_RE = /^[a-z0-9]{8,32}$/;
+const RX_SHEET = 'CamXuc', RX_TYPES = ['like', 'love', 'care', 'haha', 'wow', 'sad', 'pacman'], CID_RE = /^[a-z0-9]{8,32}$/;
 function rxSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName(RX_SHEET);

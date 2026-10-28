@@ -230,8 +230,8 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 #card .q{position:absolute;right:44px;top:10px;width:30px;height:25px;color:var(--brand);opacity:.1;pointer-events:none}
 #card .to{font-size:11.5px;font-weight:700;color:var(--accent,var(--brand));letter-spacing:.2px;text-transform:uppercase;padding-right:40px}
 #card blockquote{margin:6px 0 8px;font-size:15px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word;max-height:30vh;overflow:auto;color:var(--ink-2)}
-#card .from{font-size:13px;font-weight:600;color:var(--ink-2);text-align:right;margin:-2px 0 8px}
-#card .from:empty{display:none}
+#card .c-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-2px 0 8px;min-height:24px}
+#card .from{font-size:13px;font-weight:600;color:var(--ink-2)}
 #card .meta{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--muted);gap:8px}
 #card .nav{display:flex;gap:6px}
 #card .nav button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 11px;cursor:pointer;font-size:12px}
@@ -250,21 +250,26 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 .live{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--brand)}
 .live i{width:8px;height:8px;border-radius:50%;background:var(--brand);animation:blink 1.6s infinite}
 @keyframes blink{50%{opacity:.25}}
-.f-filters{display:flex;flex-direction:column;gap:8px}
-.f-sortrow{display:flex;align-items:center;justify-content:flex-end;gap:8px;font-size:12.5px;color:var(--muted)}
-.f-sortrow .f-select select{padding:6px 30px 6px 10px;font-size:13px;border-radius:10px}
-.f-sortrow .f-select::after{right:11px;width:6px;height:6px}
+.f-filters{display:flex;flex-direction:row;align-items:stretch;gap:8px}
+.f-filters .f-search{flex:1 1 auto;min-width:0}
+.f-sort{flex:0 0 auto}
+.f-sort select{height:100%;padding:0 30px 0 11px;font-size:13px;font-weight:600;color:var(--ink-2)}
+.f-sort::after{right:12px;width:6px;height:6px}
 /* cảm xúc */
-.rx{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:7px;min-height:28px}
+.rx{display:inline-flex;align-items:center;gap:4px;flex:none}
+#feedList .f-time{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#feedList .f-time > span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pm{width:1em;height:1em;display:block}
 .rx-sum{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted)}
 .rx-sum .ic{display:inline-flex}
 .rx-sum .ic i{font-style:normal;font-size:15px;line-height:1;width:19px;height:19px;display:grid;place-items:center;background:#fff;border-radius:50%;margin-left:-4px;box-shadow:0 0 0 2px #fff}
 .rx-sum .ic i:first-child{margin-left:0}
-.rx-btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 11px;font:inherit;font-size:12.5px;font-weight:600;color:#65676B;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;transition:background .15s,border-color .15s}
-.rx-btn:hover{background:#F2F2F2}
-.rx-btn .e{font-size:15px;line-height:1}
-.rx-btn.on{border-color:transparent;background:#F0F2F5}
-.rx-btn[data-r=like]{color:#2078F4} .rx-btn[data-r=love]{color:#E4405F} .rx-btn[data-r=care],.rx-btn[data-r=haha],.rx-btn[data-r=wow],.rx-btn[data-r=sad]{color:#E7A33E} .rx-btn[data-r=angry]{color:#E9710F}
+.rx-btn{border:0;background:transparent;border-radius:50%;width:28px;height:28px;padding:0;cursor:pointer;display:inline-grid;place-items:center;transition:background .15s,transform .15s}
+.rx-btn:hover{background:#F0F2F5;transform:scale(1.12)}
+.rx-btn .e{font-size:16px;line-height:1;display:grid;place-items:center}
+.rx-btn .e.off{filter:grayscale(1);opacity:.55}
+.rx-btn.on{background:#F0F2F5}
+.rx-btn[data-r=like]{color:#2078F4} .rx-btn[data-r=love]{color:#E4405F} .rx-btn[data-r=care],.rx-btn[data-r=haha],.rx-btn[data-r=wow],.rx-btn[data-r=sad]{color:#E7A33E}
 .rx-pick{position:fixed;z-index:80;display:flex;gap:2px;background:#fff;border-radius:999px;padding:5px 7px;box-shadow:0 6px 24px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.04);animation:rxIn .16s ease-out}
 .rx-pick[hidden]{display:none}
 @keyframes rxIn{from{opacity:0;transform:translateY(6px) scale(.9)}to{opacity:1;transform:none}}
@@ -273,7 +278,8 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 .rx-pick button.on{background:#F0F2F5}
 .rx-pick button::after{content:attr(data-label);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:rgba(0,0,0,.78);color:#fff;font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s}
 .rx-pick button:hover::after{opacity:1}
-#card .rx{margin:-2px 0 8px}
+.rx-pick button .pm{width:28px;height:28px;margin:auto}
+.rx-sum .ic i .pm{width:14px;height:14px}
 @media (max-width:640px){ .rx-pick button{width:36px;height:36px;font-size:25px} }
 .f-head{position:relative}
 .f-newpill{position:absolute;left:50%;bottom:-16px;transform:translateX(-50%);z-index:2;border:0;background:var(--brand);color:#fff;font-size:12.5px;font-weight:700;border-radius:999px;padding:6px 14px;cursor:pointer;box-shadow:0 6px 16px rgba(228,0,43,.3);animation:pop .3s}
@@ -668,7 +674,7 @@ body.anon #accField{display:none}
         <button class="clear" id="qClear" hidden aria-label="Xóa">✕</button>
       </div>
       <div class="f-select" hidden><select id="qDept" aria-label="Lọc theo phòng ban"></select></div>
-      <div class="f-sortrow"><span data-t="sortLabel"></span><div class="f-select"><select id="qSort" aria-label="Sắp xếp"><option value="new" data-t="sortNew"></option><option value="react" data-t="sortReact"></option></select></div></div>
+      <div class="f-select f-sort"><select id="qSort" aria-label="Sắp xếp" title="Sắp xếp"><option value="new" data-t="sortNew"></option><option value="react" data-t="sortReact"></option></select></div>
     </div>
     <div class="f-count" id="qCountRow" hidden><span id="qCount"></span><button id="qReset" data-t="feedReset"></button></div>
   </div>
@@ -681,8 +687,7 @@ body.anon #accField{display:none}
   <button class="close" id="cardClose" aria-label="Đóng">×</button>
   <div class="to" id="cardTo"></div>
   <blockquote id="cardText"></blockquote>
-  <div class="from" id="cardFrom"></div>
-  <div class="rx" id="cardRx"></div>
+  <div class="c-foot"><span class="from" id="cardFrom"></span><span class="rx" id="cardRx"></span></div>
   <div class="meta">
     <span id="cardMeta"></span>
     <span class="peek-hint" data-t="cardPeekHint"></span>
@@ -1730,8 +1735,10 @@ $("#qClear").onclick = ()=>{ $("#q").value=""; applyFilter(); $("#q").focus(); }
 $("#qReset").onclick = ()=>{ $("#q").value=""; setDept(""); hideCard(); };
 
 /* ---------- cảm xúc (giống Facebook) ---------- */
-const RX_TYPES = ["like","love","care","haha","wow","sad","angry"];
-const RX_EMOJI = {like:"👍", love:"❤️", care:"🥰", haha:"😆", wow:"😮", sad:"😢", angry:"😡"};
+const RX_TYPES = ["like","love","care","haha","wow","sad","pacman"];
+const RX_EMOJI = {like:"👍", love:"❤️", care:"🥰", haha:"😆", wow:"😮", sad:"😢", pacman:"ᗧ"};
+const PACMAN = "<svg class=\"pm\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 12 21.2 6.6A10.5 10.5 0 1 0 21.2 17.4Z\" fill=\"#FFD21F\" stroke=\"#D9A400\" stroke-width=\".8\"/><circle cx=\"11.2\" cy=\"6.4\" r=\"1.5\" fill=\"#222\"/></svg>";
+const rxIcon = k => k === "pacman" ? PACMAN : RX_EMOJI[k];
 const CID = (()=>{ let c = load("cta_cid"); if (!/^[a-z0-9]{8,32}$/.test(c||"")){ const a = new Uint8Array(8); (crypto.getRandomValues ? crypto.getRandomValues(a) : a.forEach((_,i)=>a[i]=Math.random()*256)); c = [...a].map(x=>x.toString(16).padStart(2,"0")).join(""); save("cta_cid", c); } return c; })();
 let MYRX = (()=>{ try{ return JSON.parse(load("cta_myrx") || "{}") || {}; }catch(e){ return {}; } })();
 const rxTotal = id => { const c = RX[id]; if (!c) return 0; let n = 0; for (const k in c) n += c[k] || 0; return n; };
@@ -1744,21 +1751,23 @@ function applyRx(map, rv){
 function rxSumHtml(id){
   const c = RX[id] || {}, n = rxTotal(id); if (!n) return "";
   const top = RX_TYPES.filter(k=>c[k]).sort((a,b)=>c[b]-c[a]).slice(0, 3);
-  return `<span class="ic">${top.map(k=>`<i>${RX_EMOJI[k]}</i>`).join("")}</span>${n.toLocaleString("vi-VN")}`;
+  return `<span class="ic">${top.map(k=>`<i>${rxIcon(k)}</i>`).join("")}</span>${n.toLocaleString("vi-VN")}`;
 }
 function rxBtnHtml(id){
   const r = MYRX[id];
-  return r ? `<span class="e">${RX_EMOJI[r]}</span>${esc(t("rx_" + r))}` : `<span class="e" style="filter:grayscale(1);opacity:.7">👍</span>${esc(t("rxBtn"))}`;
+  return r ? `<span class="e">${rxIcon(r)}</span>` : `<span class="e off">👍</span>`;
 }
 function rxBar(id){
-  const box = document.createElement("div"); box.className = "rx"; box.dataset.rxid = id;
-  box.innerHTML = `<span class="rx-sum">${rxSumHtml(id)}</span><button type="button" class="rx-btn${MYRX[id] ? " on" : ""}" ${MYRX[id] ? `data-r="${MYRX[id]}"` : ""}>${rxBtnHtml(id)}</button>`;
+  const box = document.createElement("span"); box.className = "rx"; box.dataset.rxid = id;
+  const lb = MYRX[id] ? t("rx_" + MYRX[id]) : t("rxBtn");
+  box.innerHTML = `<span class="rx-sum">${rxSumHtml(id)}</span><button type="button" class="rx-btn${MYRX[id] ? " on" : ""}" ${MYRX[id] ? `data-r="${MYRX[id]}"` : ""} title="${esc(lb)}" aria-label="${esc(lb)}">${rxBtnHtml(id)}</button>`;
   return box;
 }
 function rxPaint(box){
   const id = box.dataset.rxid; if (!id) return;
   const s = box.querySelector(".rx-sum"), b = box.querySelector(".rx-btn"); if (!s || !b) return;
   s.innerHTML = rxSumHtml(id); b.innerHTML = rxBtnHtml(id); b.classList.toggle("on", !!MYRX[id]);
+  const lb = MYRX[id] ? t("rx_" + MYRX[id]) : t("rxBtn"); b.title = lb; b.setAttribute("aria-label", lb);
   if (MYRX[id]) b.dataset.r = MYRX[id]; else delete b.dataset.r;
 }
 function rxPaintAll(){ $$("[data-rxid]").forEach(rxPaint); }
@@ -1766,7 +1775,7 @@ function rxPaintAll(){ $$("[data-rxid]").forEach(rxPaint); }
 let rxFor = null, rxHideT = null, rxShowT = null;
 (function buildPicker(){
   const p = $("#rxPick");
-  RX_TYPES.forEach(k=>{ const b = document.createElement("button"); b.type = "button"; b.dataset.r = k; b.textContent = RX_EMOJI[k]; b.setAttribute("aria-label", t("rx_" + k)); p.appendChild(b); });
+  RX_TYPES.forEach(k=>{ const b = document.createElement("button"); b.type = "button"; b.dataset.r = k; b.innerHTML = rxIcon(k); b.setAttribute("aria-label", t("rx_" + k)); p.appendChild(b); });
   p.addEventListener("click", e=>{ e.stopPropagation(); const b = e.target.closest("button"); if (b && rxFor) doReact(rxFor, b.dataset.r); rxHide(); });
   p.addEventListener("mouseenter", ()=>clearTimeout(rxHideT));
   p.addEventListener("mouseleave", ()=>{ rxHideT = setTimeout(rxHide, 350); });
@@ -1833,8 +1842,10 @@ function feedItem(m){
   to.innerHTML = miniIcon(m); to.appendChild(document.createTextNode(recipient(m)));
   if (m.featured) to.insertAdjacentHTML("beforeend", `<span class="feat">★ ${esc(t("featuredBadge"))}</span>`);
   const tx = document.createElement("div"); tx.className="f-text"; tx.innerHTML = highlight(m.text, feedQ);
-  const tm = document.createElement("div"); tm.className="f-time"; tm.textContent = (!ANON && m.from ? t("feedFrom",{from:m.from}) + " · " : "") + timeAgo(m.time);
-  li.append(to, tx, tm, rxBar(m.id)); li.onclick = ()=>showCard(m,"open", feedFiltered || items);
+  const tm = document.createElement("div"); tm.className="f-time";
+  const tt = document.createElement("span"); tt.textContent = (!ANON && m.from ? t("feedFrom",{from:m.from}) + " · " : "") + timeAgo(m.time);
+  tm.append(tt, rxBar(m.id));
+  li.append(to, tx, tm); li.onclick = ()=>showCard(m,"open", feedFiltered || items);
   return li;
 }
 function feedMore(n){
