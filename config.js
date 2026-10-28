@@ -122,7 +122,7 @@ window.SITE_CONFIG = {
     sortNew:          "Mới nhất",
     sortReact:        "Nhiều cảm xúc",
     rxBtn:            "Thích",
-    rx_like: "Thích", rx_love: "Yêu thích", rx_care: "Thương thương", rx_haha: "Haha", rx_wow: "Wow", rx_sad: "Buồn", rx_pacman: "Pacman",
+    rx_like: "Thích", rx_love: "Yêu thích", rx_care: "Thương thương", rx_haha: "Haha", rx_wow: "Wow", rx_sad: "Buồn",
     rxOld:            "Máy chủ chưa cập nhật bản mới nên chưa thả cảm xúc được.",
 
     toCompany:        "Gửi {company}",

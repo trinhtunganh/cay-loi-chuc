@@ -203,7 +203,7 @@ function createCore(tables, env = process.env, deps = {}) {
   /* ---------- cảm xúc (giống Facebook) ----------
      Mỗi trình duyệt (cid ngẫu nhiên) chọn 1 cảm xúc cho 1 lời chúc; bỏ chọn = r rỗng (giữ lại để đồng bộ).
      Bảng CamXuc: PartitionKey = mã lời chúc, RowKey = cid. Danh sách chỉ gửi kèm số đếm khi đã đổi (rv). */
-  const RX_TYPES = ['like', 'love', 'care', 'haha', 'wow', 'sad', 'pacman'];
+  const RX_TYPES = ['like', 'love', 'care', 'haha', 'wow', 'sad'];
   const CID_RE = /^[a-z0-9]{8,32}$/, RX_TTL = 10e3;
   const reactions = tables.reactions;
   let rxCache = null;

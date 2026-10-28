@@ -259,7 +259,6 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 .rx{display:inline-flex;align-items:center;gap:4px;flex:none}
 #feedList .f-time{display:flex;align-items:center;justify-content:space-between;gap:8px}
 #feedList .f-time > span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pm{width:1em;height:1em;display:block}
 .rx-sum{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted)}
 .rx-sum .ic{display:inline-flex}
 .rx-sum .ic i{font-style:normal;font-size:15px;line-height:1;width:19px;height:19px;display:grid;place-items:center;background:#fff;border-radius:50%;margin-left:-4px;box-shadow:0 0 0 2px #fff}
@@ -278,8 +277,7 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 .rx-pick button.on{background:#F0F2F5}
 .rx-pick button::after{content:attr(data-label);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:rgba(0,0,0,.78);color:#fff;font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s}
 .rx-pick button:hover::after{opacity:1}
-.rx-pick button .pm{width:28px;height:28px;margin:auto}
-.rx-sum .ic i .pm{width:14px;height:14px}
+
 @media (max-width:640px){ .rx-pick button{width:36px;height:36px;font-size:25px} }
 .f-head{position:relative}
 .f-newpill{position:absolute;left:50%;bottom:-16px;transform:translateX(-50%);z-index:2;border:0;background:var(--brand);color:#fff;font-size:12.5px;font-weight:700;border-radius:999px;padding:6px 14px;cursor:pointer;box-shadow:0 6px 16px rgba(228,0,43,.3);animation:pop .3s}
@@ -1735,10 +1733,9 @@ $("#qClear").onclick = ()=>{ $("#q").value=""; applyFilter(); $("#q").focus(); }
 $("#qReset").onclick = ()=>{ $("#q").value=""; setDept(""); hideCard(); };
 
 /* ---------- cảm xúc (giống Facebook) ---------- */
-const RX_TYPES = ["like","love","care","haha","wow","sad","pacman"];
-const RX_EMOJI = {like:"👍", love:"❤️", care:"🥰", haha:"😆", wow:"😮", sad:"😢", pacman:"ᗧ"};
-const PACMAN = "<svg class=\"pm\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 12 21.2 6.6A10.5 10.5 0 1 0 21.2 17.4Z\" fill=\"#FFD21F\" stroke=\"#D9A400\" stroke-width=\".8\"/><circle cx=\"11.2\" cy=\"6.4\" r=\"1.5\" fill=\"#222\"/></svg>";
-const rxIcon = k => k === "pacman" ? PACMAN : RX_EMOJI[k];
+const RX_TYPES = ["like","love","care","haha","wow","sad"];
+const RX_EMOJI = {like:"👍", love:"❤️", care:"🥰", haha:"😆", wow:"😮", sad:"😢"};
+const rxIcon = k => RX_EMOJI[k] || "";
 const CID = (()=>{ let c = load("cta_cid"); if (!/^[a-z0-9]{8,32}$/.test(c||"")){ const a = new Uint8Array(8); (crypto.getRandomValues ? crypto.getRandomValues(a) : a.forEach((_,i)=>a[i]=Math.random()*256)); c = [...a].map(x=>x.toString(16).padStart(2,"0")).join(""); save("cta_cid", c); } return c; })();
 let MYRX = (()=>{ try{ return JSON.parse(load("cta_myrx") || "{}") || {}; }catch(e){ return {}; } })();
 const rxTotal = id => { const c = RX[id]; if (!c) return 0; let n = 0; for (const k in c) n += c[k] || 0; return n; };
