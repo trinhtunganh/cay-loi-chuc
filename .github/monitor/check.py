@@ -75,6 +75,10 @@ lines = ["## Giám sát Cây Tri Ân — " + time.strftime("%H:%M %d/%m/%Y", tim
 lines += [f"| {a} | {b} | {c} |" for a, b, c in results]
 report = "\n".join(lines)
 print(report)
+# chú thích trên GitHub (đọc được qua API, kể cả khi không xem được log)
+for a, b, c in results[:9]:
+    lvl = "error" if a == "❌" else "warning" if a == "⚠️" else "notice"
+    print(f"::{lvl} title={b}::{a} {c}".replace("\n", " "))
 if os.environ.get("GITHUB_STEP_SUMMARY"):
     open(os.environ["GITHUB_STEP_SUMMARY"], "a").write(report + "\n")
 open("report.md", "w").write(report + ("\n\n**Lỗi:**\n- " + "\n- ".join(problems) if problems else "") + ("\n\n**Lưu ý:**\n- " + "\n- ".join(warns) if warns else "") + "\n")
