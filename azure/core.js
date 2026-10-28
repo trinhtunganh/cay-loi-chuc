@@ -34,7 +34,7 @@ function createCore(tables, env = process.env, deps = {}) {
   const clean = (v, max) => String(v || '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').trim().slice(0, max);
 
   function ensure() {
-    if (!ready) ready = Promise.all([wishes, settings, tables.backups].filter(Boolean).map(t => t.createTable().catch(e => { if (e.statusCode !== 409) throw e; })))
+    if (!ready) ready = Promise.all([wishes, settings, tables.backups, tables.reactions].filter(Boolean).map(t => t.createTable().catch(e => { if (e.statusCode !== 409) throw e; })))
       .catch(e => { ready = null; throw e; });
     return ready;
   }
@@ -122,7 +122,7 @@ function createCore(tables, env = process.env, deps = {}) {
   /* chỉ gửi phần thay đổi: không đổi → {same}, chỉ thêm mới → phần mới, còn lại → cả danh sách */
   async function listDelta(b) {
     const items = await approved(), ver = hashItems(items);
-    const out = await withTexts({ ok: true, ver, depts: await depts(), active: await active(), anon: await anonMode() }, b);
+    const out = await withRx(await withTexts({ ok: true, ver, depts: await depts(), active: await active(), anon: await anonMode() }, b), b);
     const since = String(b.since || ''), after = String(b.after || '');
     if (since && since === ver) { out.same = true; return out; }
     if (since && after) {
@@ -200,6 +200,69 @@ function createCore(tables, env = process.env, deps = {}) {
     return { ok: true, active: v };
   }
 
+  /* ---------- cảm xúc (giống Facebook) ----------
+     Mỗi trình duyệt (cid ngẫu nhiên) chọn 1 cảm xúc cho 1 lời chúc; bỏ chọn = r rỗng (giữ lại để đồng bộ).
+     Bảng CamXuc: PartitionKey = mã lời chúc, RowKey = cid. Danh sách chỉ gửi kèm số đếm khi đã đổi (rv). */
+  const RX_TYPES = ['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry'];
+  const CID_RE = /^[a-z0-9]{8,32}$/, RX_TTL = 10e3;
+  const reactions = tables.reactions;
+  let rxCache = null;
+  const rxHits = new Map();
+  async function rxAll() {
+    const out = [];
+    if (!reactions) return out;
+    for await (const e of reactions.listEntities({})) out.push({ id: e.partitionKey, cid: e.rowKey, r: e.r || '', at: Number(e.atS) || 0 });
+    return out;
+  }
+  function rxCount(list) {
+    const map = {};
+    for (const e of list) if (e.r && RX_TYPES.includes(e.r)) { const m = map[e.id] || (map[e.id] = {}); m[e.r] = (m[e.r] || 0) + 1; }
+    return map;
+  }
+  const rxHash = map => crypto.createHash('md5').update(JSON.stringify(map), 'utf8').digest('base64url').slice(0, 16);
+  async function rxMap() {
+    if (rxCache && Date.now() - rxCache.at < RX_TTL) return rxCache;
+    const map = rxCount(await rxAll());
+    rxCache = { at: Date.now(), map, rv: rxHash(map) };
+    return rxCache;
+  }
+  async function withRx(out, b) {
+    const c = await rxMap();
+    out.rv = c.rv;
+    if (String((b && b.rv) || '') !== c.rv) out.rx = c.map;
+    return out;
+  }
+  async function react(b, ip) {
+    if (!reactions) return { ok: false, error: 'Thao tác không hợp lệ.' };
+    const id = String(b.id || ''), cid = String(b.cid || ''), r = String(b.r || '');
+    if (!/^[\w-]{1,40}$/.test(id) || !CID_RE.test(cid) || (r && !RX_TYPES.includes(r))) return { ok: false, error: 'Dữ liệu không hợp lệ.' };
+    const now = Date.now(), k = String(ip || ''), h = rxHits.get(k) || { n: 0, at: now };
+    if (now - h.at > 60e3) { h.n = 0; h.at = now; }
+    if (++h.n > 120) return { ok: false, error: 'Bạn thao tác nhanh quá, thử lại sau ít phút nhé.' };
+    rxHits.set(k, h); if (rxHits.size > 5000) rxHits.clear();
+    if (!(await approved()).some(m => m.id === id)) return { ok: false, error: 'Không tìm thấy lời chúc.' };
+    await reactions.upsertEntity({ partitionKey: id, rowKey: cid, r, atS: stamp(now) }, 'Replace');
+    const mine = [];
+    for await (const e of reactions.listEntities({ queryOptions: { filter: `PartitionKey eq '${id}'` } })) mine.push({ id, cid: e.rowKey, r: e.r || '' });
+    const counts = rxCount(mine)[id] || {};
+    if (rxCache) { if (Object.keys(counts).length) rxCache.map[id] = counts; else delete rxCache.map[id]; rxCache.rv = rxHash(rxCache.map); }
+    return { ok: true, id, r, counts };
+  }
+  async function rxMerge(list, forceNow) {   // nhận cảm xúc từ máy chủ kia / bản sao lưu: bên nào sau thì thắng
+    if (!reactions || !Array.isArray(list) || !list.length) return 0;
+    const local = new Map((await rxAll()).map(e => [e.id + '|' + e.cid, e])), now = Date.now();
+    let n = 0;
+    for (const e of list) {
+      if (!e || !/^[\w-]{1,40}$/.test(String(e.id || '')) || !CID_RE.test(String(e.cid || '')) || (e.r && !RX_TYPES.includes(e.r))) continue;
+      const l = local.get(e.id + '|' + e.cid);
+      if (l && !forceNow && Number(e.at) <= l.at) continue;
+      if (l && forceNow && l.r === (e.r || '')) continue;
+      await reactions.upsertEntity({ partitionKey: e.id, rowKey: e.cid, r: e.r || '', atS: stamp(forceNow ? now : Number(e.at) || now) }, 'Replace'); n++;
+    }
+    if (n) rxCache = null;
+    return n;
+  }
+
   /* ---------- sao lưu / khôi phục ----------
      Tự sao lưu (thư mục backup/, chạy mỗi giờ): chỉ chụp khi dữ liệu đã đổi so với bản trước, và cách bản trước
      ít nhất 3 giờ; quanh ngày sinh nhật (từ 18 giờ trước đến 30 giờ sau) thì 1 giờ; sau sự kiện 6 giờ.
@@ -216,7 +279,7 @@ function createCore(tables, env = process.env, deps = {}) {
   async function snapshotData() {
     const c = await getCfg(true);
     return { format: 'cay-tri-an-backup', v: 1, at: new Date().toISOString(), source: 'azure', items: await all(),
-      settings: { DEPARTMENTS: c.DEPARTMENTS || '', ANON: c.ANON || '', TEXTS: c.TEXTS || '' } };
+      settings: { DEPARTMENTS: c.DEPARTMENTS || '', ANON: c.ANON || '', TEXTS: c.TEXTS || '' }, reactions: await rxAll() };
   }
   async function bkIndex() {
     const out = [];
@@ -298,8 +361,9 @@ function createCore(tables, env = process.env, deps = {}) {
       if (s.ANON === 'true' || s.ANON === 'false') { await setCfgStamped('ANON', s.ANON, now); done.push('ANON'); }
       if (typeof s.TEXTS === 'string' && s.TEXTS) { let o = null; try { o = JSON.parse(s.TEXTS); } catch (e) {} const r = cleanTexts(o); if (r.ok) { await setCfgStamped('TEXTS', r.json, now); done.push('TEXTS'); } }
     }
+    const rxn = await rxMerge(Array.isArray(data.reactions) ? data.reactions.slice(0, 50000) : [], true);
     listCache = null;
-    return { ok: true, mode, added, changed, hidden, settings: done, safety: safety.id };
+    return { ok: true, mode, added, changed, hidden, reactions: rxn, settings: done, safety: safety.id };
   }
 
   /* ---------- xóa hẳn (chỉ lời chúc đã "Ẩn đi"); mã được ghi vào PURGED để Google cũng xóa ---------- */
@@ -386,11 +450,13 @@ function createCore(tables, env = process.env, deps = {}) {
         const v = gs[k];
         if (v && v.v && Number(v.at) > ls[k].at) { await setCfgStamped(k, v.v, Number(v.at)); ls[k] = { v: v.v, at: Number(v.at) }; if (k === 'ANON') listCache = null; }
       }
+      const rxn = await rxMerge(dump.reactions || []); if (rxn) pulled.reactions = rxn;
       if (pulled.added || pulled.changed || pulled.removed) listCache = null;
       /* 2. gửi thay đổi của Azure sang Google */
       const pushSince = Math.max(0, Number(cfg.SYNC_PUSH || 0) - overlap);
       const items = [...local.values()].filter(m => Number(m.updated) >= pushSince);
-      pushed = await peer({ action: 'peerUpsert', key, items, settings: ls, purged });
+      const rxPush = (await rxAll()).filter(e => e.at >= pushSince);
+      pushed = await peer({ action: 'peerUpsert', key, items, settings: ls, purged, reactions: rxPush });
       if (!pushed || !pushed.ok) throw new Error((pushed && pushed.error) || 'Google không nhận dữ liệu');
       await setCfg('SYNC_PULL', String(maxSeen));
       await setCfg('SYNC_PUSH', String(started));
@@ -448,6 +514,7 @@ function createCore(tables, env = process.env, deps = {}) {
         case 'verify':        return await withTexts({ ok: true, active: await active(), anon: await anonMode() }, body);
         case 'list':          return await listDelta(body);
         case 'submit':        return await submit(body);
+        case 'react':         return await react(body, ip);
         case 'adminVerify':   return { ok: true, active: await active(), anon: await anonMode() };
         case 'adminList':     return { ok: true, items: await all(), depts: await depts(), active: await active(), anon: await anonMode(), texts: textsObj(await getCfg()), tv: String(Number((await getCfg()).TEXTS_AT || 0)), sync: await syncStatus(), staffPin: setting('PIN') };
         case 'adminSetPins':  return await setPins(body);

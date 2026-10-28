@@ -251,6 +251,30 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 .live i{width:8px;height:8px;border-radius:50%;background:var(--brand);animation:blink 1.6s infinite}
 @keyframes blink{50%{opacity:.25}}
 .f-filters{display:flex;flex-direction:column;gap:8px}
+.f-sortrow{display:flex;align-items:center;justify-content:flex-end;gap:8px;font-size:12.5px;color:var(--muted)}
+.f-sortrow .f-select select{padding:6px 30px 6px 10px;font-size:13px;border-radius:10px}
+.f-sortrow .f-select::after{right:11px;width:6px;height:6px}
+/* cảm xúc */
+.rx{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:7px;min-height:28px}
+.rx-sum{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted)}
+.rx-sum .ic{display:inline-flex}
+.rx-sum .ic i{font-style:normal;font-size:15px;line-height:1;width:19px;height:19px;display:grid;place-items:center;background:#fff;border-radius:50%;margin-left:-4px;box-shadow:0 0 0 2px #fff}
+.rx-sum .ic i:first-child{margin-left:0}
+.rx-btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 11px;font:inherit;font-size:12.5px;font-weight:600;color:#65676B;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;transition:background .15s,border-color .15s}
+.rx-btn:hover{background:#F2F2F2}
+.rx-btn .e{font-size:15px;line-height:1}
+.rx-btn.on{border-color:transparent;background:#F0F2F5}
+.rx-btn[data-r=like]{color:#2078F4} .rx-btn[data-r=love]{color:#E4405F} .rx-btn[data-r=care],.rx-btn[data-r=haha],.rx-btn[data-r=wow],.rx-btn[data-r=sad]{color:#E7A33E} .rx-btn[data-r=angry]{color:#E9710F}
+.rx-pick{position:fixed;z-index:80;display:flex;gap:2px;background:#fff;border-radius:999px;padding:5px 7px;box-shadow:0 6px 24px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.04);animation:rxIn .16s ease-out}
+.rx-pick[hidden]{display:none}
+@keyframes rxIn{from{opacity:0;transform:translateY(6px) scale(.9)}to{opacity:1;transform:none}}
+.rx-pick button{position:relative;border:0;background:transparent;font-size:28px;line-height:1;width:40px;height:40px;border-radius:50%;cursor:pointer;transition:transform .14s cubic-bezier(.3,1.6,.5,1)}
+.rx-pick button:hover,.rx-pick button:focus-visible{transform:translateY(-6px) scale(1.3);outline:0}
+.rx-pick button.on{background:#F0F2F5}
+.rx-pick button::after{content:attr(data-label);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:rgba(0,0,0,.78);color:#fff;font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s}
+.rx-pick button:hover::after{opacity:1}
+#card .rx{margin:-2px 0 8px}
+@media (max-width:640px){ .rx-pick button{width:36px;height:36px;font-size:25px} }
 .f-head{position:relative}
 .f-newpill{position:absolute;left:50%;bottom:-16px;transform:translateX(-50%);z-index:2;border:0;background:var(--brand);color:#fff;font-size:12.5px;font-weight:700;border-radius:999px;padding:6px 14px;cursor:pointer;box-shadow:0 6px 16px rgba(228,0,43,.3);animation:pop .3s}
 .f-search{display:flex;align-items:center;gap:8px;border:1px solid #E2DCDC;border-radius:12px;padding:0 6px 0 12px;background:#fff;transition:border-color .2s,box-shadow .2s}
@@ -644,11 +668,13 @@ body.anon #accField{display:none}
         <button class="clear" id="qClear" hidden aria-label="Xóa">✕</button>
       </div>
       <div class="f-select" hidden><select id="qDept" aria-label="Lọc theo phòng ban"></select></div>
+      <div class="f-sortrow"><span data-t="sortLabel"></span><div class="f-select"><select id="qSort" aria-label="Sắp xếp"><option value="new" data-t="sortNew"></option><option value="react" data-t="sortReact"></option></select></div></div>
     </div>
     <div class="f-count" id="qCountRow" hidden><span id="qCount"></span><button id="qReset" data-t="feedReset"></button></div>
   </div>
   <ul id="feedList"></ul>
 </aside>
+<div class="rx-pick" id="rxPick" hidden role="toolbar" aria-label="Cảm xúc"></div>
 <!-- Thẻ lời chúc -->
 <div id="card" aria-live="polite">
   <svg class="q" viewBox="0 0 48 40" aria-hidden="true"><path d="M0 40V24C0 10 7 2 20 0v8c-6 2-9 6-9 12h9v20zm28 0V24c0-14 7-22 20-24v8c-6 2-9 6-9 12h9v20z" fill="currentColor"/></svg>
@@ -656,6 +682,7 @@ body.anon #accField{display:none}
   <div class="to" id="cardTo"></div>
   <blockquote id="cardText"></blockquote>
   <div class="from" id="cardFrom"></div>
+  <div class="rx" id="cardRx"></div>
   <div class="meta">
     <span id="cardMeta"></span>
     <span class="peek-hint" data-t="cardPeekHint"></span>
@@ -918,6 +945,7 @@ if (DEF_TXT.birthday == null) DEF_TXT.birthday = (CFG.event || {}).birthday || "
 if (DEF_TXT.ideasCompany == null) DEF_TXT.ideasCompany = ((CFG.ideas || {}).company || []).join("\n");
 const TXT = Object.assign({}, DEF_TXT);
 let TEXTS_TV = "", TEXTS_OVR = {};
+let RX = {}, RX_V = "";   // số cảm xúc từng lời chúc + mã phiên bản (máy chủ chỉ gửi lại khi đổi)
 function setOverrides(o){
   Object.keys(TXT).forEach(k=>{ delete TXT[k]; }); Object.assign(TXT, DEF_TXT); TEXTS_OVR = {};
   if (o && typeof o === "object") Object.keys(o).forEach(k=>{ if (typeof o[k] === "string"){ TXT[k] = o[k]; TEXTS_OVR[k] = o[k]; } });
@@ -1059,10 +1087,12 @@ function setAnonMode(v){
 }
 async function api(action, data={}, which){
   if (action === "list" || action === "verify") data = Object.assign({tv: TEXTS_TV}, data);
+  if (action === "list") data = Object.assign({rv: RX_V}, data);
   const res = await apiRaw(action, data, which);
   if (res && (!which || which === CUR)){
     if (typeof res.anon === "boolean") setAnonMode(res.anon);
     if (res.texts && typeof res.texts === "object") applyServerTexts(res.texts, res.tv);
+    if (res.rx && typeof res.rx === "object") applyRx(res.rx, res.rv);
   }
   return res;
 }
@@ -1129,7 +1159,10 @@ function previewApi(action, data){
     save("cta_prev_depts", JSON.stringify(data.depts)); return Promise.resolve({ok:true, depts:data.depts});
   }
   const pT = (()=>{ try{ return JSON.parse(load("cta_prev_texts") || "null") || {tv:"0", texts:{}}; }catch(e){ return {tv:"0", texts:{}}; } })();
-  const withT = o => Object.assign(o, {tv: pT.tv}, String(data.tv||"") !== pT.tv || action === "adminList" ? {texts: pT.texts} : {});
+  const pRx = (()=>{ let P = {}; try{ P = JSON.parse(load("cta_prev_rx") || "{}"); }catch(e){}
+    const map = {}; (sample || []).forEach((m,i)=>{ const c = {}; if (i % 3 === 0) c.like = 1 + i % 7; if (i % 4 === 1) c.love = 1 + i % 5; if (i % 9 === 2) c.haha = 2; Object.values(P[m.id] || {}).forEach(r=>{ c[r] = (c[r]||0) + 1; }); if (Object.keys(c).length) map[m.id] = c; });
+    return map; });
+  const withT = o => { Object.assign(o, {tv: pT.tv}, String(data.tv||"") !== pT.tv || action === "adminList" ? {texts: pT.texts} : {}); if (action === "list"){ const m = pRx(), v = String(JSON.stringify(m).length) + "_" + hash(JSON.stringify(m)); o.rv = v; if (String(data.rv||"") !== v) o.rx = m; } return o; };
   if (action==="adminBackups"){ const L = (()=>{ try{ return JSON.parse(load("cta_prev_bk") || "[]"); }catch(e){ return []; } })(); return Promise.resolve({ok:true, backups: L.map(x=>x.meta), everyMin:180, keep:24, days:45}); }
   if (action==="adminBackupNow" || action==="adminBackupGet"){
     let L = []; try{ L = JSON.parse(load("cta_prev_bk") || "[]"); }catch(e){}
@@ -1143,6 +1176,12 @@ function previewApi(action, data){
     its.forEach(m=>{ if (!have.has(m.id)){ sample.push(Object.assign({}, m)); a++; } else if (data.mode==="replace"){ Object.assign(have.get(m.id), m); c++; } });
     if (data.mode==="replace") sample.forEach(m=>{ if (!inF.has(m.id) && !m.deleted){ m.deleted = true; h++; } });
     return Promise.resolve({ok:true, added:a, changed:c, hidden:h});
+  }
+  if (action==="react"){
+    let P = {}; try{ P = JSON.parse(load("cta_prev_rx") || "{}"); }catch(e){}
+    const w = P[data.id] = P[data.id] || {}; if (data.r) w[data.cid] = data.r; else delete w[data.cid];
+    save("cta_prev_rx", JSON.stringify(P));
+    return Promise.resolve({ok:true, counts: pRx()[data.id] || {}});
   }
   if (action==="adminSetTexts"){ const v = {tv: String(Date.now()), texts: data.texts || {}}; save("cta_prev_texts", JSON.stringify(v)); return Promise.resolve({ok:true, tv:v.tv, texts:v.texts}); }
   if (action==="verify" || action==="adminVerify") return Promise.resolve(withT({ok:true, anon:ANON}));
@@ -1553,6 +1592,7 @@ function showCard(m, mode, list){
   $("#cardTo").innerHTML = esc(recipient(m)) + (m.featured ? ` <span class="feat">★ ${esc(t("featuredBadge"))}</span>` : "");
   $("#cardText").textContent = m.text;
   $("#cardFrom").textContent = !ANON && m.from ? t("cardFrom",{from:m.from}) : "";
+  const cr = $("#cardRx"); cr.textContent = ""; cr.append(...rxBar(m.id).childNodes);  cr.dataset.rxid = m.id;
   $("#cardMeta").textContent = timeAgo(m.time) + (mode==="open" && cardList.length>1 ? ` · ${cardIdx+1}/${cardList.length}` : "");
   c.classList.toggle("peek", mode==="peek");
   $$(".leaf.spot").forEach(e=>e.classList.remove("spot"));
@@ -1689,6 +1729,94 @@ $("#qDept").addEventListener("change", e=>setDept(e.target.value));
 $("#qClear").onclick = ()=>{ $("#q").value=""; applyFilter(); $("#q").focus(); };
 $("#qReset").onclick = ()=>{ $("#q").value=""; setDept(""); hideCard(); };
 
+/* ---------- cảm xúc (giống Facebook) ---------- */
+const RX_TYPES = ["like","love","care","haha","wow","sad","angry"];
+const RX_EMOJI = {like:"👍", love:"❤️", care:"🥰", haha:"😆", wow:"😮", sad:"😢", angry:"😡"};
+const CID = (()=>{ let c = load("cta_cid"); if (!/^[a-z0-9]{8,32}$/.test(c||"")){ const a = new Uint8Array(8); (crypto.getRandomValues ? crypto.getRandomValues(a) : a.forEach((_,i)=>a[i]=Math.random()*256)); c = [...a].map(x=>x.toString(16).padStart(2,"0")).join(""); save("cta_cid", c); } return c; })();
+let MYRX = (()=>{ try{ return JSON.parse(load("cta_myrx") || "{}") || {}; }catch(e){ return {}; } })();
+const rxTotal = id => { const c = RX[id]; if (!c) return 0; let n = 0; for (const k in c) n += c[k] || 0; return n; };
+function applyRx(map, rv){
+  const old = $("#qSort").value === "react" ? JSON.stringify(feedSrc.slice(0, 60).map(m=>rxTotal(m.id))) : "";
+  RX = map || {}; RX_V = String(rv || "");
+  rxPaintAll();
+  if ($("#qSort").value === "react" && loaded && JSON.stringify(feedSrc.slice(0, 60).map(m=>rxTotal(m.id))) !== old) renderFeed(new Set(), true);
+}
+function rxSumHtml(id){
+  const c = RX[id] || {}, n = rxTotal(id); if (!n) return "";
+  const top = RX_TYPES.filter(k=>c[k]).sort((a,b)=>c[b]-c[a]).slice(0, 3);
+  return `<span class="ic">${top.map(k=>`<i>${RX_EMOJI[k]}</i>`).join("")}</span>${n.toLocaleString("vi-VN")}`;
+}
+function rxBtnHtml(id){
+  const r = MYRX[id];
+  return r ? `<span class="e">${RX_EMOJI[r]}</span>${esc(t("rx_" + r))}` : `<span class="e" style="filter:grayscale(1);opacity:.7">👍</span>${esc(t("rxBtn"))}`;
+}
+function rxBar(id){
+  const box = document.createElement("div"); box.className = "rx"; box.dataset.rxid = id;
+  box.innerHTML = `<span class="rx-sum">${rxSumHtml(id)}</span><button type="button" class="rx-btn${MYRX[id] ? " on" : ""}" ${MYRX[id] ? `data-r="${MYRX[id]}"` : ""}>${rxBtnHtml(id)}</button>`;
+  return box;
+}
+function rxPaint(box){
+  const id = box.dataset.rxid; if (!id) return;
+  const s = box.querySelector(".rx-sum"), b = box.querySelector(".rx-btn"); if (!s || !b) return;
+  s.innerHTML = rxSumHtml(id); b.innerHTML = rxBtnHtml(id); b.classList.toggle("on", !!MYRX[id]);
+  if (MYRX[id]) b.dataset.r = MYRX[id]; else delete b.dataset.r;
+}
+function rxPaintAll(){ $$("[data-rxid]").forEach(rxPaint); }
+/* bảng chọn cảm xúc: bấm nút (điện thoại) hoặc rê chuột (máy tính) */
+let rxFor = null, rxHideT = null, rxShowT = null;
+(function buildPicker(){
+  const p = $("#rxPick");
+  RX_TYPES.forEach(k=>{ const b = document.createElement("button"); b.type = "button"; b.dataset.r = k; b.textContent = RX_EMOJI[k]; b.setAttribute("aria-label", t("rx_" + k)); p.appendChild(b); });
+  p.addEventListener("click", e=>{ e.stopPropagation(); const b = e.target.closest("button"); if (b && rxFor) doReact(rxFor, b.dataset.r); rxHide(); });
+  p.addEventListener("mouseenter", ()=>clearTimeout(rxHideT));
+  p.addEventListener("mouseleave", ()=>{ rxHideT = setTimeout(rxHide, 350); });
+})();
+function rxShow(btn){
+  const box = btn.closest("[data-rxid]"), p = $("#rxPick"); if (!box) return;
+  rxFor = box.dataset.rxid;
+  $$("#rxPick button").forEach(b=>{ b.classList.toggle("on", MYRX[rxFor] === b.dataset.r); b.dataset.label = t("rx_" + b.dataset.r); });
+  p.hidden = false;
+  const r = btn.getBoundingClientRect(), w = p.offsetWidth, h = p.offsetHeight;
+  let L = Math.min(Math.max(8, r.right - w), innerWidth - w - 8), T = r.top - h - 8;
+  if (T < 8) T = r.bottom + 8;
+  p.style.left = L + "px"; p.style.top = T + "px";
+}
+function rxHide(){ clearTimeout(rxShowT); $("#rxPick").hidden = true; rxFor = null; }
+document.addEventListener("click", e=>{
+  const b = e.target.closest(".rx-btn");
+  if (b){ e.stopPropagation(); e.preventDefault(); if (!$("#rxPick").hidden && rxFor === b.closest("[data-rxid]").dataset.rxid) rxHide(); else rxShow(b); return; }
+  if (e.target.closest(".rx")) { e.stopPropagation(); return; }
+  if (!e.target.closest("#rxPick")) rxHide();
+}, true);
+document.addEventListener("mouseover", e=>{
+  const b = e.target.closest && e.target.closest(".rx-btn"); if (!b || !matchMedia("(hover:hover)").matches) return;
+  clearTimeout(rxHideT); clearTimeout(rxShowT); rxShowT = setTimeout(()=>rxShow(b), 380);
+});
+document.addEventListener("mouseout", e=>{
+  const b = e.target.closest && e.target.closest(".rx-btn"); if (!b) return;
+  clearTimeout(rxShowT); if (!$("#rxPick").hidden) rxHideT = setTimeout(rxHide, 450);
+});
+addEventListener("scroll", ()=>rxHide(), true);
+async function doReact(id, r){
+  const prev = MYRX[id] || "", next = prev === r ? "" : r;
+  const oldCounts = Object.assign({}, RX[id] || {}), c = Object.assign({}, RX[id] || {});
+  if (prev) c[prev] = Math.max(0, (c[prev] || 0) - 1);
+  if (next) c[next] = (c[next] || 0) + 1;
+  RX[id] = c; if (next) MYRX[id] = next; else delete MYRX[id];
+  save("cta_myrx", JSON.stringify(MYRX)); rxPaintAll();
+  try{
+    const res = await api("react", {id, cid: CID, r: next});
+    if (!res || !res.ok) throw new Error(res && res.error === "Thao tác không hợp lệ." ? t("rxOld") : (res && res.error) || t("netError"));
+    if (res.counts) RX[id] = res.counts;
+    RX_V = "";   // lần tải sau lấy lại số đếm mới nhất
+    rxPaintAll();
+  }catch(e){
+    RX[id] = oldCounts; if (prev) MYRX[id] = prev; else delete MYRX[id];
+    save("cta_myrx", JSON.stringify(MYRX)); rxPaintAll(); toast(e.message || t("netError"));
+  }
+}
+$("#qSort").addEventListener("change", ()=>{ renderFeed(new Set(), false); $("#feedList").scrollTop = 0; });
+
 /* ---------- danh sách lời chúc (mới nhất hoặc kết quả lọc) ---------- */
 function highlight(text, q){
   const safe = esc(text); if (!q) return safe;
@@ -1706,7 +1834,7 @@ function feedItem(m){
   if (m.featured) to.insertAdjacentHTML("beforeend", `<span class="feat">★ ${esc(t("featuredBadge"))}</span>`);
   const tx = document.createElement("div"); tx.className="f-text"; tx.innerHTML = highlight(m.text, feedQ);
   const tm = document.createElement("div"); tm.className="f-time"; tm.textContent = (!ANON && m.from ? t("feedFrom",{from:m.from}) + " · " : "") + timeAgo(m.time);
-  li.append(to, tx, tm); li.onclick = ()=>showCard(m,"open", feedFiltered || items);
+  li.append(to, tx, tm, rxBar(m.id)); li.onclick = ()=>showCard(m,"open", feedFiltered || items);
   return li;
 }
 function feedMore(n){
@@ -1722,7 +1850,8 @@ function renderFeed(fresh, keep=false){
   feedFiltered = filtered(); feedQ = norm($("#q").value); feedFresh = fresh || new Set();
   $("#feedTitle").textContent = feedFiltered ? t("feedResults") : t("feedTitle");
   $("#feedLive").hidden = !!feedFiltered;
-  feedSrc = (feedFiltered || items).slice().sort((a,b)=>String(b.time).localeCompare(String(a.time)));
+  const byTime = (a,b)=>String(b.time).localeCompare(String(a.time));
+  feedSrc = (feedFiltered || items).slice().sort($("#qSort").value === "react" ? (a,b)=>(rxTotal(b.id) - rxTotal(a.id)) || byTime(a,b) : byTime);
   ul.textContent = ""; feedShown = 0;
   const sentinel = document.createElement("li"); sentinel.id = "feedMore"; sentinel.className = "f-more"; sentinel.textContent = t("feedLoading") || "…";
   ul.appendChild(sentinel);
@@ -2173,9 +2302,9 @@ function exportCsv(){
   const cell = v => { const s = String(v == null ? "" : v); return /[",\n\r;]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
   const fmt = ts => { const d = new Date(ts); return isNaN(d) || !ts ? "" : d.toLocaleString("vi-VN",{timeZone:"Asia/Ho_Chi_Minh"}); };
   const type = m => m.toType==="company" ? t("optCompany") : m.toType==="dept" ? t("optDept") : t("optPerson");
-  const head = ["Mã","Thời gian","Account VGR","Gửi tới","Phòng ban","Tên người nhận","Nội dung","Trạng thái","Tiêu biểu","Giải thưởng","Thời điểm trúng"];
+  const head = ["Mã","Thời gian","Account VGR","Gửi tới","Phòng ban","Tên người nhận","Nội dung","Trạng thái","Tiêu biểu","Giải thưởng","Thời điểm trúng","Tổng cảm xúc","Chi tiết cảm xúc"];
   const rows = adminItems.slice().sort((a,b)=>String(a.time).localeCompare(String(b.time))).map(m=>[
-    m.id, fmt(m.time), m.account||"", type(m), m.toDept||"", m.toName||"", m.text||"", statusOf(m), m.featured ? "Có" : "", m.prize||"", m.wonAt ? fmt(m.wonAt) : ""
+    m.id, fmt(m.time), m.account||"", type(m), m.toDept||"", m.toName||"", m.text||"", statusOf(m), m.featured ? "Có" : "", m.prize||"", m.wonAt ? fmt(m.wonAt) : "", rxTotal(m.id) || "", RX_TYPES.filter(k=>(RX[m.id]||{})[k]).map(k=>RX_EMOJI[k] + " " + RX[m.id][k]).join("  ")
   ]);
   const csv = "\ufeff" + [head].concat(rows).map(r=>r.map(cell).join(",")).join("\r\n");
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));

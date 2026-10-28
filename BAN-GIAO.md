@@ -27,12 +27,14 @@ Cập nhật: 24/10/2026. Dán file này (hoặc link repo) vào đầu cuộc t
 - Tab **Sao lưu**:
   - Tải bản sao lưu .json; khôi phục kiểu Gộp hoặc Đưa về đúng bản sao lưu.
   - Azure tự sao lưu: 3 giờ/lần, 1 giờ/lần quanh sinh nhật, chỉ khi dữ liệu đổi. Giữ 24 bản + 1 bản/ngày trong 45 ngày.
+- **Cảm xúc** kiểu Facebook trên từng lời chúc, sắp xếp danh sách theo số cảm xúc.
+- **Giám sát**: workflow `.github/workflows/monitor.yml` 10 phút/lần (mở Issue khi lỗi) + tác vụ định kỳ của Claude mỗi giờ báo về điện thoại.
 - Nút **Quay thưởng** (hộp quà):
   - Chọn khoảng thời gian; bảng kê lời chúc kèm lý do không được quay.
   - Account rải ngẫu nhiên, quay đúng 5 giây; người đã trúng bị loại khỏi lượt sau.
 
 ## Việc còn treo (cần máy tính có app Claude desktop)
-1. **Restart Azure** để nạp bản mới nhất. Bản mới gồm: tab Nội dung, sao lưu tự động, ngày sinh nhật sửa trong Quản trị.
+1. **Restart Azure** để nạp bản mới nhất. Bản mới gồm: tab Nội dung, sao lưu tự động, ngày sinh nhật sửa trong Quản trị, cảm xúc, giám sát chi tiết (?health).
 2. **Google**: dán `Code.gs` mới vào Apps Script → Deploy → Manage deployments → New version.
 3. Đặt thuộc tính `SYNC_KEY` (≥16 ký tự) giống nhau ở Google (Script properties) và Azure (App settings), thêm `GOOGLE_URL` ở Azure. Sau đó kiểm tra lần đồng bộ đầu (Quản trị → Máy chủ).
 4. "Ẩn đi" dòng lời chúc `[THỬ NGHIỆM]` ở cả 2 máy chủ. Muốn xóa hẳn thì Ban tổ chức tự bấm.

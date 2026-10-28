@@ -90,6 +90,7 @@ function doPost(e) {
       case 'verify': return json(withTexts({ ok: true, active: activeBackend(), anon: anonMode() }, body));
       case 'list':   return json(listDelta(body));
       case 'submit': return json(submit(body));
+      case 'react':  return json(react(body));
       default:       return json({ ok: false, error: 'Thao tác không hợp lệ.' });
     }
   } catch (err) {
@@ -130,7 +131,7 @@ function listApproved() {
 function listDelta(body) {
   const items = listApproved();
   const ver = hashItems(items);
-  const out = withTexts({ ok: true, ver: ver, depts: getDepts(), active: activeBackend(), anon: anonMode() }, body);
+  const out = withRx(withTexts({ ok: true, ver: ver, depts: getDepts(), active: activeBackend(), anon: anonMode() }, body), body);
   const since = String(body.since || ''), after = String(body.after || '');
   if (since && since === ver) { out.same = true; return out; }
   if (since && after) {
@@ -264,6 +265,76 @@ function adminSet(body) {
   }
 }
 
+/* ---------- Cảm xúc (giống Facebook): sheet CamXuc, mỗi dòng = 1 trình duyệt × 1 lời chúc ---------- */
+const RX_SHEET = 'CamXuc', RX_TYPES = ['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry'], CID_RE = /^[a-z0-9]{8,32}$/;
+function rxSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(RX_SHEET);
+  if (!sh) { sh = ss.insertSheet(RX_SHEET); sh.getRange(1, 1, 1, 4).setValues([['Mã lời chúc', 'Mã trình duyệt', 'Cảm xúc', 'Cập nhật']]); sh.setFrozenRows(1); }
+  return sh;
+}
+function rxAll(sh) {
+  sh = sh || rxSheet();
+  const last = sh.getLastRow();
+  if (last < 2) return [];
+  return sh.getRange(2, 1, last - 1, 4).getValues().map((r, i) => ({ id: String(r[0]), cid: String(r[1]), r: String(r[2] || ''), at: Number(r[3]) || 0, row: i + 2 })).filter(e => e.id && e.cid);
+}
+function rxCount(list) {
+  const map = {};
+  list.forEach(e => { if (e.r && RX_TYPES.indexOf(e.r) >= 0) { const m = map[e.id] || (map[e.id] = {}); m[e.r] = (m[e.r] || 0) + 1; } });
+  return map;
+}
+function rxHash(map) { return hashItems(map).slice(0, 16); }
+function rxCached() {
+  const c = getBig('rx_map');
+  if (c) { try { return JSON.parse(c); } catch (e) {} }
+  const map = rxCount(rxAll()), v = { map: map, rv: rxHash(map) };
+  putBig('rx_map', JSON.stringify(v), 30);
+  return v;
+}
+function withRx(out, body) {
+  const c = rxCached();
+  out.rv = c.rv;
+  if (String((body && body.rv) || '') !== c.rv) out.rx = c.map;
+  return out;
+}
+function react(body) {
+  const id = String(body.id || ''), cid = String(body.cid || ''), r = String(body.r || '');
+  if (!/^[\w-]{1,40}$/.test(id) || !CID_RE.test(cid) || (r && RX_TYPES.indexOf(r) < 0)) return { ok: false, error: 'Dữ liệu không hợp lệ.' };
+  if (!listApproved().some(m => m.id === id)) return { ok: false, error: 'Không tìm thấy lời chúc.' };
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try {
+    const sh = rxSheet(), all = rxAll(sh), now = Date.now();
+    const e = all.find(x => x.id === id && x.cid === cid);
+    if (e) sh.getRange(e.row, 3, 1, 2).setValues([[r, now]]); else sh.appendRow([id, cid, r, now]);
+    if (e) e.r = r; else all.push({ id: id, cid: cid, r: r, at: now });
+    const counts = rxCount(all.filter(x => x.id === id))[id] || {};
+    const map = rxCount(all), v = { map: map, rv: rxHash(map) };
+    putBig('rx_map', JSON.stringify(v), 30);
+    return { ok: true, id: id, r: r, counts: counts };
+  } finally {
+    lock.releaseLock();
+  }
+}
+/** nhận cảm xúc từ máy chủ kia / bản sao lưu: bên nào sau thì thắng (forceNow: ghi đè bằng thời điểm hiện tại) */
+function rxMerge(list, forceNow) {
+  if (!Array.isArray(list) || !list.length) return 0;
+  const sh = rxSheet(), local = {}, now = Date.now();
+  rxAll(sh).forEach(e => local[e.id + '|' + e.cid] = e);
+  let n = 0;
+  list.forEach(e => {
+    if (!e || !/^[\w-]{1,40}$/.test(String(e.id || '')) || !CID_RE.test(String(e.cid || '')) || (e.r && RX_TYPES.indexOf(e.r) < 0)) return;
+    const l = local[e.id + '|' + e.cid], at = forceNow ? now : (Number(e.at) || now);
+    if (l && !forceNow && Number(e.at) <= l.at) return;
+    if (l && forceNow && l.r === (e.r || '')) return;
+    if (l) sh.getRange(l.row, 3, 1, 2).setValues([[e.r || '', at]]); else { sh.appendRow([e.id, e.cid, e.r || '', at]); local[e.id + '|' + e.cid] = { r: e.r, at: at, row: sh.getLastRow() }; }
+    n++;
+  });
+  if (n) removeBig('rx_map');
+  return n;
+}
+
 /**
  * Khôi phục từ bản sao lưu (file .json tải về từ Quản trị → Sao lưu).
  * Trước khi khôi phục luôn chép sheet LoiChuc ra một tab "SaoLuu …" để có thể quay lại.
@@ -313,7 +384,8 @@ function adminRestore(body) {
     }
     CacheService.getScriptCache().remove('props');
     removeBig('approved_list');
-    return { ok: true, mode: mode, added: added, changed: changed, hidden: hidden, settings: done, safety: copyName };
+    const rxn = rxMerge(Array.isArray(data.reactions) ? data.reactions.slice(0, 50000) : [], true);
+    return { ok: true, mode: mode, added: added, changed: changed, hidden: hidden, reactions: rxn, settings: done, safety: copyName };
   } finally {
     lock.releaseLock();
   }
@@ -502,7 +574,8 @@ function peerDump(body) {
   const since = Number(body.since || 0);
   const items = listAll().filter(m => m.updated >= since);
   const p = PropertiesService.getScriptProperties().getProperties();
-  return { ok: true, items: items, settings: peerSettings(p), purged: getPurged(p), now: Date.now() };
+  const rx = rxAll().filter(e => e.at >= since).map(e => ({ id: e.id, cid: e.cid, r: e.r, at: e.at }));
+  return { ok: true, items: items, settings: peerSettings(p), purged: getPurged(p), reactions: rx, now: Date.now() };
 }
 function peerUpsert(body) {
   const items = Array.isArray(body.items) ? body.items : [];
@@ -554,8 +627,9 @@ function peerUpsert(body) {
     });
     if (Object.keys(upd).length) props.setProperties(upd);
     CacheService.getScriptCache().removeAll(['props']);
+    const rxn = rxMerge(body.reactions);
     if (added || changed || removed || upd.ANON) removeBig('approved_list');
-    return { ok: true, added: added, changed: changed, removed: removed, settings: Object.keys(upd) };
+    return { ok: true, added: added, changed: changed, removed: removed, reactions: rxn, settings: Object.keys(upd) };
   } finally {
     lock.releaseLock();
   }

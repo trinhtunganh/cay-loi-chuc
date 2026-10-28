@@ -4,7 +4,7 @@ const { createCore } = require('../core');
 
 const CONN = process.env.TABLES_CONNECTION || process.env.AzureWebJobsStorage;
 let core = null;
-const getCore = () => core || (core = createCore({ wishes: tableClient(CONN, 'LoiChuc'), settings: tableClient(CONN, 'CaiDat'), backups: tableClient(CONN, 'SaoLuu') }));
+const getCore = () => core || (core = createCore({ wishes: tableClient(CONN, 'LoiChuc'), settings: tableClient(CONN, 'CaiDat'), backups: tableClient(CONN, 'SaoLuu'), reactions: tableClient(CONN, 'CamXuc') }));
 
 const HEADERS = {
   'Content-Type': 'application/json; charset=utf-8',
