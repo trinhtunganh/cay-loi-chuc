@@ -4,7 +4,7 @@ const { createCore } = require('../core');
 
 const CONN = process.env.TABLES_CONNECTION || process.env.AzureWebJobsStorage;
 let core = null;
-const getCore = () => core || (core = createCore({ wishes: tableClient(CONN, 'LoiChuc'), settings: tableClient(CONN, 'CaiDat'), backups: tableClient(CONN, 'SaoLuu'), reactions: tableClient(CONN, 'CamXuc') }));
+const getCore = () => core || (core = createCore({ wishes: tableClient(CONN, 'LoiChuc'), settings: tableClient(CONN, 'CaiDat'), backups: tableClient(CONN, 'SaoLuu'), reactions: tableClient(CONN, 'CamXuc'), stats: tableClient(CONN, 'ThongKe') }));
 
 const HEADERS = {
   'Content-Type': 'application/json; charset=utf-8',
@@ -27,7 +27,9 @@ async function http(context, req) {
   if (raw == null) raw = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
   if (Buffer.isBuffer(raw)) raw = raw.toString('utf8');
   const out = await getCore().handle(String(raw), ip);
-  context.res = { status: 200, headers: HEADERS, body: JSON.stringify(out) };
+  const body = JSON.stringify(out);
+  getCore().addBytes(body.length);
+  context.res = { status: 200, headers: HEADERS, body };
 };
 
 module.exports = http;

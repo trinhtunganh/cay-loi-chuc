@@ -49,8 +49,15 @@ if AZURE:
             now = h["now"]
             results.append(("ℹ️", "Azure: số lời chúc đang hiện", str(h["wishes"])))
             results.append(("ℹ️", "Máy chủ cả công ty đang dùng", str(h.get("active") or "chưa chọn")))
+            if h.get("live") is not None:
+                results.append(("ℹ️", "Đang mở trang (2 phút gần nhất)", f"{h['live']} người"))
+            if h.get("hour"):
+                hh = h["hour"]; results.append(("ℹ️", "Giờ này", f"{hh['n']} lượt gọi, TB {hh['avg']} ms, {hh['err']} lỗi"))
+                if hh.get("err", 0) >= 5: row("Lỗi máy chủ trong giờ", False, f"{hh['err']} lỗi")
             s = h.get("sync", {})
-            if s.get("configured"):
+            if not GOOGLE:
+                pass   # Google đã tắt: không theo dõi đồng bộ
+            elif s.get("configured"):
                 age = (now - s.get("at", 0)) / 60e3
                 ok = s.get("status") == "ok" and age < 15
                 row("Đồng bộ Azure ⇄ Google", ok if ok else ("warn" if h.get("active") == "azure" else False), f"{s.get('status') or 'chưa chạy'}, {age:.0f} phút trước")

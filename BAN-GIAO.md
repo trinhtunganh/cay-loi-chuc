@@ -9,10 +9,7 @@ Cập nhật: 24/10/2026. Dán file này (hoặc link repo) vào đầu cuộc t
 - Hướng dẫn cho Ban tổ chức: `HUONG-DAN.md`.
 
 ## Kiến trúc
-- Hai máy chủ chạy song song:
-  - **Azure** (chính): `https://caytrian-vinrobotics.azurewebsites.net/api/cay`.
-  - **Google Apps Script** (dự phòng).
-- Azure tự đồng bộ 2 chiều với Google 2 phút/lần (hàm `azure/sync`). Bên nào sửa sau thì thắng; các cài đặt có dấu thời gian `_AT`.
+- Chỉ dùng **Azure**: `https://caytrian-vinrobotics.azurewebsites.net/api/cay`. Google Apps Script đã **tắt** từ 28/10/2026 (`apiUrl` trong `config.js` để trống; code `Code.gs` và phần đồng bộ vẫn giữ, bật lại bằng cách điền `apiUrl` và cài `GOOGLE_URL`/`SYNC_KEY` trên Azure).
 - Azure nạp code từ `azure/dist/cay-azure.zip` trên nhánh `main`. Sau mỗi lần sửa code Azure phải: build lại zip, push, rồi **Restart** Function App trên portal.azure.com.
 - Trình duyệt tự chuyển sang máy chủ kia nếu máy đang dùng lỗi 3 lần liên tiếp.
 
@@ -21,7 +18,7 @@ Cập nhật: 24/10/2026. Dán file này (hoặc link repo) vào đầu cuộc t
   - Duyệt, chọn tiêu biểu, Ẩn đi / Khôi phục / Xóa hẳn.
   - Lọc theo trạng thái; nút xuất Excel ở góc cửa sổ.
   - Công tắc **Chế độ ẩn danh**. Tắt ẩn danh thì account hiện kèm lời chúc.
-- Tab **Máy chủ**: chuyển Google ⇄ Azure, xem tình trạng đồng bộ.
+- Tab **Máy chủ**: tình trạng Azure + **báo cáo hiệu năng** (người đang mở trang, lượt gọi/giờ, thời gian xử lý TB và 95%, lỗi, dữ liệu gửi đi; 24 giờ / 3 ngày / 7 ngày). Số liệu do Azure tự ghi vào bảng `ThongKe` mỗi phút.
 - Tab **Mã PIN**: đổi PIN nhân viên và PIN quản trị riêng.
 - Tab **Nội dung**: sửa mọi chữ hiển thị và ngày giờ sinh nhật (đồng hồ đếm ngược), lưu trên máy chủ.
 - Tab **Sao lưu**:
@@ -34,11 +31,9 @@ Cập nhật: 24/10/2026. Dán file này (hoặc link repo) vào đầu cuộc t
   - Account rải ngẫu nhiên, quay đúng 5 giây; người đã trúng bị loại khỏi lượt sau.
 
 ## Việc còn treo (cần máy tính có app Claude desktop)
-1. **Restart Azure** để nạp bản mới nhất. Bản mới gồm: tab Nội dung, sao lưu tự động, ngày sinh nhật sửa trong Quản trị, cảm xúc, giám sát chi tiết (?health).
-2. **Google**: dán `Code.gs` mới vào Apps Script → Deploy → Manage deployments → New version.
-3. Đặt thuộc tính `SYNC_KEY` (≥16 ký tự) giống nhau ở Google (Script properties) và Azure (App settings), thêm `GOOGLE_URL` ở Azure. Sau đó kiểm tra lần đồng bộ đầu (Quản trị → Máy chủ).
-4. "Ẩn đi" dòng lời chúc `[THỬ NGHIỆM]` ở cả 2 máy chủ. Muốn xóa hẳn thì Ban tổ chức tự bấm.
-5. (Hoãn) Nới giới hạn sai PIN toàn hệ thống bên Google (đang 40 lần/10 phút).
+1. **Restart Azure** để nạp bản mới nhất. Bản mới gồm: tab Nội dung, sao lưu tự động, ngày sinh nhật sửa trong Quản trị, cảm xúc, giám sát chi tiết (?health), báo cáo hiệu năng.
+2. "Ẩn đi" dòng lời chúc `[THỬ NGHIỆM]` trên Azure. Muốn xóa hẳn thì Ban tổ chức tự bấm.
+3. (Không cần nữa, Google đã tắt) Cài `Code.gs` mới, `SYNC_KEY`, `GOOGLE_URL`.
 
 ## Kiểm thử
 Có bộ máy chủ giả lập (mock Google + mock Azure) và script Playwright. Bộ này nằm trong scratchpad của phiên cũ nên sẽ mất khi phiên đóng; khi cần, nhờ Claude dựng lại. Không ghi dữ liệu thử lên máy chủ thật.

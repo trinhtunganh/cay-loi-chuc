@@ -34,7 +34,7 @@ function createCore(tables, env = process.env, deps = {}) {
   const clean = (v, max) => String(v || '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').trim().slice(0, max);
 
   function ensure() {
-    if (!ready) ready = Promise.all([wishes, settings, tables.backups, tables.reactions].filter(Boolean).map(t => t.createTable().catch(e => { if (e.statusCode !== 409) throw e; })))
+    if (!ready) ready = Promise.all([wishes, settings, tables.backups, tables.reactions, tables.stats].filter(Boolean).map(t => t.createTable().catch(e => { if (e.statusCode !== 409) throw e; })))
       .catch(e => { ready = null; throw e; });
     return ready;
   }
@@ -198,6 +198,73 @@ function createCore(tables, env = process.env, deps = {}) {
     if (!/^(google|azure)$/.test(v)) return { ok: false, error: 'Máy chủ không hợp lệ.' };
     await setCfgStamped('ACTIVE', v);
     return { ok: true, active: v };
+  }
+
+  /* ---------- thống kê hiệu năng (bảng ThongKe) ----------
+     Mỗi máy chạy (instance) gom số liệu theo từng giờ (giờ VN) trong bộ nhớ, 1 phút ghi 1 lần:
+     PartitionKey 'h', RowKey = yyyymmddHH_<instance>. Không lưu PIN, nội dung hay địa chỉ IP. */
+  const stats = tables.stats, INST = crypto.randomBytes(3).toString('hex'), STARTED = Date.now();
+  const BUCKETS = [25, 50, 100, 250, 500, 1000, 2500];
+  const hourKey = t => new Date(t + 7 * 3600e3).toISOString().slice(0, 13).replace(/[-T]/g, '');
+  const newBucket = h => ({ h, n: 0, err: 0, rej: 0, msSum: 0, msMax: 0, hist: new Array(BUCKETS.length + 1).fill(0), act: {}, bytes: 0, cids: new Set() });
+  let stCur = null, stPending = [], stFlushAt = 0, stFlushing = null;
+  const viewers = new Map();   // cid -> lần cuối hỏi danh sách (đếm người đang mở trang)
+  function stBucket(now) {
+    const h = hourKey(now);
+    if (!stCur || stCur.h !== h) { if (stCur) stPending.push(stCur); stCur = newBucket(h); }
+    return stCur;
+  }
+  function record(action, ms, out, cid) {
+    const now = Date.now(), b = stBucket(now);
+    b.n++; b.msSum += ms; if (ms > b.msMax) b.msMax = ms;
+    let i = 0; while (i < BUCKETS.length && ms >= BUCKETS[i]) i++; b.hist[i]++;
+    const a = /^[a-zA-Z]{1,24}$/.test(action) ? action : 'other'; b.act[a] = (b.act[a] || 0) + 1;
+    if (out && out.ok === false) { if (/bận/.test(out.error || '')) b.err++; else b.rej++; }
+    if (cid && /^[a-z0-9]{8,32}$/.test(cid)) { b.cids.add(cid); if (action === 'list') viewers.set(cid, now); if (viewers.size > 20000) viewers.clear(); }
+    if (now - stFlushAt > 60e3) flushStats().catch(e => console.error('stats', e));
+  }
+  function addBytes(n) { stBucket(Date.now()).bytes += Number(n) || 0; }
+  const stEntity = b => ({ partitionKey: 'h', rowKey: b.h + '_' + INST, n: b.n, err: b.err, rej: b.rej, msSum: Math.round(b.msSum), msMax: Math.round(b.msMax),
+    hist: JSON.stringify(b.hist), act: JSON.stringify(b.act), bytes: Math.round(b.bytes), uniq: b.cids.size });
+  function flushStats() {
+    if (!stats) return Promise.resolve();
+    if (stFlushing) return stFlushing;
+    stFlushAt = Date.now();
+    const list = stPending.splice(0).concat(stCur ? [stCur] : []);
+    stFlushing = (async () => { for (const b of list) await stats.upsertEntity(stEntity(b), 'Replace'); })().finally(() => { stFlushing = null; });
+    return stFlushing;
+  }
+  function liveViewers() {
+    const now = Date.now(); let n = 0;
+    for (const [k, t] of viewers) { if (now - t < 150e3) n++; else if (now - t > 600e3) viewers.delete(k); }
+    return n;
+  }
+  async function perf(b) {
+    const hours = Math.min(24 * 14, Math.max(1, Number(b.hours) || 24)), now = Date.now();
+    const from = hourKey(now - (hours - 1) * 3600e3), map = new Map();
+    const add = e => {
+      const h = String(e.rowKey || e.h).slice(0, 10); if (h < from) return;
+      const m = map.get(h) || { h, n: 0, err: 0, rej: 0, msSum: 0, msMax: 0, hist: new Array(BUCKETS.length + 1).fill(0), act: {}, bytes: 0, uniq: 0, inst: 0 };
+      m.n += Number(e.n) || 0; m.err += Number(e.err) || 0; m.rej += Number(e.rej) || 0; m.msSum += Number(e.msSum) || 0; m.msMax = Math.max(m.msMax, Number(e.msMax) || 0);
+      m.bytes += Number(e.bytes) || 0; m.uniq += Number(e.uniq) || 0; m.inst++;
+      let hist = e.hist, act = e.act; try { if (typeof hist === 'string') hist = JSON.parse(hist); if (typeof act === 'string') act = JSON.parse(act); } catch (x) {}
+      (hist || []).forEach((v, i) => { m.hist[i] = (m.hist[i] || 0) + (Number(v) || 0); });
+      for (const k in (act || {})) m.act[k] = (m.act[k] || 0) + (Number(act[k]) || 0);
+      map.set(h, m);
+    };
+    if (stats) {
+      await ensure();
+      for await (const e of stats.listEntities({ queryOptions: { filter: `PartitionKey eq 'h' and RowKey ge '${from}'` } })) {
+        if (String(e.rowKey).endsWith('_' + INST)) continue;   // máy này: lấy số trong bộ nhớ (mới hơn)
+        add(e);
+      }
+    }
+    stPending.concat(stCur ? [stCur] : []).forEach(x => add(Object.assign(stEntity(x), { rowKey: x.h })));
+    const p95 = hist => { const tot = hist.reduce((a, v) => a + v, 0); if (!tot) return 0; let c = 0; for (let i = 0; i < hist.length; i++) { c += hist[i]; if (c >= tot * 0.95) return i < BUCKETS.length ? BUCKETS[i] : 5000; } return 5000; };
+    const rows = [...map.values()].sort((a, b) => a.h.localeCompare(b.h)).map(m => ({ h: m.h, n: m.n, err: m.err, rej: m.rej, avg: m.n ? Math.round(m.msSum / m.n) : 0, p95: p95(m.hist), max: m.msMax, bytes: m.bytes, uniq: m.uniq, act: m.act, hist: m.hist }));
+    const mem = process.memoryUsage();
+    return { ok: true, hours: rows, buckets: BUCKETS, live: liveViewers(), now,
+      instance: { id: INST, uptimeMin: Math.round((now - STARTED) / 60e3), rssMB: Math.round(mem.rss / 1048576), heapMB: Math.round(mem.heapUsed / 1048576) } };
   }
 
   /* ---------- cảm xúc (giống Facebook) ----------
@@ -487,14 +554,23 @@ function createCore(tables, env = process.env, deps = {}) {
     if (tables.backups) { const idx = await bkIndex(); lastBackup = idx.length ? Number(idx[0].atS) || 0 : 0; }
     return { ok: true, now: Date.now(), wishes: list.length, active: c.ACTIVE || null, anon: c.ANON === 'true',
       sync: { at: Number(c.SYNC_AT || 0), status: String(c.SYNC_OK || '').slice(0, 120), configured: !!(env.GOOGLE_URL && String(env.SYNC_KEY || '').length >= 16) },
-      backup: { at: lastBackup, everyMin: Math.round(bkInterval(Date.now(), bdayOf(c)) / 60e3) }, ms: Date.now() - t0 };
+      backup: { at: lastBackup, everyMin: Math.round(bkInterval(Date.now(), bdayOf(c)) / 60e3) }, live: liveViewers(),
+      hour: stCur ? { n: stCur.n, err: stCur.err, avg: stCur.n ? Math.round(stCur.msSum / stCur.n) : 0 } : null, ms: Date.now() - t0 };
   }
   async function syncStatus() { const c = await getCfg(); return { at: Number(c.SYNC_AT || 0), status: c.SYNC_OK || '' }; }
 
   /** Xử lý 1 yêu cầu. ip dùng để chặn dò PIN theo từng máy, không lưu lại. */
+  /* đo thời gian xử lý từng yêu cầu cho thống kê hiệu năng */
   async function handle(raw, ip) {
+    const t0 = Date.now(), meta = {};
+    const out = await handleInner(raw, ip, meta);
+    try { record(meta.action || 'bad', Date.now() - t0, out, meta.cid); } catch (e) { console.error(e); }
+    return out;
+  }
+  async function handleInner(raw, ip, meta) {
     let body;
     try { body = JSON.parse(raw || '{}'); } catch (e) { return { ok: false, error: 'Dữ liệu gửi lên không hợp lệ.' }; }
+    meta.action = String(body.action || ''); meta.cid = typeof body.cid === 'string' ? body.cid : '';
     const now = Date.now(), f = fails.get(ip);
     if (f && now - f.at > FAIL_WINDOW) fails.delete(ip);
     if (f && f.n >= FAIL_MAX && now - f.at <= FAIL_WINDOW) return { ok: false, error: 'Nhập sai PIN quá nhiều lần. Vui lòng thử lại sau 10 phút.' };
@@ -526,6 +602,7 @@ function createCore(tables, env = process.env, deps = {}) {
         case 'adminSetAnon':  return await setAnon(body);
         case 'adminSetTexts': return await setTexts(body);
         case 'adminBackups':  return await bkList();
+        case 'adminPerf':     return await perf(body);
         case 'adminBackupGet':return await bkGet(body);
         case 'adminBackupNow':return await bkSave('manual');
         case 'adminRestore':  return await restore(body);
@@ -537,7 +614,7 @@ function createCore(tables, env = process.env, deps = {}) {
     }
   }
 
-  return { handle, sync, autoBackup, health };
+  return { handle, sync, autoBackup, health, addBytes, flushStats };
 }
 
 module.exports = { createCore };
