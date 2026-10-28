@@ -263,7 +263,7 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 .rx-sum .ic{display:inline-flex}
 .rx-sum .ic i{font-style:normal;font-size:15px;line-height:1;width:19px;height:19px;display:grid;place-items:center;background:#fff;border-radius:50%;margin-left:-4px;box-shadow:0 0 0 2px #fff}
 .rx-sum .ic i:first-child{margin-left:0}
-.rx-btn{border:0;background:transparent;border-radius:50%;width:28px;height:28px;padding:0;cursor:pointer;display:inline-grid;place-items:center;transition:background .15s,transform .15s}
+.rx-btn{border:0;background:transparent;border-radius:50%;width:28px;height:28px;padding:0;cursor:pointer;display:inline-grid;place-items:center;transition:background .15s,transform .15s;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 .rx-btn:hover{background:#F0F2F5;transform:scale(1.12)}
 .rx-btn .e{font-size:16px;line-height:1;display:grid;place-items:center}
 .rx-btn .e.off{filter:grayscale(1);opacity:.55}
@@ -1820,7 +1820,14 @@ function rxShow(btn){
 function rxHide(){ clearTimeout(rxShowT); $("#rxPick").hidden = true; rxFor = null; }
 document.addEventListener("click", e=>{
   const b = e.target.closest(".rx-btn");
-  if (b){ e.stopPropagation(); e.preventDefault(); if (!$("#rxPick").hidden && rxFor === b.closest("[data-rxid]").dataset.rxid) rxHide(); else rxShow(b); return; }
+  if (b){
+    e.stopPropagation(); e.preventDefault();
+    if (rxLongFired){ rxLongFired = false; return; }   // vừa nhấn giữ để mở bảng: không tính là bấm
+    /* giống Facebook: bấm = Thích; đã có cảm xúc thì bấm lại để bỏ */
+    const id = b.closest("[data-rxid]").dataset.rxid;
+    rxHide(); doReact(id, MYRX[id] || "like");
+    return;
+  }
   if (e.target.closest(".rx")) { e.stopPropagation(); return; }
   if (!e.target.closest("#rxPick")) rxHide();
 }, true);
@@ -1833,6 +1840,15 @@ document.addEventListener("mouseout", e=>{
   clearTimeout(rxShowT); if (!$("#rxPick").hidden) rxHideT = setTimeout(rxHide, 450);
 });
 addEventListener("scroll", ()=>rxHide(), true);
+/* điện thoại: nhấn giữ nút để chọn cảm xúc khác */
+let rxLongT = null, rxLongFired = false;
+document.addEventListener("touchstart", e=>{
+  const b = e.target.closest && e.target.closest(".rx-btn"); if (!b) return;
+  rxLongFired = false; clearTimeout(rxLongT);
+  rxLongT = setTimeout(()=>{ rxLongFired = true; rxShow(b); }, 420);
+}, {passive:true});
+["touchend","touchmove","touchcancel"].forEach(ev=>document.addEventListener(ev, ()=>clearTimeout(rxLongT), {passive:true}));
+document.addEventListener("contextmenu", e=>{ if (e.target.closest && e.target.closest(".rx-btn")) e.preventDefault(); });
 async function doReact(id, r){
   const prev = MYRX[id] || "", next = prev === r ? "" : r;
   const oldCounts = Object.assign({}, RX[id] || {}), c = Object.assign({}, RX[id] || {});
