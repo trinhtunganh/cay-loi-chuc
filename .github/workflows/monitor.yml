@@ -1,0 +1,42 @@
+name: Giám sát Cây Tri Ân
+on:
+  schedule:
+    - cron: "*/10 * * * *"   # mỗi 10 phút (GitHub có thể trễ vài phút)
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+concurrency: { group: monitor, cancel-in-progress: false }
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github/monitor
+            config.js
+          sparse-checkout-cone-mode: false
+      - name: Kiểm tra hệ thống
+        run: python3 .github/monitor/check.py
+      - name: Mở / cập nhật / đóng Issue cảnh báo
+        if: always()
+        env: { GH_TOKEN: "${{ github.token }}", REPO: "${{ github.repository }}" }
+        run: |
+          TITLE="⚠️ Cảnh báo: hệ thống Cây Tri Ân có lỗi"
+          num=$(gh issue list -R "$REPO" --state open --label monitor --json number --jq '.[0].number' 2>/dev/null || true)
+          [ -f status.txt ] || { echo "fail" > status.txt; echo "Script giám sát bị lỗi, xem log của lần chạy." > report.md; }
+          if [ "$(cat status.txt)" = "fail" ]; then
+            gh label create monitor -R "$REPO" --color D73A4A --description "Cảnh báo tự động" 2>/dev/null || true
+            if [ -z "$num" ]; then gh issue create -R "$REPO" --title "$TITLE" --label monitor --body-file report.md
+            else
+              # chỉ bình luận thêm mỗi giờ một lần để không spam
+              last=$(gh issue view "$num" -R "$REPO" --json comments,createdAt --jq '(.comments[-1].createdAt // .createdAt)')
+              if [ $(( $(date +%s) - $(date -d "$last" +%s) )) -gt 3300 ]; then gh issue comment "$num" -R "$REPO" --body-file report.md; fi
+            fi
+            exit 1
+          elif [ -n "$num" ]; then
+            { echo "✅ Hệ thống đã hoạt động bình thường trở lại."; echo; cat report.md; } > ok.md
+            gh issue comment "$num" -R "$REPO" --body-file ok.md && gh issue close "$num" -R "$REPO"
+          fi

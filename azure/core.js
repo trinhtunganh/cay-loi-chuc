@@ -412,6 +412,17 @@ function createCore(tables, env = process.env, deps = {}) {
     pinCfg = await getCfg(true);
     return { ok: true, pin: !!pin, adminPin: !!ap };
   }
+  /* GET ?health: số liệu không nhạy cảm cho bộ giám sát (không cần PIN) */
+  async function health() {
+    const t0 = Date.now();
+    await ensure();
+    const c = await getCfg(), list = await approved();
+    let lastBackup = 0;
+    if (tables.backups) { const idx = await bkIndex(); lastBackup = idx.length ? Number(idx[0].atS) || 0 : 0; }
+    return { ok: true, now: Date.now(), wishes: list.length, active: c.ACTIVE || null, anon: c.ANON === 'true',
+      sync: { at: Number(c.SYNC_AT || 0), status: String(c.SYNC_OK || '').slice(0, 120), configured: !!(env.GOOGLE_URL && String(env.SYNC_KEY || '').length >= 16) },
+      backup: { at: lastBackup, everyMin: Math.round(bkInterval(Date.now(), bdayOf(c)) / 60e3) }, ms: Date.now() - t0 };
+  }
   async function syncStatus() { const c = await getCfg(); return { at: Number(c.SYNC_AT || 0), status: c.SYNC_OK || '' }; }
 
   /** Xử lý 1 yêu cầu. ip dùng để chặn dò PIN theo từng máy, không lưu lại. */
@@ -459,7 +470,7 @@ function createCore(tables, env = process.env, deps = {}) {
     }
   }
 
-  return { handle, sync, autoBackup };
+  return { handle, sync, autoBackup, health };
 }
 
 module.exports = { createCore };

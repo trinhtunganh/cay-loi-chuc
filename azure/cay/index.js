@@ -16,6 +16,10 @@ const HEADERS = {
 
 async function http(context, req) {
   if (req.method === 'OPTIONS') { context.res = { status: 204, headers: HEADERS }; return; }
+  if (req.method === 'GET' && req.query && req.query.health != null) {
+    let out; try { out = await getCore().health(); } catch (e) { out = { ok: false, error: String(e && e.message || e).slice(0, 200) }; }
+    context.res = { status: out.ok ? 200 : 503, headers: HEADERS, body: JSON.stringify(out) }; return;
+  }
   if (req.method === 'GET') { context.res = { status: 200, headers: HEADERS, body: JSON.stringify({ ok: true, message: 'Cây Tri Ân API (Azure) đang chạy.' }) }; return; }
   const h = req.headers || {};
   const ip = String(h['x-forwarded-for'] || h['client-ip'] || '').split(',')[0].trim().replace(/:\d+$/, '');
