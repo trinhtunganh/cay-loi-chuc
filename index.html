@@ -229,6 +229,14 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 @keyframes drawLine{to{stroke-dashoffset:0}}
 #card .q{position:absolute;right:44px;top:10px;width:30px;height:25px;color:var(--brand);opacity:.1;pointer-events:none}
 #card .to{font-size:11.5px;font-weight:700;color:var(--accent,var(--brand));letter-spacing:.2px;text-transform:uppercase;padding-right:40px}
+.tr-btn{border:0;background:transparent;color:#2F6FB6;font:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:2px 6px;border-radius:999px;white-space:nowrap;flex:none}
+.tr-btn:hover{background:#EEF4FB}
+.tr-btn:disabled{opacity:.6;cursor:wait}
+.tr-out{margin-top:6px;padding:7px 10px;border-left:3px solid #9CC0EA;background:#F5F9FE;border-radius:0 8px 8px 0;font-size:14px;line-height:1.5;color:var(--ink-2);white-space:pre-wrap}
+.tr-out small{display:block;font-size:11px;color:var(--muted);margin-bottom:2px}
+#card .tr-out{margin:-2px 0 8px;max-height:22vh;overflow:auto}
+.f-meta-l{display:inline-flex;align-items:center;gap:4px;min-width:0}
+.f-meta-l > span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #card blockquote{margin:6px 0 8px;font-size:15px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word;max-height:30vh;overflow:auto;color:var(--ink-2)}
 #card .c-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-2px 0 8px;min-height:24px}
 #card .from{font-size:13px;font-weight:600;color:var(--ink-2)}
@@ -1625,6 +1633,8 @@ function showCard(m, mode, list){
   const c = $("#card"); c.style.setProperty("--accent", colorOf(m));
   $("#cardTo").innerHTML = esc(recipient(m)) + (m.featured ? ` <span class="feat">★ ${esc(t("featuredBadge"))}</span>` : "");
   $("#cardText").textContent = m.text;
+  $$("#card .tr-out").forEach(x=>x.remove());
+  { const f = $("#cardFrom"), old = $("#card .c-foot .tr-btn"); if (old) old.remove(); const b = trButton(m, ()=>$("#cardText")); if (b) f.after(b); }
   $("#cardFrom").textContent = !ANON && m.from ? t("cardFrom",{from:m.from}) : "";
   const cr = $("#cardRx"); cr.textContent = ""; cr.append(...rxBar(m.id).childNodes);  cr.dataset.rxid = m.id;
   $("#cardMeta").textContent = timeAgo(m.time) + (mode==="open" && cardList.length>1 ? ` · ${cardIdx+1}/${cardList.length}` : "");
@@ -1869,6 +1879,57 @@ async function doReact(id, r){
 }
 $("#qSort").addEventListener("change", ()=>{ renderFeed(new Set(), false); $("#feedList").scrollTop = 0; });
 
+/* ---------- dịch lời chúc không phải tiếng Việt ----------
+   Chrome/Edge có sẵn bộ dịch chạy ngay trên máy (Translator API): miễn phí, không gọi máy chủ nào.
+   Trình duyệt chưa có thì mở Bing Translator ở tab mới. Nhận biết tiếng Việt bằng kiểm tra chữ rất nhẹ. */
+const VI_MARK = /[ăâđêôơưàáạảãầấậẩẫằắặẳẵèéẹẻẽềếệểễìíịỉĩòóọỏõồốộổỗờớợởỡùúụủũừứựửữỳýỵỷỹ]/i;
+const VI_PLAIN = new Set("cam on chuc moi nguoi cong ty anh chi em va cua nhieu vui ve ban minh nam tuoi sinh nhat doi lam viec cac nhung duoc khong rat cho trong voi la co mot nay thanh se da doan ket thanh cong luon".split(" "));
+const OTHER_SCRIPT = /[\u0400-\u04ff\u0590-\u06ff\u0e00-\u0e7f\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/;
+const trCache = new Map();
+function needsTr(text){
+  const s = String(text || ""); if (s.length < 4) return false;
+  if (OTHER_SCRIPT.test(s)) return true;
+  if (VI_MARK.test(s)) return false;
+  const words = (s.toLowerCase().match(/[a-z]+/g) || []); if (words.length < 3) return false;
+  const vi = words.filter(w=>VI_PLAIN.has(w)).length;
+  return vi / words.length < 0.3;   // phần lớn không phải từ tiếng Việt không dấu
+}
+function trButton(m, anchor){
+  if (!needsTr(m.text)) return null;
+  const b = document.createElement("button"); b.type = "button"; b.className = "tr-btn"; b.textContent = "🌐 " + t("trBtn");
+  b.addEventListener("click", async e=>{
+    e.stopPropagation(); e.preventDefault();
+    const at = anchor(), box = at.parentNode, shown = box.querySelector(`.tr-out[data-id="${m.id}"]`);
+    if (shown){ shown.remove(); b.textContent = "🌐 " + t("trBtn"); return; }
+    b.disabled = true; b.textContent = t("trWorking");
+    try{
+      const out = await translateText(m.text);
+      if (out == null){ window.open("https://www.bing.com/translator?from=auto&to=vi&text=" + encodeURIComponent(m.text.slice(0, 1000)), "_blank", "noopener"); b.textContent = "🌐 " + t("trBtn"); return; }
+      const d = document.createElement("div"); d.className = "tr-out"; d.dataset.id = m.id;
+      d.innerHTML = `<small>${esc(t("trLabel"))}</small>`; d.appendChild(document.createTextNode(out));
+      at.after(d); b.textContent = t("trBack");
+    }catch(err){ b.textContent = "🌐 " + t("trBtn"); toast(t("trFail")); }
+    finally{ b.disabled = false; }
+  });
+  return b;
+}
+async function translateText(text){
+  if (trCache.has(text)) return trCache.get(text);
+  if (!("Translator" in self)) return null;   // trình duyệt chưa có bộ dịch: mở Bing
+  let src = "en";
+  try{
+    if ("LanguageDetector" in self){ const det = await LanguageDetector.create(); const r = (await det.detect(text))[0]; if (r && r.detectedLanguage && r.detectedLanguage !== "und") src = r.detectedLanguage; }
+  }catch(e){}
+  if (src === "vi") return text;
+  try{
+    const av = await Translator.availability({sourceLanguage: src, targetLanguage: "vi"});
+    if (av === "unavailable") return null;
+    const tr = await Translator.create({sourceLanguage: src, targetLanguage: "vi"});
+    const out = await tr.translate(text);
+    trCache.set(text, out); return out;
+  }catch(e){ return null; }
+}
+
 /* ---------- danh sách lời chúc (mới nhất hoặc kết quả lọc) ---------- */
 function highlight(text, q){
   const safe = esc(text); if (!q) return safe;
@@ -1886,8 +1947,11 @@ function feedItem(m){
   if (m.featured) to.insertAdjacentHTML("beforeend", `<span class="feat">★ ${esc(t("featuredBadge"))}</span>`);
   const tx = document.createElement("div"); tx.className="f-text"; tx.innerHTML = highlight(m.text, feedQ);
   const tm = document.createElement("div"); tm.className="f-time";
+  const tl = document.createElement("span"); tl.className = "f-meta-l";
   const tt = document.createElement("span"); tt.textContent = (!ANON && m.from ? t("feedFrom",{from:m.from}) + " · " : "") + timeAgo(m.time);
-  tm.append(tt, rxBar(m.id));
+  tl.appendChild(tt);
+  const trb = trButton(m, ()=>tx); if (trb) tl.appendChild(trb);
+  tm.append(tl, rxBar(m.id));
   li.append(to, tx, tm); li.onclick = ()=>showCard(m,"open", feedFiltered || items);
   return li;
 }
