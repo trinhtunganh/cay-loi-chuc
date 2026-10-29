@@ -234,6 +234,7 @@ svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 .tr-btn:disabled{opacity:.6;cursor:wait}
 .tr-out{margin-top:6px;padding:7px 10px;border-left:3px solid #9CC0EA;background:#F5F9FE;border-radius:0 8px 8px 0;font-size:14px;line-height:1.5;color:var(--ink-2);white-space:pre-wrap}
 .tr-out small{display:block;font-size:11px;color:var(--muted);margin-bottom:2px}
+.tr-out a{color:#2F6FB6;font-weight:600;font-size:13px}
 #card .tr-out{margin:-2px 0 8px;max-height:22vh;overflow:auto}
 .f-meta-l{display:inline-flex;align-items:center;gap:4px;min-width:0}
 .f-meta-l > span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1902,31 +1903,54 @@ function trButton(m, anchor){
     const at = anchor(), box = at.parentNode, shown = box.querySelector(`.tr-out[data-id="${m.id}"]`);
     if (shown){ shown.remove(); b.textContent = "🌐 " + t("trBtn"); return; }
     b.disabled = true; b.textContent = t("trWorking");
+    const show = (html, txt) => { const d = document.createElement("div"); d.className = "tr-out"; d.dataset.id = m.id; d.innerHTML = html; if (txt != null) d.appendChild(document.createTextNode(txt)); at.after(d); b.textContent = t("trBack"); };
+    const bing = "https://www.bing.com/translator?from=auto&to=vi&text=" + encodeURIComponent(m.text.slice(0, 1000));
+    const link = `<a href="${bing}" target="_blank" rel="noopener">${esc(t("trBing"))} ↗</a>`;
     try{
-      const out = await translateText(m.text);
-      if (out == null){ window.open("https://www.bing.com/translator?from=auto&to=vi&text=" + encodeURIComponent(m.text.slice(0, 1000)), "_blank", "noopener"); b.textContent = "🌐 " + t("trBtn"); return; }
-      const d = document.createElement("div"); d.className = "tr-out"; d.dataset.id = m.id;
-      d.innerHTML = `<small>${esc(t("trLabel"))}</small>`; d.appendChild(document.createTextNode(out));
-      at.after(d); b.textContent = t("trBack");
-    }catch(err){ b.textContent = "🌐 " + t("trBtn"); toast(t("trFail")); }
+      const r = await translateText(m.text);
+      if (r && r.text != null) show(`<small>${esc(t("trLabel"))}</small>`, r.text);
+      else if (!("Translator" in self)){ window.open(bing, "_blank", "noopener"); b.textContent = "🌐 " + t("trBtn"); }
+      else show(`<small>${esc(r && r.loading ? t("trLoading") : t("trNoModel"))}</small>` + link);
+    }catch(err){ show(`<small>${esc(t("trNoModel"))}</small>` + link); }
     finally{ b.disabled = false; }
   });
   return b;
 }
+const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej)=>setTimeout(()=>rej(new Error("timeout")), ms))]);
+/* đoán ngôn ngữ nhanh khi trình duyệt chưa có bộ nhận diện */
+function guessLang(s){
+  if (/[぀-ヿ]/.test(s)) return "ja"; if (/[가-힯]/.test(s)) return "ko"; if (/[㐀-鿿]/.test(s)) return "zh";
+  if (/[Ѐ-ӿ]/.test(s)) return "ru"; if (/[฀-๿]/.test(s)) return "th";
+  if (/[¡¿ñ]/i.test(s) || /\b(feliz|gracias|cumpleaños|para|todos|equipo)\b/i.test(s)) return "es";
+  if (/[àâçéèêëîïôûùüÿœ]/i.test(s) || /\b(joyeux|merci|anniversaire|toute|équipe)\b/i.test(s)) return "fr";
+  if (/[äöüß]/i.test(s) || /\b(alles|gute|danke|geburtstag)\b/i.test(s)) return "de";
+  return "en";
+}
+/* trả {text} khi dịch xong; {loading} khi trình duyệt đang tải bộ dịch; null khi không dịch được trên máy */
 async function translateText(text){
-  if (trCache.has(text)) return trCache.get(text);
-  if (!("Translator" in self)) return null;   // trình duyệt chưa có bộ dịch: mở Bing
-  let src = "en";
+  if (trCache.has(text)) return {text: trCache.get(text)};
+  if (!("Translator" in self)) return null;
+  let src = guessLang(text);
   try{
-    if ("LanguageDetector" in self){ const det = await LanguageDetector.create(); const r = (await det.detect(text))[0]; if (r && r.detectedLanguage && r.detectedLanguage !== "und") src = r.detectedLanguage; }
+    if ("LanguageDetector" in self && await withTimeout(LanguageDetector.availability(), 1500) === "available"){
+      const det = await withTimeout(LanguageDetector.create(), 2000);
+      const r = (await withTimeout(det.detect(text), 1500))[0];
+      if (r && r.detectedLanguage && r.detectedLanguage !== "und" && r.confidence > .4) src = r.detectedLanguage;
+    }
   }catch(e){}
-  if (src === "vi") return text;
+  if (src === "vi") return {text};
+  let av = "unavailable";
+  try{ av = await withTimeout(Translator.availability({sourceLanguage: src, targetLanguage: "vi"}), 2000); }catch(e){}
+  if (av === "unavailable") return null;
+  if (av !== "available"){
+    /* chưa có bộ dịch: cho trình duyệt tải ở nền, lần bấm sau sẽ dịch ngay */
+    try{ Translator.create({sourceLanguage: src, targetLanguage: "vi"}).catch(()=>{}); }catch(e){}
+    return {loading: true};
+  }
   try{
-    const av = await Translator.availability({sourceLanguage: src, targetLanguage: "vi"});
-    if (av === "unavailable") return null;
-    const tr = await Translator.create({sourceLanguage: src, targetLanguage: "vi"});
-    const out = await tr.translate(text);
-    trCache.set(text, out); return out;
+    const tr = await withTimeout(Translator.create({sourceLanguage: src, targetLanguage: "vi"}), 5000);
+    const out = await withTimeout(tr.translate(text), 8000);
+    trCache.set(text, out); return {text: out};
   }catch(e){ return null; }
 }
 

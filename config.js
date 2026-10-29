@@ -127,6 +127,9 @@ window.SITE_CONFIG = {
     trWorking:        "Đang dịch…",
     trLabel:          "Bản dịch tự động",
     trFail:           "Chưa dịch được, bạn thử lại nhé.",
+    trLoading:        "Trình duyệt đang tải bộ dịch cho ngôn ngữ này, bấm Dịch lại sau ít phút. Hoặc:",
+    trNoModel:        "Trình duyệt chưa dịch được ngôn ngữ này. Bạn có thể:",
+    trBing:           "Dịch bằng Bing",
     rx_like: "Thích", rx_love: "Yêu thích", rx_care: "Thương thương", rx_haha: "Haha", rx_wow: "Wow", rx_sad: "Buồn",
     rxOld:            "Máy chủ chưa cập nhật bản mới nên chưa thả cảm xúc được.",
 
