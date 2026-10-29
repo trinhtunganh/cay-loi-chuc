@@ -1895,21 +1895,34 @@ function needsTr(text){
   const vi = words.filter(w=>VI_PLAIN.has(w)).length;
   return vi / words.length < 0.3;   // phần lớn không phải từ tiếng Việt không dấu
 }
+const trShown = new Set();   // lời chúc đang mở bản dịch: vẽ lại danh sách vẫn giữ
+const trPending = new Map(); // dịch trước khi rê chuột / chạm vào nút
+function trBox(m, txt){
+  const d = document.createElement("div"); d.className = "tr-out"; d.dataset.id = m.id;
+  d.innerHTML = `<small>${esc(t("trLabel"))}</small>`; d.appendChild(document.createTextNode(txt));
+  return d;
+}
 function trButton(m, anchor){
   if (!needsTr(m.text)) return null;
-  const b = document.createElement("button"); b.type = "button"; b.className = "tr-btn"; b.textContent = "🌐 " + t("trBtn");
+  const b = document.createElement("button"); b.type = "button"; b.className = "tr-btn";
+  const label = () => { b.textContent = trShown.has(m.id) ? t("trBack") : "🌐 " + t("trBtn"); };
+  label();
+  /* đã mở bản dịch trước đó: gắn lại ngay khi danh sách / thẻ được vẽ lại */
+  if (trShown.has(m.id) && trCache.has(m.text)) requestAnimationFrame(()=>{ const at = anchor(); if (at && at.parentNode && !at.parentNode.querySelector(`.tr-out[data-id="${m.id}"]`)) at.after(trBox(m, trCache.get(m.text))); });
+  const prefetch = ()=>{ if ("Translator" in self && !trCache.has(m.text) && !trPending.has(m.text)) trPending.set(m.text, translateText(m.text).catch(()=>null)); };
+  b.addEventListener("pointerenter", prefetch); b.addEventListener("touchstart", prefetch, {passive:true});
   b.addEventListener("click", async e=>{
     e.stopPropagation(); e.preventDefault();
     const at = anchor(), box = at.parentNode, shown = box.querySelector(`.tr-out[data-id="${m.id}"]`);
-    if (shown){ shown.remove(); b.textContent = "🌐 " + t("trBtn"); return; }
-    b.disabled = true; b.textContent = t("trWorking");
+    if (shown || trShown.has(m.id)){ if (shown) shown.remove(); trShown.delete(m.id); label(); return; }
     const show = (html, txt) => { const d = document.createElement("div"); d.className = "tr-out"; d.dataset.id = m.id; d.innerHTML = html; if (txt != null) d.appendChild(document.createTextNode(txt)); at.after(d); b.textContent = t("trBack"); };
     const bing = "https://www.bing.com/translator?from=auto&to=vi&text=" + encodeURIComponent(m.text.slice(0, 1000));
     const link = `<a href="${bing}" target="_blank" rel="noopener">${esc(t("trBing"))} ↗</a>`;
+    if (!("Translator" in self)){ window.open(bing, "_blank", "noopener"); return; }
+    b.disabled = true; b.textContent = t("trWorking");
     try{
-      const r = await translateText(m.text);
-      if (r && r.text != null) show(`<small>${esc(t("trLabel"))}</small>`, r.text);
-      else if (!("Translator" in self)){ window.open(bing, "_blank", "noopener"); b.textContent = "🌐 " + t("trBtn"); }
+      const r = await (trPending.get(m.text) || translateText(m.text)); trPending.delete(m.text);
+      if (r && r.text != null){ trShown.add(m.id); at.after(trBox(m, r.text)); b.textContent = t("trBack"); }
       else show(`<small>${esc(r && r.loading ? t("trLoading") : t("trNoModel"))}</small>` + link);
     }catch(err){ show(`<small>${esc(t("trNoModel"))}</small>` + link); }
     finally{ b.disabled = false; }
@@ -1926,6 +1939,7 @@ function guessLang(s){
   if (/[äöüß]/i.test(s) || /\b(alles|gute|danke|geburtstag)\b/i.test(s)) return "de";
   return "en";
 }
+let trDetector = null; const trByLang = new Map();   // giữ lại để lần dịch sau nhanh
 /* trả {text} khi dịch xong; {loading} khi trình duyệt đang tải bộ dịch; null khi không dịch được trên máy */
 async function translateText(text){
   if (trCache.has(text)) return {text: trCache.get(text)};
@@ -1933,7 +1947,7 @@ async function translateText(text){
   let src = guessLang(text);
   try{
     if ("LanguageDetector" in self && await withTimeout(LanguageDetector.availability(), 1500) === "available"){
-      const det = await withTimeout(LanguageDetector.create(), 2000);
+      const det = await withTimeout(trDetector || (trDetector = LanguageDetector.create()), 2000);
       const r = (await withTimeout(det.detect(text), 1500))[0];
       if (r && r.detectedLanguage && r.detectedLanguage !== "und" && r.confidence > .4) src = r.detectedLanguage;
     }
@@ -1948,10 +1962,11 @@ async function translateText(text){
     return {loading: true};
   }
   try{
-    const tr = await withTimeout(Translator.create({sourceLanguage: src, targetLanguage: "vi"}), 5000);
+    if (!trByLang.has(src)) trByLang.set(src, Translator.create({sourceLanguage: src, targetLanguage: "vi"}));
+    const tr = await withTimeout(trByLang.get(src), 5000);
     const out = await withTimeout(tr.translate(text), 8000);
     trCache.set(text, out); return {text: out};
-  }catch(e){ return null; }
+  }catch(e){ trByLang.delete(src); return null; }
 }
 
 /* ---------- danh sách lời chúc (mới nhất hoặc kết quả lọc) ---------- */
