@@ -382,10 +382,10 @@ function createCore(tables, env = process.env, deps = {}) {
   async function autoBackup() {
     await ensure();
     const now = Date.now(), last = (await bkIndex())[0], B = bdayOf(await getCfg(true));
-    if (last && now - Number(last.atS || 0) < bkInterval(now, B) - 5 * 60e3) return { ok: true, skipped: 'chưa đến giờ' };
+    if (last && now - Number(last.atS || 0) < bkInterval(now, B) - 5 * 60e3) { await setCfg('BACKUP_CHECK', String(now)); return { ok: true, skipped: 'chưa đến giờ' }; }
     const data = await snapshotData();
     const hash = crypto.createHash('md5').update(JSON.stringify([data.items, data.settings]), 'utf8').digest('hex');
-    if (last && last.hash === hash) return { ok: true, skipped: 'dữ liệu không đổi' };
+    if (last && last.hash === hash) { await setCfg('BACKUP_CHECK', String(now)); return { ok: true, skipped: 'dữ liệu không đổi' }; }
     return bkSave('auto', data);
   }
   async function bkList() {
@@ -554,7 +554,7 @@ function createCore(tables, env = process.env, deps = {}) {
     if (tables.backups) { const idx = await bkIndex(); lastBackup = idx.length ? Number(idx[0].atS) || 0 : 0; }
     return { ok: true, now: Date.now(), wishes: list.length, active: c.ACTIVE || null, anon: c.ANON === 'true',
       sync: { at: Number(c.SYNC_AT || 0), status: String(c.SYNC_OK || '').slice(0, 120), configured: !!(env.GOOGLE_URL && String(env.SYNC_KEY || '').length >= 16) },
-      backup: { at: lastBackup, everyMin: Math.round(bkInterval(Date.now(), bdayOf(c)) / 60e3) }, live: liveViewers(),
+      backup: { at: lastBackup, checkedAt: Number(c.BACKUP_CHECK || 0), everyMin: Math.round(bkInterval(Date.now(), bdayOf(c)) / 60e3) }, live: liveViewers(),
       hour: stCur ? { n: stCur.n, err: stCur.err, avg: stCur.n ? Math.round(stCur.msSum / stCur.n) : 0 } : null, ms: Date.now() - t0 };
   }
   async function syncStatus() { const c = await getCfg(); return { at: Number(c.SYNC_AT || 0), status: c.SYNC_OK || '' }; }

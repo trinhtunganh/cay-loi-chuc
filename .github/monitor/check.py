@@ -65,8 +65,16 @@ if AZURE:
                 row("Đồng bộ Azure ⇄ Google", "warn", "chưa cài GOOGLE_URL / SYNC_KEY trên Azure")
             b = h.get("backup", {})
             if b.get("at"):
-                age = (now - b["at"]) / 60e3; lim = b.get("everyMin", 180) * 2 + 60
-                row("Sao lưu tự động", True if age < lim else "warn", f"bản mới nhất {age:.0f} phút trước (chu kỳ {b.get('everyMin')} phút, chỉ chụp khi có thay đổi)")
+                age = (now - b["at"]) / 60e3
+                # bản mới nhất cũ là bình thường khi dữ liệu không đổi; chỉ cảnh báo khi Azure ngừng kiểm tra sao lưu
+                seen = max(b["at"], b.get("checkedAt") or 0); idle = (now - seen) / 60e3
+                if "checkedAt" in b:
+                    ok = idle < 3 * 60        # bộ hẹn giờ sao lưu chạy mỗi giờ
+                    note = f"bản mới nhất {age:.0f} phút trước, kiểm tra gần nhất {idle:.0f} phút trước (chỉ chụp khi dữ liệu thay đổi)"
+                else:
+                    ok = age < 24 * 60        # máy chủ bản cũ: chỉ cảnh báo khi quá 1 ngày không có bản nào
+                    note = f"bản mới nhất {age:.0f} phút trước (chỉ chụp khi dữ liệu thay đổi)"
+                row("Sao lưu tự động", True if ok else "warn", note + ("" if ok else " — Azure có thể đã ngừng sao lưu"))
             else:
                 row("Sao lưu tự động", "warn", "chưa có bản nào")
 else:
