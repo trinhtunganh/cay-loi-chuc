@@ -1727,7 +1727,7 @@ function placeCallout(le, scroll){
   const crown = lb.width > 0 ? { l: Math.max(cv.left, lb.left - 10), r: Math.min(cv.right, lb.right + 10) } : { l: cv.left, r: cv.right };
   const lx = r.left + r.width/2, ly = r.top + r.height/2;
   const gap = 28, roomR = rightEdge - crown.r - gap, roomL = crown.l - gap - leftEdge;
-  const mid = (crown.l + crown.r) / 2, MIN = 270;
+  const mid = (crown.l + crown.r) / 2, MIN = 240;
   /* ưu tiên phía có chiếc lá; phía đó chật quá thì sang phía kia; cả hai đều chật thì đặt dưới cây */
   let side = lx >= mid ? "right" : "left";
   if ((side === "right" ? roomR : roomL) < MIN) side = (side === "right" ? roomL : roomR) >= MIN ? (side === "right" ? "left" : "right") : "bottom";
