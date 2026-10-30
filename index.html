@@ -185,6 +185,10 @@ header .btn.primary:hover{background:rgba(255,255,255,.12);color:#fff;border-col
 #tree{width:100%;height:auto;display:block;max-height:calc(100vh - 300px);min-height:340px;overflow:visible}
 body.preview #tree{max-height:calc(100vh - 330px)}
 .leaf{cursor:pointer;outline:none}
+#canopy,#foliage{pointer-events:none}
+#foliage .fl{animation:flIn .9s ease-out both}
+#foliage.still .fl{animation:none}
+@keyframes flIn{from{opacity:0}to{opacity:1}}
 .leaf .shape{transition:transform .25s,filter .25s,opacity .35s;transform-box:fill-box;transform-origin:0 50%}
 .leaf.flower .shape{transform-origin:center}
 .leaf:hover .shape,.leaf:focus-visible .shape{transform:scale(1.35);filter:drop-shadow(0 0 6px rgba(255,200,120,.95))}
@@ -665,6 +669,8 @@ body.anon #accField{display:none}
         <stop offset="75%" stop-color="#F2405F"/><stop offset="100%" stop-color="#D1002A"/>
       </radialGradient>
       <radialGradient id="shadow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#3B5A2A" stop-opacity=".35"/><stop offset="100%" stop-color="#3B5A2A" stop-opacity="0"/></radialGradient>
+      <radialGradient id="canopyG" cx="45%" cy="40%" r="60%"><stop offset="0%" stop-color="#CDEBB0" stop-opacity=".95"/><stop offset="60%" stop-color="#A8D68C" stop-opacity=".55"/><stop offset="100%" stop-color="#8CC97A" stop-opacity="0"/></radialGradient>
+      <radialGradient id="canopyP" cx="45%" cy="40%" r="60%"><stop offset="0%" stop-color="#FFD9E2" stop-opacity=".95"/><stop offset="60%" stop-color="#FFC2CE" stop-opacity=".5"/><stop offset="100%" stop-color="#FFC2CE" stop-opacity="0"/></radialGradient>
       <g id="leafGrads"></g>
     </defs>
     <circle cx="500" cy="430" r="470" fill="url(#sun)"/>
@@ -675,7 +681,7 @@ body.anon #accField{display:none}
     <g id="sunG" class="deco"></g>
     <g id="birdsG" class="deco"></g>
     <g id="backBots" class="deco"></g>
-    <g id="treeScale"><g class="sway"><g id="branches"></g><g id="leaves"></g></g></g>
+    <g id="treeScale"><g class="sway"><g id="canopy" aria-hidden="true"></g><g id="branches"></g><g id="foliage" aria-hidden="true"></g><g id="leaves"></g></g></g>
     <g id="frontBots" class="deco"></g>
     <g id="flyG" class="deco"></g>
   </svg>
@@ -1577,16 +1583,53 @@ function leafShape(m, size, r){
   }
   return g;
 }
-function placeLeaf(m, stage, cands){
+/* chọn chỗ mọc cho 1 lời chúc: thử vài vị trí (cố định theo mã lời chúc) trên các cành, lấy chỗ xa các lá đã có nhất
+   → hoa lá rải đều khắp tán, không dồn cục. Lời chúc xếp theo thời gian gửi nên lá cũ không bị dời chỗ. */
+function segPoint(s, tt){ const u = 1-tt; return [u*u*s.x1 + 2*u*tt*s.cx + tt*tt*s.x2, u*u*s.y1 + 2*u*tt*s.cy + tt*tt*s.y2]; }
+function placeLeaf(m, stage, cands, placed){
   const h = hash(m.id), r = rng(h);
-  const s = cands[h % cands.length];
-  const tt = .25 + r()*.75, u = 1-tt;
-  const x = u*u*s.x1 + 2*u*tt*s.cx + tt*tt*s.x2, y = u*u*s.y1 + 2*u*tt*s.cy + tt*tt*s.y2;
-  const side = r()<.5 ? -1 : 1, off = ((s.w+s.w2)/4 + 1 + r()*12) * side;
-  const px = x + -Math.sin(s.ang)*off, py = y + Math.cos(s.ang)*off;
-  const rot = (s.ang*180/Math.PI) + side*(30+r()*50);
-  const size = (isFlower(m) ? 22 : 21) / stage.scale;
-  return {x:px, y:py, rot, size, r};
+  const size = (isFlower(m) ? 24 : 23) / stage.scale;
+  let best = null, bestD = -1;
+  for (let k = 0; k < 9; k++){
+    const s = cands[Math.floor(r() * cands.length)];
+    const tt = .2 + r()*.8, [x, y] = segPoint(s, tt);
+    const side = r()<.5 ? -1 : 1, off = ((s.w+s.w2)/4 + 2 + r()*16/stage.scale) * side;
+    const px = x + -Math.sin(s.ang)*off, py = y + Math.cos(s.ang)*off;
+    let d = Infinity;
+    for (let i = 0; i < placed.length; i++){ const q = placed[i], dx = q[0]-px, dy = q[1]-py, dd = dx*dx + dy*dy; if (dd < d) d = dd; }
+    if (d > bestD){ bestD = d; best = {x:px, y:py, rot:(s.ang*180/Math.PI) + side*(30+r()*50)}; }
+  }
+  placed.push([best.x, best.y]);
+  return {x:best.x, y:best.y, rot:best.rot, size, r};
+}
+/* tán nền + lá trang trí: không bấm được, chỉ làm cây trông xum xuê; dày dần theo số lời chúc */
+const FOLIAGE = ["#5FA35A","#7DB65A","#4C9A6A","#8FBF6A","#3E8E5E","#6BAF6F","#A3C96B"];
+function drawFoliage(stage, n){
+  const cv = $("#canopy"), fo = $("#foliage"); cv.textContent = ""; fo.textContent = "";
+  if (!n) return;
+  const r = rng(777 + stage.depth), sc = stage.scale;
+  const outer = SEGS.filter(s=>s.depth<=stage.depth && s.depth>=Math.max(2, stage.depth-2));
+  const fill = Math.min(1, .45 + n/160);
+  /* mảng tán mờ ở đầu cành */
+  outer.forEach(s=>{
+    (s.depth >= stage.depth-1 ? [.5, 1] : [.6]).forEach(tt=>{
+      const [x, y] = segPoint(s, tt), R = (30 + r()*24) * (.8 + .2*fill) * (s.depth >= stage.depth-1 ? 1 : 1.25);
+      cv.appendChild(el("circle",{cx:(x + (r()-.5)*10).toFixed(1), cy:(y + (r()-.5)*10).toFixed(1), r:R.toFixed(1), fill: r()<.82 ? "url(#canopyG)" : "url(#canopyP)", opacity:(.5 + .4*fill).toFixed(2)}));
+    });
+  });
+  /* lá nhỏ trang trí */
+  const F = Math.round(Math.max(0, Math.min(2.2*n + 20, 230 - .5*Math.max(0, n - 100))));
+  const segs = SEGS.filter(s=>s.depth<=stage.depth && s.depth>=2);
+  for (let i = 0; i < F; i++){
+    const s = segs[Math.floor(r()*segs.length)], [x, y] = segPoint(s, .15 + r()*.85);
+    const side = r()<.5 ? -1 : 1, off = ((s.w+s.w2)/4 + r()*18/sc) * side;
+    const px = x - Math.sin(s.ang)*off, py = y + Math.cos(s.ang)*off;
+    const z = (11 + r()*7) / sc, c = FOLIAGE[Math.floor(r()*FOLIAGE.length)], bulge = .34 + r()*.12;
+    const g = el("g",{class:"fl", transform:`translate(${px.toFixed(1)},${py.toFixed(1)}) rotate(${((s.ang*180/Math.PI) + side*(25+r()*60)).toFixed(0)})`});
+    g.style.animationDelay = (r()*.6).toFixed(2) + "s";
+    g.appendChild(el("path",{d:`M0,0 C${z*.25},${-z*bulge} ${z*.8},${-z*bulge} ${z*1.2},0 C${z*.8},${z*bulge} ${z*.25},${z*bulge} 0,0 Z`, fill:c, opacity:(.72 + r()*.25).toFixed(2)}));
+    fo.appendChild(g);
+  }
 }
 
 function renderStatus(bump){
@@ -1602,19 +1645,26 @@ function renderStatus(bump){
   $("#empty").hidden = !(loaded && items.length===0);
 }
 
+let foliageKey = "";
 function renderLeaves(fresh=new Set()){
   const stage = STAGES[stageIdx(items.length)];
   if (!currentStage || stage.depth!==currentStage.depth || stage.scale!==currentStage.scale){ drawTree(stage); currentStage = stage; }
   renderStatus(fresh.size>0);
-  const minDepth = Math.max(1, stage.depth-2);
-  const cands = SEGS.filter(s=>s.depth<=stage.depth && s.depth>=Math.min(minDepth, stage.depth));
+  /* cành để mọc: cả cành trong (từ cấp 2) lẫn cành ngoài, cành ngoài nhiều cơ hội hơn */
+  const cands = [];
+  SEGS.forEach(s=>{ if (s.depth<=stage.depth && s.depth>=Math.min(2, stage.depth)){ const w = s.depth >= stage.depth-1 ? 3 : 1; for (let i=0;i<w;i++) cands.push(s); } });
+  /* tán nền chỉ vẽ lại khi cây lên giai đoạn hoặc thêm mỗi 20 lời chúc: không nháy khi có lời chúc mới */
+  const fk = stage.depth + ":" + Math.min(300, Math.ceil(items.length/20)*20);
+  if (foliageKey !== fk){ const anim = !foliageKey || foliageKey.split(":")[0] !== String(stage.depth); foliageKey = fk; drawFoliage(stage, Math.min(300, Math.ceil(items.length/20)*20)); $("#foliage").classList.toggle("still", !anim); }
   const g = $("#leaves"); g.textContent = ""; leafEls.clear();
+  const placed = [], pos = new Map();
+  items.slice().sort((a,b)=>String(a.time).localeCompare(String(b.time)) || String(a.id).localeCompare(String(b.id))).forEach(m=>pos.set(m.id, placeLeaf(m, stage, cands, placed)));
   const ordered = items.filter(m=>!isFlower(m)).concat(items.filter(isFlower));
   ordered.forEach(m=>{
-    const pos = placeLeaf(m, stage, cands), isF = isFlower(m);
-    const node = el("g",{class:"leaf"+(isF?" flower":"")+(fresh.has(m.id)?" grow":""), transform:`translate(${pos.x.toFixed(1)},${pos.y.toFixed(1)}) rotate(${isF ? (pos.r()*72).toFixed(0) : pos.rot.toFixed(1)})`, tabindex:"0", role:"button", "aria-label":recipient(m)});
-    node.dataset.id = m.id; node.dataset.size = pos.size.toFixed(1);
-    node.appendChild(leafShape(m, pos.size, pos.r));
+    const p = pos.get(m.id), isF = isFlower(m);
+    const node = el("g",{class:"leaf"+(isF?" flower":"")+(fresh.has(m.id)?" grow":""), transform:`translate(${p.x.toFixed(1)},${p.y.toFixed(1)}) rotate(${isF ? (p.r()*72).toFixed(0) : p.rot.toFixed(1)})`, tabindex:"0", role:"button", "aria-label":recipient(m)});
+    node.dataset.id = m.id; node.dataset.size = p.size.toFixed(1);
+    node.appendChild(leafShape(m, p.size, p.r));
     g.appendChild(node); leafEls.set(m.id, node);
   });
   applyFilter(fresh, true);
