@@ -1603,6 +1603,9 @@ function placeLeaf(m, stage, cands, placed){
   return {x:best.x, y:best.y, rot:best.rot, size, r};
 }
 /* tán nền + lá trang trí: không bấm được, chỉ làm cây trông xum xuê; dày dần theo số lời chúc */
+/* vùng giữa tán (phía trên chỗ thân tách đôi): 1 = ngay giữa, 0 = xa */
+const CROWN_C = {x: 500, y: FORK.y - TIP_DY*.72};
+function centerness(x, y){ const d = Math.hypot((x - CROWN_C.x)/210, (y - CROWN_C.y)/170); return Math.max(0, 1 - d); }
 const FOLIAGE = ["#5FA35A","#7DB65A","#4C9A6A","#8FBF6A","#3E8E5E","#6BAF6F","#A3C96B"];
 function drawFoliage(stage, n){
   const cv = $("#canopy"), fo = $("#foliage"); cv.textContent = ""; fo.textContent = "";
@@ -1617,9 +1620,16 @@ function drawFoliage(stage, n){
       cv.appendChild(el("circle",{cx:(x + (r()-.5)*10).toFixed(1), cy:(y + (r()-.5)*10).toFixed(1), r:R.toFixed(1), fill: r()<.82 ? "url(#canopyG)" : "url(#canopyP)", opacity:(.5 + .4*fill).toFixed(2)}));
     });
   });
+  /* mảng tán lớn ở giữa để tán tròn đầy */
+  const blobs = Math.round(5 + 7*fill);
+  for (let i = 0; i < blobs; i++){
+    const a = r()*Math.PI*2, d = Math.sqrt(r()), x = CROWN_C.x + Math.cos(a)*d*190, y = CROWN_C.y + Math.sin(a)*d*130;
+    cv.appendChild(el("circle",{cx:x.toFixed(1), cy:y.toFixed(1), r:(40 + r()*30).toFixed(1), fill: r()<.8 ? "url(#canopyG)" : "url(#canopyP)", opacity:(.45 + .4*fill).toFixed(2)}));
+  }
   /* lá nhỏ trang trí */
   const F = Math.round(Math.max(0, Math.min(2.2*n + 20, 230 - .5*Math.max(0, n - 100))));
-  const segs = SEGS.filter(s=>s.depth<=stage.depth && s.depth>=2);
+  const segs = [];
+  SEGS.forEach(s=>{ if (s.depth > stage.depth || s.depth < 1) return; const [mx, my] = segPoint(s, .6), c = centerness(mx, my); if (s.depth < 2 && c < .25) return; const w = 1 + Math.round(c*4); for (let i=0;i<w;i++) segs.push(s); });
   for (let i = 0; i < F; i++){
     const s = segs[Math.floor(r()*segs.length)], [x, y] = segPoint(s, .15 + r()*.85);
     const side = r()<.5 ? -1 : 1, off = ((s.w+s.w2)/4 + r()*18/sc) * side;
@@ -1652,7 +1662,13 @@ function renderLeaves(fresh=new Set()){
   renderStatus(fresh.size>0);
   /* cành để mọc: cả cành trong (từ cấp 2) lẫn cành ngoài, cành ngoài nhiều cơ hội hơn */
   const cands = [];
-  SEGS.forEach(s=>{ if (s.depth<=stage.depth && s.depth>=Math.min(2, stage.depth)){ const w = s.depth >= stage.depth-1 ? 3 : 1; for (let i=0;i<w;i++) cands.push(s); } });
+  SEGS.forEach(s=>{
+    if (s.depth > stage.depth || s.depth < 1) return;
+    const [mx, my] = segPoint(s, .6), c = centerness(mx, my);
+    if (s.depth < 2 && c < .25) return;                       // cành lớn chỉ mọc hoa lá ở đoạn giữa tán
+    const w = (s.depth >= stage.depth-1 ? 3 : 1) + Math.round(c * 9);   // ưu tiên đầu cành và vùng giữa
+    for (let i=0;i<w;i++) cands.push(s);
+  });
   /* tán nền chỉ vẽ lại khi cây lên giai đoạn hoặc thêm mỗi 20 lời chúc: không nháy khi có lời chúc mới */
   const fk = stage.depth + ":" + Math.min(300, Math.ceil(items.length/20)*20);
   if (foliageKey !== fk){ const anim = !foliageKey || foliageKey.split(":")[0] !== String(stage.depth); foliageKey = fk; drawFoliage(stage, Math.min(300, Math.ceil(items.length/20)*20)); $("#foliage").classList.toggle("still", !anim); }
