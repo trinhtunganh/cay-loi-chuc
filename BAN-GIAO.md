@@ -24,6 +24,7 @@ Cập nhật: 24/10/2026. Dán file này (hoặc link repo) vào đầu cuộc t
 - Tab **Sao lưu**:
   - Tải bản sao lưu .json; khôi phục kiểu Gộp hoặc Đưa về đúng bản sao lưu.
   - Azure tự sao lưu: 3 giờ/lần, 1 giờ/lần quanh sinh nhật, chỉ khi dữ liệu đổi. Giữ 24 bản + 1 bản/ngày trong 45 ngày.
+- **Ngày và đêm** tự đổi theo vòng 30 phút (mặt trời đi trái → phải, trời tối dần, cây phát sáng). Chỉ đổi độ mờ các lớp vẽ sẵn mỗi 4 giây, dừng khi tab ẩn.
 - **Cảm xúc** kiểu Facebook trên từng lời chúc, sắp xếp danh sách theo số cảm xúc.
 - **Giám sát**: workflow `.github/workflows/monitor.yml` 10 phút/lần (mở Issue khi lỗi) + tác vụ định kỳ của Claude mỗi giờ báo về điện thoại.
 - Nút **Quay thưởng** (hộp quà):

@@ -197,7 +197,16 @@ body.preview #tree{max-height:calc(100vh - 330px)}
 .leaf.spot .shape{animation:pulse 1.6s ease-in-out infinite;filter:drop-shadow(0 0 10px rgba(255,190,90,1))}
 @keyframes pulse{0%,100%{transform:scale(1.3)}50%{transform:scale(1.6)}}
 /* ---------- giao diện đêm (tự bật 18:00–06:00 giờ VN) ---------- */
-body.night{background:radial-gradient(130% 90% at 42% 38%,#1C2D5E 0%,#0B1532 42%,#050914 100%);color:#E7ECFF}
+/* trời tối dần: lớp nền đêm phủ lên nền ngày, độ đậm = --dark (0 ngày → 1 đêm), chỉ đổi độ mờ nên rất nhẹ */
+:root{--dark:0}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(130% 90% at 42% 38%,#1C2D5E 0%,#0B1532 42%,#050914 100%);opacity:var(--dark);transition:opacity 4s linear}
+#show::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(130% 90% at 40% 40%,#1C2D5E 0%,#0B1532 45%,#050914 100%);opacity:var(--dark);transition:opacity 4s linear}
+#show > *{position:relative;z-index:1}
+.cyc{transition:opacity 4s linear}
+#sunG{transition:transform 4s linear,opacity 4s linear}
+.notrans,.notrans *,.notrans::before{transition:none!important}
+body.night{color:#E7ECFF}
+.overview .status,#feed{transition:background .8s,border-color .8s}
 body.night .overview .status,body.night #feed{background:rgba(14,24,54,.74);border-color:rgba(160,190,255,.18);box-shadow:0 10px 40px rgba(0,0,0,.35);backdrop-filter:blur(8px)}
 body.night .status b,body.night .st-head,body.night #gName,body.night #feed .f-head h3,body.night #feedList .f-text,body.night #countNum{color:#E7ECFF}
 body.night #feedList li{border-color:rgba(255,255,255,.07)} body.night #feedList li:hover,body.night #feedList li.new{background:rgba(255,255,255,.05)}
@@ -212,12 +221,9 @@ body.night .rx-sum{color:#9FB0D6} body.night .rx-sum .ic i{background:#1B2748;bo
 body.night .tr-out{background:rgba(120,170,255,.1);color:#DCE6FF;border-color:#5C8FD6}
 body.night .tr-btn{color:#8FC1FF} body.night .tr-btn:hover{background:rgba(143,193,255,.12)}
 body.night .petals span{background:radial-gradient(circle at 30% 30%,#fff,#BFE0FF 60%,#7FB8FF);opacity:.5}
-body.night #sunG,body.night #birdsG{display:none}
-body.night #grass{opacity:.25}
 body.night .tap-hint{background:rgba(255,255,255,.14)}
-body.night #show{background:radial-gradient(130% 90% at 40% 40%,#1C2D5E 0%,#0B1532 45%,#050914 100%);color:#E7ECFF}
+body.night #show{color:#E7ECFF}
 body.night #show .s-mode{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15)}
-#nightBg,#fireflies{display:none} body.night #nightBg,body.night #fireflies{display:inline}
 .ff{animation:tw 3s ease-in-out infinite} @keyframes tw{0%,100%{opacity:.12}50%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.ff{animation:none;opacity:.6}}
 .sway{animation:sway 7s ease-in-out infinite;transform-box:view-box;transform-origin:500px 930px}
@@ -706,13 +712,13 @@ body.anon #accField{display:none}
     <ellipse cx="500" cy="1060" rx="2600" ry="170" fill="url(#hill1)"/>
     <ellipse cx="500" cy="1075" rx="2200" ry="140" fill="url(#hill2)"/>
     <ellipse cx="500" cy="938" rx="170" ry="16" fill="url(#shadow)"/>
-    <g id="nightBg" aria-hidden="true"></g>
-    <g id="grass"></g>
+    <g id="nightBg" class="cyc" aria-hidden="true"></g>
+    <g id="grass" class="cyc"></g>
     <g id="sunG" class="deco"></g>
-    <g id="birdsG" class="deco"></g>
+    <g id="birdsG" class="deco cyc"></g>
     <g id="backBots" class="deco"></g>
-    <g id="treeScale"><g class="sway"><g id="canopy" aria-hidden="true"></g><g id="branches"></g><g id="foliage" aria-hidden="true"></g><g id="leaves"></g></g></g>
-    <g id="fireflies" aria-hidden="true"></g>
+    <g id="treeScale"><g class="sway"><g id="canopy" class="cyc" aria-hidden="true"></g><g id="canopyN" class="cyc" aria-hidden="true"></g><g id="branches"></g><g id="foliage" class="cyc" aria-hidden="true"></g><g id="foliageN" class="cyc" aria-hidden="true"></g><g id="halos" class="cyc" aria-hidden="true"></g><g id="leaves"></g></g></g>
+    <g id="fireflies" class="cyc" aria-hidden="true"></g>
     <g id="frontBots" class="deco"></g>
     <g id="flyG" class="deco"></g>
   </svg>
@@ -1352,9 +1358,15 @@ function buildSun(){
   for (let i=0;i<12;i++) rays.appendChild(el("rect",{x:"-3", y:"-74", width:"6", height:"18", rx:"3", fill:"#FFC94D", opacity:".85", transform:`rotate(${i*30})`}));
   g.append(rays, el("circle",{r:"48", fill:"url(#sunDisc)"}), el("circle",{r:"48", fill:"none", stroke:"#FFE7A3", "stroke-width":"3", opacity:".7"}));
 }
-function placeSun(){
-  const k = CAM.h/980;
-  $("#sunG").setAttribute("transform", `translate(${Math.max(VIS.x + 60*k, CAM.x + CAM.w*.06 - 30*k).toFixed(1)},${(CAM.y + CAM.h*.1).toFixed(1)}) scale(${k.toFixed(3)})`);
+function placeSun(p){
+  if (p == null) p = themeForced ? (themeForced === "night" ? .7 : .25) : cyclePhase();
+  const k = CAM.h/980, s = p / .52;               // 0 → 1: mặt trời mọc bên trái, lặn bên phải
+  const x0 = VIS.x + 70*k, x1 = VIS.x + VIS.w - 70*k;
+  const x = x0 + (x1 - x0) * Math.min(1, Math.max(0, s));
+  const y = CAM.y + CAM.h*.1 + (1 - Math.sin(Math.PI * Math.min(1, Math.max(0, s)))) * CAM.h*.26;
+  const g = $("#sunG"); g.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) scale(${k.toFixed(3)})`;
+  g.removeAttribute("transform");
+  g.style.opacity = (s >= 0 && s <= 1 ? Math.min(1, Math.sin(Math.PI*s) * 3) : 0).toFixed(3);
 }
 
 /* robot dạng người: trắng, điểm đỏ thương hiệu, mặt kính đen mắt xanh */
@@ -1599,7 +1611,6 @@ function drawTree(stage){
 }
 function leafShape(m, size, r){
   const g = el("g",{class:"shape"});
-  if (NIGHT) g.appendChild(el("circle",{cx: isFlower(m) ? 0 : (size*.6).toFixed(1), cy:0, r:(size*.95).toFixed(1), fill:"url(#wishHalo)"}));
   if (isFlower(m)){
     const s = size*.62, pc = wishColor(m), pf = petalGrad(pc);
     for (let i=0;i<5;i++){
@@ -1639,34 +1650,58 @@ function placeLeaf(m, stage, cands, placed){
 const CROWN_C = {x: 500, y: FORK.y - TIP_DY*.72};
 function centerness(x, y){ const d = Math.hypot((x - CROWN_C.x)/210, (y - CROWN_C.y)/170); return Math.max(0, 1 - d); }
 const FOLIAGE = ["#5FA35A","#7DB65A","#4C9A6A","#8FBF6A","#3E8E5E","#6BAF6F","#A3C96B"];
-/* ---------- giao diện đêm ---------- */
-let NIGHT = false, nightTok = 0;
-const vnHour = () => (new Date().getUTCHours() + 7) % 24;
+/* ---------- ngày và đêm: 1 chu kỳ 30 phút, mặt trời đi từ trái sang phải, trời tối dần, cây sáng dần ----------
+   Tính theo đồng hồ chung nên mọi máy thấy cùng một lúc trong ngày. Cảnh ngày và cảnh đêm vẽ sẵn, chỉ đổi độ mờ
+   mỗi 4 giây (trình duyệt tự làm mượt) → gần như không tốn máy. ?theme=night|day để cố định, ?cycle=2 để chu kỳ 2 phút. */
+const CYCLE_MS = (()=>{ const m = /[?&]cycle=([\d.]+)/.exec(location.search); const v = m ? +m[1] : +(TIMING.dayCycle || 30); return Math.max(1, v) * 60e3; })();
 const themeForced = (()=>{ const m = /[?&]theme=(night|day)/.exec(location.search); return m ? m[1] : ""; })();
-const wantNight = () => themeForced ? themeForced === "night" : (vnHour() >= 18 || vnHour() < 6);
 const DAY_BARK = ["#4A2C1C","#7A4E33","#8E6042","#5A3824"], NIGHT_BARK = ["#141A2E","#27304F","#36426A","#1B2240"];
+const mixHex = (a, b, t) => "#" + [1,3,5].map(i=>Math.round(parseInt(a.substr(i,2),16)*(1-t) + parseInt(b.substr(i,2),16)*t).toString(16).padStart(2,"0")).join("");
+const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t*t*(3 - 2*t); };
+let NIGHT = false, DARK = 0, nightTok = 0, nightDirty = true, cycStarted = false;
+function cyclePhase(){ return ((Date.now() % CYCLE_MS) + CYCLE_MS) % CYCLE_MS / CYCLE_MS; }
+/* p: 0–0.5 mặt trời đi trái → phải; 0.40–0.56 hoàng hôn; 0.56–0.88 đêm; 0.88–1 rạng sáng */
+function darkness(p){
+  if (themeForced) return themeForced === "night" ? 1 : 0;
+  return p < .88 ? sstep(.40, .56, p) : 1 - sstep(.88, 1, p);
+}
 function buildNightScene(){
   const bg = $("#nightBg"), ff = $("#fireflies"); if (bg.firstChild) return;
+  bg.appendChild(el("circle",{cx:"500", cy:"430", r:"560", fill:"url(#nGlow)"}));
+  bg.appendChild(el("ellipse",{cx:"500", cy:"1060", rx:"2600", ry:"170", fill:"#0A1524"}));
+  bg.appendChild(el("ellipse",{cx:"500", cy:"1075", rx:"2200", ry:"140", fill:"#0C1A2C"}));
   [[-180,90],[-60,60],[60,110],[1000,95],[1110,70],[1220,120],[-300,80],[1330,90]].forEach(([x,w],i)=>{
     bg.appendChild(el("path",{d:`M${x},1000 C${x+w*.2},700 ${x-w*.3},350 ${x+w*.15},-100 L${x+w*.75},-100 C${x+w*1.1},350 ${x+w*.65},700 ${x+w},1000 Z`, fill: i%2 ? "#0E1834" : "#0A1229", opacity:".55"}));
   });
   const r = rng(99);
   for (let i=0;i<60;i++){ const c = el("circle",{cx:(-250 + r()*1500).toFixed(0), cy:(80 + r()*880).toFixed(0), r:(3 + r()*5).toFixed(1), fill: r()<.75 ? "url(#ffBlue)" : "url(#ffGold)", class:"ff"}); c.style.animationDelay = (r()*3).toFixed(2)+"s"; c.style.animationDuration = (2 + r()*3).toFixed(1)+"s"; ff.appendChild(c); }
 }
-function applyTheme(force){
-  const n = wantNight(); if (n === NIGHT && !force) return;
-  NIGHT = n; document.body.classList.toggle("night", n);
-  if (n) buildNightScene();
-  [...$("#bark").children].forEach((st,i)=>st.setAttribute("stop-color", (n ? NIGHT_BARK : DAY_BARK)[i] || st.getAttribute("stop-color")));
-  const sunC = document.querySelector('#tree > circle'); if (sunC){ sunC.setAttribute("fill", n ? "url(#nGlow)" : "url(#sun)"); sunC.setAttribute("r", n ? "560" : "470"); }
-  $$('#tree > ellipse').forEach((e,i)=>{ if (i < 2) e.setAttribute("fill", n ? (i ? "#0C1A2C" : "#0A1524") : (i ? "url(#hill2)" : "url(#hill1)")); });
-  foliageKey = ""; if (currentStage) renderLeaves();
+const setOp = (q, v) => { const e = $(q); if (!e) return; e.style.opacity = v.toFixed(3); e.style.display = v < .005 ? "none" : ""; };
+function cycleTick(first){
+  const p = themeForced ? (themeForced === "night" ? .7 : .25) : cyclePhase(), d = darkness(p);
+  DARK = d;
+  if (d > 0 || p > .3){ buildNightScene(); if (nightDirty && currentStage){ nightDirty = false; drawFoliageNight(currentStage, Math.min(300, Math.ceil(items.length/20)*20)); } }
+  document.documentElement.style.setProperty("--dark", d.toFixed(3));
+  const n = d >= .5; if (n !== NIGHT){ NIGHT = n; document.body.classList.toggle("night", n); }
+  /* lớp đêm hiện dần, lớp ngày mờ dần */
+  ["#nightBg","#fireflies","#canopyN","#foliageN","#halos"].forEach(q=>setOp(q, d));
+  ["#canopy","#foliage"].forEach(q=>setOp(q, 1 - d));
+  setOp("#birdsG", 1 - d); const gr = $("#grass"); if (gr) gr.style.opacity = (1 - .75*d).toFixed(3);
+  const sunC = document.querySelector('#tree > circle'); if (sunC){ sunC.classList.add("cyc"); sunC.style.opacity = (1 - d).toFixed(3); }
+  [...$("#bark").children].forEach((st,i)=>st.setAttribute("stop-color", mixHex(DAY_BARK[i] || DAY_BARK[3], NIGHT_BARK[i] || NIGHT_BARK[3], d)));
+  placeSun(p);
 }
-setInterval(()=>applyTheme(), 60000);
+function startCycle(){
+  if (cycStarted) return; cycStarted = true;
+  document.body.classList.add("notrans"); cycleTick(true);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>document.body.classList.remove("notrans")));
+  setInterval(()=>{ if (!document.hidden) cycleTick(); }, 4000);
+  document.addEventListener("visibilitychange", ()=>{ if (!document.hidden){ document.body.classList.add("notrans"); cycleTick(); requestAnimationFrame(()=>requestAnimationFrame(()=>document.body.classList.remove("notrans"))); } });
+}
 /* tán phát sáng: vẽ hàng nghìn lá nhỏ thành 1 ảnh (một lần) rồi gắn vào cây → máy yếu vẫn mượt */
 const ICE = ["#FFFFFF","#F1F8FF","#DDEEFF","#C4E1FF","#A6D0FF","#86BCFF"], GOLD = ["#FFE6A6","#FFD27A","#FFC15A"];
 function drawFoliageNight(stage, n){
-  const cv = $("#canopy"), fo = $("#foliage"); cv.textContent = ""; fo.textContent = "";
+  const cv = $("#canopyN"), fo = $("#foliageN"); cv.textContent = ""; fo.textContent = "";
   if (!n) return;
   const tok = ++nightTok, r = rng(4242 + stage.depth), sc = stage.scale;
   SEGS.filter(s=>s.depth<=stage.depth && s.depth>=Math.max(2, stage.depth-2)).forEach(s=>{ const [x,y] = segPoint(s, 1); cv.appendChild(el("circle",{cx:x.toFixed(0), cy:y.toFixed(0), r:(46 + r()*34).toFixed(0), fill:"url(#nBlob)", opacity:".42"})); });
@@ -1701,7 +1736,8 @@ function drawFoliageNight(stage, n){
   img.src = src;
 }
 function drawFoliage(stage, n){
-  if (NIGHT) return drawFoliageNight(stage, n);
+  nightDirty = true;
+  if (DARK > 0 || cycStarted && cyclePhase() > .3){ nightDirty = false; drawFoliageNight(stage, n); }
   const cv = $("#canopy"), fo = $("#foliage"); cv.textContent = ""; fo.textContent = "";
   if (!n) return;
   const r = rng(777 + stage.depth), sc = stage.scale;
@@ -1769,6 +1805,8 @@ function renderLeaves(fresh=new Set()){
   const g = $("#leaves"); g.textContent = ""; leafEls.clear();
   const placed = [], pos = new Map();
   items.slice().sort((a,b)=>String(a.time).localeCompare(String(b.time)) || String(a.id).localeCompare(String(b.id))).forEach(m=>pos.set(m.id, placeLeaf(m, stage, cands, placed)));
+  const hal = $("#halos"); hal.textContent = "";
+  pos.forEach(p=>hal.appendChild(el("circle",{cx:p.x.toFixed(1), cy:p.y.toFixed(1), r:(p.size*1.05).toFixed(1), fill:"url(#wishHalo)"})));
   const ordered = items.filter(m=>!isFlower(m)).concat(items.filter(isFlower));
   ordered.forEach(m=>{
     const p = pos.get(m.id), isF = isFlower(m);
@@ -2425,8 +2463,8 @@ function start(){
 /* ---------- khởi động ---------- */
 if (PREVIEW) document.body.classList.add("preview");
 applyTexts(); setAnonMode(ANON); buildLeafGradients(); setupScene(); buildGrass(); buildLegend(); syncType(); setupCountdown(); setupPetals();
-applyTheme(true);
 drawTree(STAGES[0]); currentStage = STAGES[0]; renderLeaves();
+startCycle();
 /* ---------- quản trị ---------- */
 let adminItems = [], adminTab = "list", adminFilter = "all";
 function openAdminGate(){ $("#adminErr").textContent=""; $("#adminPin").value=""; openModal("#adminGate"); setTimeout(()=>$("#adminPin").focus(),60); }
