@@ -199,11 +199,12 @@ body.preview #tree{max-height:calc(100vh - 330px)}
 /* ---------- giao diện đêm (tự bật 18:00–06:00 giờ VN) ---------- */
 /* trời tối dần: lớp nền đêm phủ lên nền ngày, độ đậm = --dark (0 ngày → 1 đêm), chỉ đổi độ mờ nên rất nhẹ */
 :root{--dark:0}
-body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(130% 90% at 42% 38%,#1C2D5E 0%,#0B1532 42%,#050914 100%);opacity:var(--dark);transition:opacity 4s linear}
-#show::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(130% 90% at 40% 40%,#1C2D5E 0%,#0B1532 45%,#050914 100%);opacity:var(--dark);transition:opacity 4s linear}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:#0D1838;opacity:var(--dark);transition:opacity 4s linear}
+#show::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:#0D1838;opacity:var(--dark);transition:opacity 4s linear}
 #show > *{position:relative;z-index:1}
 .cyc{transition:opacity 4s linear}
-#sunG{transition:transform 4s linear,opacity 4s linear}
+#sunG,#moonG{transition:transform 4s linear,opacity 4s linear}
+.nglow{opacity:var(--dark);transition:opacity 4s linear}
 .notrans,.notrans *,.notrans::before{transition:none!important}
 body.night{color:#E7ECFF}
 .overview .status,#feed{transition:background .8s,border-color .8s}
@@ -706,6 +707,10 @@ body.anon #accField{display:none}
       <radialGradient id="wishHalo" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFF6D8" stop-opacity=".75"/><stop offset="100%" stop-color="#FFF6D8" stop-opacity="0"/></radialGradient>
       <radialGradient id="ffBlue" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="35%" stop-color="#BFE3FF" stop-opacity=".9"/><stop offset="100%" stop-color="#BFE3FF" stop-opacity="0"/></radialGradient>
       <radialGradient id="ffGold" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="35%" stop-color="#FFE2A3" stop-opacity=".9"/><stop offset="100%" stop-color="#FFE2A3" stop-opacity="0"/></radialGradient>
+      <radialGradient id="moonHalo" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFF8DC" stop-opacity=".75"/><stop offset="30%" stop-color="#DDE9FF" stop-opacity=".3"/><stop offset="100%" stop-color="#DDE9FF" stop-opacity="0"/></radialGradient>
+      <radialGradient id="moonDisc" cx="40%" cy="38%" r="65%"><stop offset="0%" stop-color="#FFFDF2"/><stop offset="70%" stop-color="#F3EBC8"/><stop offset="100%" stop-color="#E2D6A8"/></radialGradient>
+      <radialGradient id="groundGlow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#7FF0C4" stop-opacity=".28"/><stop offset="100%" stop-color="#7FF0C4" stop-opacity="0"/></radialGradient>
+      <radialGradient id="botGlow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#E8F6FF" stop-opacity=".75"/><stop offset="45%" stop-color="#9FD8FF" stop-opacity=".28"/><stop offset="100%" stop-color="#9FD8FF" stop-opacity="0"/></radialGradient>
       <g id="leafGrads"></g>
     </defs>
     <circle cx="500" cy="430" r="470" fill="url(#sun)"/>
@@ -714,7 +719,9 @@ body.anon #accField{display:none}
     <ellipse cx="500" cy="938" rx="170" ry="16" fill="url(#shadow)"/>
     <g id="nightBg" class="cyc" aria-hidden="true"></g>
     <g id="grass" class="cyc"></g>
+    <g id="grassN" class="cyc" aria-hidden="true"></g>
     <g id="sunG" class="deco"></g>
+    <g id="moonG" class="deco" aria-hidden="true"></g>
     <g id="birdsG" class="deco cyc"></g>
     <g id="backBots" class="deco"></g>
     <g id="treeScale"><g class="sway"><g id="canopy" class="cyc" aria-hidden="true"></g><g id="canopyN" class="cyc" aria-hidden="true"></g><g id="branches"></g><g id="foliage" class="cyc" aria-hidden="true"></g><g id="foliageN" class="cyc" aria-hidden="true"></g><g id="halos" class="cyc" aria-hidden="true"></g><g id="leaves"></g></g></g>
@@ -1358,6 +1365,11 @@ function buildSun(){
   for (let i=0;i<12;i++) rays.appendChild(el("rect",{x:"-3", y:"-74", width:"6", height:"18", rx:"3", fill:"#FFC94D", opacity:".85", transform:`rotate(${i*30})`}));
   g.append(rays, el("circle",{r:"48", fill:"url(#sunDisc)"}), el("circle",{r:"48", fill:"none", stroke:"#FFE7A3", "stroke-width":"3", opacity:".7"}));
 }
+function buildMoon(){
+  const g = $("#moonG"); if (g.firstChild) return;
+  g.append(el("circle",{r:"260", fill:"url(#moonHalo)"}), el("circle",{r:"50", fill:"url(#moonDisc)"}),
+    el("circle",{cx:"-13", cy:"-9", r:"8", fill:"#E3D7AE", opacity:".55"}), el("circle",{cx:"12", cy:"10", r:"11", fill:"#E3D7AE", opacity:".45"}), el("circle",{cx:"16", cy:"-16", r:"5", fill:"#E3D7AE", opacity:".5"}));
+}
 function placeSun(p){
   if (p == null) p = themeForced ? (themeForced === "night" ? .7 : .25) : cyclePhase();
   const k = CAM.h/980, s = p / .52;               // 0 → 1: mặt trời mọc bên trái, lặn bên phải
@@ -1367,6 +1379,12 @@ function placeSun(p){
   const g = $("#sunG"); g.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) scale(${k.toFixed(3)})`;
   g.removeAttribute("transform");
   g.style.opacity = (s >= 0 && s <= 1 ? Math.min(1, Math.sin(Math.PI*s) * 3) : 0).toFixed(3);
+  /* mặt trăng: mọc bên trái lúc chập tối, đi sang phải, lặn lúc rạng sáng */
+  const m = $("#moonG"); if (!m.firstChild) return;
+  const t = Math.min(1, Math.max(0, (p - .46) / .52));
+  const mx = x0 + (x1 - x0) * t, my = CAM.y + CAM.h*.1 + (1 - Math.sin(Math.PI * t)) * CAM.h*.26;
+  m.style.transform = `translate(${mx.toFixed(1)}px,${my.toFixed(1)}px) scale(${k.toFixed(3)})`;
+  m.style.opacity = (DARK * (p > .46 ? Math.min(1, Math.sin(Math.PI*t) * 4) : 0) * (themeForced === "night" ? 0 : 1) + (themeForced === "night" ? 1 : 0)).toFixed(3);
 }
 
 /* robot dạng người: trắng, điểm đỏ thương hiệu, mặt kính đen mắt xanh */
@@ -1427,6 +1445,7 @@ function makeRobot(kind){
   g.appendChild(body);
   if (fx.dropG) g.appendChild(fx.dropG);
   if (fx.bitG) g.appendChild(fx.bitG);
+  g.insertBefore(el("ellipse",{cx:"0", cy:"-44", rx:"40", ry:"58", fill:"url(#botGlow)", class:"nglow"}), g.firstChild);
   return {g, body, legB, legF, armB, armF, fx};
 }
 
@@ -1670,9 +1689,17 @@ function buildNightScene(){
   bg.appendChild(el("circle",{cx:"500", cy:"430", r:"560", fill:"url(#nGlow)"}));
   bg.appendChild(el("ellipse",{cx:"500", cy:"1060", rx:"2600", ry:"170", fill:"#0A1524"}));
   bg.appendChild(el("ellipse",{cx:"500", cy:"1075", rx:"2200", ry:"140", fill:"#0C1A2C"}));
-  [[-180,90],[-60,60],[60,110],[1000,95],[1110,70],[1220,120],[-300,80],[1330,90]].forEach(([x,w],i)=>{
-    bg.appendChild(el("path",{d:`M${x},1000 C${x+w*.2},700 ${x-w*.3},350 ${x+w*.15},-100 L${x+w*.75},-100 C${x+w*1.1},350 ${x+w*.65},700 ${x+w},1000 Z`, fill: i%2 ? "#0E1834" : "#0A1229", opacity:".55"}));
-  });
+  /* cỏ phát sáng trải khắp mặt đất */
+  const gn = $("#grassN"), rg = rng(77);
+  gn.appendChild(el("ellipse",{cx:"500", cy:"955", rx:"900", ry:"60", fill:"url(#groundGlow)"}));
+  let dd = "";
+  for (let i=0;i<150;i++){
+    const x = -380 + rg()*1760, y = 925 + rg()*70, k = .7 + rg()*.7;
+    [-1,0,1].forEach(j=>{ const h=(7+rg()*8)*k, lean=j*3.5*k+(rg()-.5)*2; dd += `M${(x+j*1.6).toFixed(1)},${y.toFixed(1)} q${(lean*.3).toFixed(1)},${(-h*.6).toFixed(1)} ${lean.toFixed(1)},${(-h).toFixed(1)} `; });
+  }
+  gn.appendChild(el("path",{d:dd, stroke:"#7FF0C4", "stroke-width":"3.2", fill:"none", "stroke-linecap":"round", opacity:".22"}));
+  gn.appendChild(el("path",{d:dd, stroke:"#C9FFE6", "stroke-width":"1.2", fill:"none", "stroke-linecap":"round", opacity:".85"}));
+  for (let i=0;i<40;i++) gn.appendChild(el("circle",{cx:(-380 + rg()*1760).toFixed(0), cy:(915 + rg()*70).toFixed(0), r:(1.4 + rg()*1.6).toFixed(1), fill:"#E6FFF4", opacity:".8"}));
   const r = rng(99);
   for (let i=0;i<60;i++){ const c = el("circle",{cx:(-250 + r()*1500).toFixed(0), cy:(80 + r()*880).toFixed(0), r:(3 + r()*5).toFixed(1), fill: r()<.75 ? "url(#ffBlue)" : "url(#ffGold)", class:"ff"}); c.style.animationDelay = (r()*3).toFixed(2)+"s"; c.style.animationDuration = (2 + r()*3).toFixed(1)+"s"; ff.appendChild(c); }
 }
@@ -1680,13 +1707,13 @@ const setOp = (q, v) => { const e = $(q); if (!e) return; e.style.opacity = v.to
 function cycleTick(first){
   const p = themeForced ? (themeForced === "night" ? .7 : .25) : cyclePhase(), d = darkness(p);
   DARK = d;
-  if (d > 0 || p > .3){ buildNightScene(); if (nightDirty && currentStage){ nightDirty = false; drawFoliageNight(currentStage, Math.min(300, Math.ceil(items.length/20)*20)); } }
+  if (d > 0 || p > .3){ buildNightScene(); buildMoon(); if (nightDirty && currentStage){ nightDirty = false; drawFoliageNight(currentStage, Math.min(300, Math.ceil(items.length/20)*20)); } }
   document.documentElement.style.setProperty("--dark", d.toFixed(3));
   const n = d >= .5; if (n !== NIGHT){ NIGHT = n; document.body.classList.toggle("night", n); }
   /* lớp đêm hiện dần, lớp ngày mờ dần */
-  ["#nightBg","#fireflies","#canopyN","#foliageN","#halos"].forEach(q=>setOp(q, d));
+  ["#nightBg","#fireflies","#canopyN","#foliageN","#halos","#grassN"].forEach(q=>setOp(q, d));
   ["#canopy","#foliage"].forEach(q=>setOp(q, 1 - d));
-  setOp("#birdsG", 1 - d); const gr = $("#grass"); if (gr) gr.style.opacity = (1 - .75*d).toFixed(3);
+  setOp("#birdsG", 1 - d); setOp("#grass", 1 - d);
   const sunC = document.querySelector('#tree > circle'); if (sunC){ sunC.classList.add("cyc"); sunC.style.opacity = (1 - d).toFixed(3); }
   [...$("#bark").children].forEach((st,i)=>st.setAttribute("stop-color", mixHex(DAY_BARK[i] || DAY_BARK[3], NIGHT_BARK[i] || NIGHT_BARK[3], d)));
   placeSun(p);
