@@ -114,3 +114,12 @@ Mốc mặc định (sửa trong `config.js`, mục `stages`):
 | 250+ | Đại thụ nở hoa |
 
 Hoa đỏ = lời chúc gửi cả công ty; lá màu = gửi phòng ban hoặc đồng nghiệp (màu theo thứ tự phòng ban trong `config.js`).
+
+## Màn hình chào mừng ngày sinh nhật
+- Vào **Quản trị → 🎉 Chào mừng**, chọn 1 trong 3 mẫu (hoặc Tắt), bấm **Lưu cài đặt chào mừng**:
+  1. **Cây bừng nở**: nền đỏ, cây mọc lên, mọi lời chúc cùng nở, con số lời cảm ơn chạy lên.
+  2. **Cùng thổi nến**: mỗi người bấm "Thổi nến" (mỗi trình duyệt 1 lần); đủ số người đặt trong ô "Số người thổi nến" thì nến trên mọi máy cùng tắt và pháo giấy bung ra. Cần máy chủ Azure bản mới (khởi động lại Azure sau ngày 17/11).
+  3. **Pháo hoa lời chúc**: trời đêm, pháo hoa, mỗi chùm hé một lời chúc thật. Hợp màn hình lớn.
+- Nút **▶ Xem thử** chỉ mở trên máy bạn. Có thể xem thử bằng đường link: thêm `?welcome=1` (hoặc 2, 3) vào cuối địa chỉ trang.
+- **Khi nào hiện**: mặc định chỉ trong ngày sinh nhật (ngày ở tab Nội dung); chọn "Ngay từ bây giờ" nếu muốn mọi người thấy luôn. Mỗi máy tự hiện 1 lần mỗi ngày, luôn có nút Bỏ qua (hoặc phím Esc).
+- Chữ trên các màn hình sửa ở tab **Nội dung**, nhóm "Màn hình chào mừng ngày sinh nhật".

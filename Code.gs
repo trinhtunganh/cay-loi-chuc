@@ -301,7 +301,7 @@ function withRx(out, body) {
 function react(body) {
   const id = String(body.id || ''), cid = String(body.cid || ''), r = String(body.r || '');
   if (!/^[\w-]{1,40}$/.test(id) || !CID_RE.test(cid) || (r && RX_TYPES.indexOf(r) < 0)) return { ok: false, error: 'Dữ liệu không hợp lệ.' };
-  if (!listApproved().some(m => m.id === id)) return { ok: false, error: 'Không tìm thấy lời chúc.' };
+  if (id !== 'WELCOME_CAKE' && !listApproved().some(m => m.id === id)) return { ok: false, error: 'Không tìm thấy lời chúc.' };
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
   try {

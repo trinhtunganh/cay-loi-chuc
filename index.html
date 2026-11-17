@@ -634,6 +634,110 @@ body.anon #accField{display:none}
   #show{padding:16px} #show .s-top img{height:26px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.petals{display:none}}
+/* ---------- màn hình chào mừng ngày sinh nhật (3 mẫu) ---------- */
+#wl{position:fixed;inset:0;z-index:45;overflow:hidden;color:#fff;opacity:0;transition:opacity .5s;-webkit-user-select:none;user-select:none}
+#wl.in{opacity:1} #wl.out{opacity:0;pointer-events:none}
+body.wl-open{overflow:hidden}
+#wl .wl-kick{letter-spacing:.32em;text-transform:uppercase;font-size:13px;font-weight:700;opacity:.9}
+#wl .wl-h{font-weight:900;line-height:1.04;letter-spacing:-.02em;margin:0}
+#wl .wl-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+#wl .wl-b{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border-radius:999px;font-weight:700;font-size:16px;border:2px solid #fff;background:transparent;color:#fff;cursor:pointer;transition:transform .2s,box-shadow .2s,background .2s,color .2s}
+#wl .wl-b:hover{transform:translateY(-2px)}
+#wl .wl-b.solid{background:#fff;color:var(--brand)}
+#wl .wl-b.red{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 8px 20px rgba(228,0,43,.28)}
+#wl .wl-b.red:hover{background:var(--brand-dark);border-color:var(--brand-dark)}
+#wl .wl-b:disabled{cursor:default;transform:none;opacity:.85}
+#wl .wl-skip{position:absolute;top:18px;right:22px;z-index:5;font-size:13px;color:inherit;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.45);padding:7px 15px;border-radius:999px;cursor:pointer}
+#wl .wl-skip:hover{background:rgba(255,255,255,.2)}
+#wl .wl-logo{position:absolute;top:20px;left:26px;height:28px;z-index:5}
+@media (max-width:700px){#wl .wl-prev{top:4px!important;font-size:10px;padding:3px 9px}}
+#wl .wl-prev{position:absolute;top:22px;left:50%;transform:translateX(-50%);z-index:6;white-space:nowrap;font-size:12px;font-weight:700;letter-spacing:.08em;background:#FFD166;color:#3A2A00;padding:5px 12px;border-radius:999px}
+#wl .wl-up{animation:wlUp .9s cubic-bezier(.2,.8,.2,1) both}
+#wl .wl-fade{animation:wlFade 1s ease both}
+@keyframes wlUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes wlFade{from{opacity:0}to{opacity:1}}
+/* mẫu 1: cây bừng nở */
+#wl.k1{background:radial-gradient(120% 90% at 50% 45%,#F2163F 0%,#D0002A 45%,#8E001C 100%)}
+#wl.k1 .wl-logo{filter:brightness(0) invert(1)}
+.wl1-big{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:min(44vw,600px);letter-spacing:-.06em;color:transparent;-webkit-text-stroke:2px rgba(255,255,255,.16);line-height:1;animation:wlBig 2.4s ease both}
+@keyframes wlBig{from{opacity:0;transform:scale(1.12)}to{opacity:1;transform:none}}
+.wl1-tree{position:absolute;left:50%;top:53%;width:min(70vh,92vw,820px);height:min(70vh,92vw,820px);transform:translate(-50%,-50%)}
+.wl1-tree > div{width:100%;height:100%;transform-origin:50% 100%;animation:wlGrow 1.8s cubic-bezier(.2,.9,.25,1) .3s both}
+.wl1-tree svg{width:100%;height:100%;overflow:visible;pointer-events:none}
+@keyframes wlGrow{from{transform:scale(.15);opacity:0}30%{opacity:1}to{transform:none;opacity:1}}
+.wl1-tree .wlp{animation:wlFade .5s ease both}
+.wl1-top{position:absolute;left:0;right:0;top:8vh;text-align:center;padding:0 16px}
+.wl1-top .wl-h{font-size:clamp(32px,5.2vw,74px);margin-top:10px;text-shadow:0 6px 30px rgba(0,0,0,.25)}
+.wl1-bot{position:absolute;left:0;right:0;bottom:5.5vh;text-align:center;padding:0 16px}
+.wl1-cnt{font-size:clamp(15px,1.5vw,20px);margin-bottom:18px}
+.wl1-cnt b{font-size:1.7em;font-weight:900;margin-right:8px;font-variant-numeric:tabular-nums}
+.wl-fx{position:absolute;inset:0;pointer-events:none}
+.wl-fx > i{position:absolute;left:50%;top:52%;animation:wlBurst 1.8s cubic-bezier(.15,.8,.25,1) both}
+.wl-fx > i > s{display:block;text-decoration:none;animation:wlFloat 5s ease-in-out infinite alternate}
+@keyframes wlBurst{from{transform:translate(-50%,-50%) scale(.2);opacity:0}15%{opacity:1}to{transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) rotate(var(--r));opacity:var(--o)}}
+@keyframes wlFloat{from{transform:translateY(-6px) rotate(-8deg)}to{transform:translateY(8px) rotate(10deg)}}
+/* mẫu 2: thổi nến */
+#wl.k2{background:linear-gradient(180deg,var(--bg-top) 0%,var(--bg-mid) 60%,var(--bg-bot) 100%);color:var(--ink)}
+#wl.k2 .wl-skip{background:#fff;border-color:var(--line)}
+.wl2-top{position:absolute;left:0;right:0;top:7vh;text-align:center;padding:0 16px}
+.wl2-top .wl-kick{color:var(--brand)}
+.wl2-top .wl-h{font-size:clamp(28px,4.4vw,62px);margin-top:8px}
+.wl2-top .wl-h em{font-style:normal;color:var(--brand)}
+.wl2-cake{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(86vw,720px,78vh)}
+.wl2-cake svg{width:100%;overflow:visible}
+.wl2-cake .fl{transform-box:fill-box;transform-origin:50% 100%;animation:wlFlick .35s ease-in-out infinite alternate;transition:opacity .4s}
+@keyframes wlFlick{from{transform:scale(.92,1.05) skewX(-2deg)}to{transform:scale(1.04,.94) skewX(2deg)}}
+.wl2-cake .glow{transition:opacity .6s}
+#wl.out-c .fl,#wl.out-c .glow{opacity:0}
+.wl2-cake .smoke{opacity:0}
+#wl.out-c .smoke{animation:wlSmoke 2.4s ease-out both}
+@keyframes wlSmoke{from{opacity:.7;transform:translateY(0) scale(.6)}to{opacity:0;transform:translateY(-70px) scale(1.6)}}
+.wl2-bots{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(5vh + 120px);width:min(98vw,1250px);overflow:visible}
+.wl2-bot{position:absolute;left:0;right:0;bottom:4.5vh;text-align:center;padding:0 16px}
+.wl2-bar{width:min(460px,82vw);height:9px;border-radius:9px;background:#F3E3E6;overflow:hidden;margin:0 auto 10px}
+.wl2-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#FF8FAB,var(--brand));border-radius:9px;transition:width .8s}
+.wl2-info{font-size:15px;color:var(--muted);margin-bottom:14px;min-height:1.4em}
+.wl2-info b{color:var(--brand);font-size:21px;font-variant-numeric:tabular-nums}
+.wl-conf{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.wl-conf i{position:absolute;top:-30px;width:9px;height:15px;border-radius:2px;animation:wlFall linear both}
+@keyframes wlFall{to{transform:translate(var(--dx),112vh) rotate(var(--r))}}
+.wl-conf.still i{animation:none;top:auto}
+/* mẫu 3: pháo hoa lời chúc */
+#wl.k3{background:radial-gradient(120% 90% at 50% 40%,#1C2D5E 0%,#0D1838 55%,#060B1E 100%)}
+#wl.k3 .wl-logo{position:static;height:32px;filter:brightness(0) invert(1);margin-bottom:20px}
+.wl3-star{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;animation:ffTw 3s ease-in-out infinite alternate}
+@keyframes ffTw{from{opacity:.15}to{opacity:.85}}
+.wl3-fw{position:absolute;width:280px;height:280px;transform:translate(-50%,-50%) scale(.1);opacity:0;animation:wlFw 4.2s ease-out infinite}
+@keyframes wlFw{0%{transform:translate(-50%,-50%) scale(.1);opacity:0}8%{opacity:1}55%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,calc(-50% + 22px)) scale(1.06);opacity:0}}
+.wl3-card{position:absolute;transform:translate(-50%,-50%);width:220px;text-align:center;font-size:13.5px;line-height:1.45;background:rgba(13,24,56,.78);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:10px 13px;opacity:0;animation:wlCard 4.2s ease-out infinite}
+.wl3-card small{display:block;margin-top:4px;color:#9FB0D6;font-size:12px}
+@keyframes wlCard{0%,12%{opacity:0;transform:translate(-50%,-40%)}24%,80%{opacity:1;transform:translate(-50%,-50%)}100%{opacity:0;transform:translate(-50%,-50%)}}
+.wl3-mid{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);text-align:center;width:min(760px,92vw)}
+.wl3-mid .wl-h{font-size:clamp(38px,6.2vw,92px);background:linear-gradient(180deg,#fff 0%,#FFD9E1 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 26px rgba(255,140,170,.35))}
+.wl3-sub{margin-top:14px;font-size:clamp(15px,1.6vw,21px);color:#C9D6FF}
+.wl3-ground{position:absolute;left:0;right:0;bottom:0;width:100%;height:24vh}
+.wl3-bot{position:absolute;left:0;right:0;bottom:3.5vh;text-align:center}
+@media (prefers-reduced-motion:reduce){#wl *,#wl *::before{animation-duration:.01s!important;animation-iteration-count:1!important}}
+/* khu quản trị: chọn mẫu chào mừng */
+.wlA-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.wlA-card{border:2px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;display:flex;flex-direction:column;cursor:pointer;transition:border-color .2s,box-shadow .2s}
+.wlA-card:hover{border-color:#F3B6C2}
+.wlA-card.on{border-color:var(--brand);box-shadow:0 6px 18px rgba(228,0,43,.15)}
+.wlA-th{height:104px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:19px;line-height:1.1;text-align:center;padding:10px;position:relative}
+.wlA-th small{display:block;font-size:11px;font-weight:700;letter-spacing:.15em;opacity:.85;margin-bottom:4px}
+.wlA-th.t0{background:repeating-linear-gradient(45deg,#F6F3F3,#F6F3F3 10px,#EFEAEA 10px,#EFEAEA 20px);color:var(--muted);font-size:15px}
+.wlA-th.t1{background:radial-gradient(120% 90% at 50% 45%,#F2163F,#8E001C);color:#fff}
+.wlA-th.t2{background:linear-gradient(180deg,#FFFBF9,#FDF1F2);color:var(--ink)} .wlA-th.t2 em{font-style:normal;color:var(--brand)}
+.wlA-th.t3{background:radial-gradient(120% 90% at 50% 40%,#1C2D5E,#060B1E);color:#FFE3EA}
+.wlA-bd{padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px;flex:1}
+.wlA-bd b{font-size:14.5px;display:flex;align-items:center;gap:7px}
+.wlA-bd b::before{content:"";width:14px;height:14px;border-radius:50%;border:2px solid #C9C2C2;flex:none}
+.wlA-card.on .wlA-bd b::before{border-color:var(--brand);background:radial-gradient(circle,var(--brand) 0 4px,#fff 5px)}
+.wlA-bd p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.45;flex:1}
+.wlA-bd .btn{align-self:flex-start;padding:6px 14px;font-size:13px}
+.wlA-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:14px}
+.wlA-opts .pn-box select{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:15px;background:#fff}
+.wlA-state{font-size:13px;color:var(--muted);margin:12px 0 0} .wlA-state b{color:var(--ink)}
 </style>
 <script src="config.js"></script>
 </head>
@@ -921,6 +1025,7 @@ body.anon #accField{display:none}
       <button data-tab="pin" role="tab">🔑 <span data-t="adminTabPin"></span></button>
       <button data-tab="texts" role="tab">📝 <span data-t="adminTabTexts"></span></button>
       <button data-tab="backup" role="tab">💾 <span data-t="adminTabBackup"></span></button>
+      <button data-tab="welcome" role="tab">🎉 <span data-t="adminTabWelcome"></span></button>
     </div>
     <div class="pn" id="aBackup" hidden>
       <div class="pn-grid">
@@ -955,6 +1060,23 @@ body.anon #accField{display:none}
       </div>
       <p class="dp-hint" id="txHint"></p>
       <div class="tx-list" id="txList"></div>
+    </div>
+    <div class="pn" id="aWelcome" hidden>
+      <p class="dp-hint" data-t="wlAdminHint"></p>
+      <div class="wlA-grid" id="wlCards">
+        <div class="wlA-card" data-k="1"><div class="wlA-th t1"><div><small>21 · 11</small>Chúc mừng<br>sinh nhật</div></div><div class="wlA-bd"><b data-t="wlName1"></b><p data-t="wlDesc1"></p><button class="btn" type="button" data-t="wlPreview"></button></div></div>
+        <div class="wlA-card" data-k="2"><div class="wlA-th t2"><div><small style="color:var(--brand)">🎂 🎂 🎂</small>Cùng thổi nến<br><em>mừng sinh nhật</em></div></div><div class="wlA-bd"><b data-t="wlName2"></b><p data-t="wlDesc2"></p><button class="btn" type="button" data-t="wlPreview"></button></div></div>
+        <div class="wlA-card" data-k="3"><div class="wlA-th t3"><div><small>✺ ✺ ✺</small>Happy<br>Birthday</div></div><div class="wlA-bd"><b data-t="wlName3"></b><p data-t="wlDesc3"></p><button class="btn" type="button" data-t="wlPreview"></button></div></div>
+        <div class="wlA-card" data-k="0"><div class="wlA-th t0"><div data-t="wlOffThumb"></div></div><div class="wlA-bd"><b data-t="wlOff"></b><p data-t="wlDescOff"></p></div></div>
+      </div>
+      <div class="wlA-opts">
+        <div class="pn-box"><h3 class="pn-h" data-t="wlWhenTitle"></h3><p class="pn-sub" data-t="wlWhenSub"></p>
+          <select id="wlWhen"><option value="day" data-t="wlWhenDayOpt"></option><option value="now" data-t="wlWhenNowOpt"></option></select></div>
+        <div class="pn-box"><h3 class="pn-h" data-t="wlGoalTitle"></h3><p class="pn-sub" data-t="wlGoalSub"></p>
+          <input id="wlGoalIn" type="number" min="1" max="5000" inputmode="numeric"></div>
+      </div>
+      <p class="wlA-state" id="wlState"></p>
+      <button class="btn primary" id="wlSave" type="button" data-t="wlSave" style="margin-top:12px"></button>
     </div>
     <div class="pn" id="aPin" hidden>
       <p class="dp-hint" data-t="adminPinHint"></p>
@@ -1195,6 +1317,7 @@ function applyServerTexts(o, tv){
   save("cta_texts", JSON.stringify({tv: TEXTS_TV, texts: o}));
   if (same) return;
   setOverrides(o); refreshTextsUI();
+  if (started && typeof wlMaybe === "function") setTimeout(wlMaybe, 300);
 }
 function refreshTextsUI(){
   try{
@@ -1254,6 +1377,7 @@ function previewApi(action, data){
   const pT = (()=>{ try{ return JSON.parse(load("cta_prev_texts") || "null") || {tv:"0", texts:{}}; }catch(e){ return {tv:"0", texts:{}}; } })();
   const pRx = (()=>{ let P = {}; try{ P = JSON.parse(load("cta_prev_rx") || "{}"); }catch(e){}
     const map = {}; (sample || []).forEach((m,i)=>{ const c = {}; if (i % 3 === 0) c.like = 1 + i % 7; if (i % 4 === 1) c.love = 1 + i % 5; if (i % 9 === 2) c.haha = 2; Object.values(P[m.id] || {}).forEach(r=>{ c[r] = (c[r]||0) + 1; }); if (Object.keys(c).length) map[m.id] = c; });
+    const cake = {}; Object.values(P.WELCOME_CAKE || {}).forEach(r=>{ cake[r] = (cake[r]||0) + 1; }); if (Object.keys(cake).length) map.WELCOME_CAKE = cake;
     return map; });
   const withT = o => { Object.assign(o, {tv: pT.tv}, String(data.tv||"") !== pT.tv || action === "adminList" ? {texts: pT.texts} : {}); if (action === "list"){ const m = pRx(), v = String(JSON.stringify(m).length) + "_" + hash(JSON.stringify(m)); o.rv = v; if (String(data.rv||"") !== v) o.rx = m; } return o; };
   if (action==="adminBackups"){ const L = (()=>{ try{ return JSON.parse(load("cta_prev_bk") || "[]"); }catch(e){ return []; } })(); return Promise.resolve({ok:true, backups: L.map(x=>x.meta), everyMin:180, keep:24, days:45}); }
@@ -2030,6 +2154,7 @@ function applyRx(map, rv){
   const old = $("#qSort").value === "react" ? JSON.stringify(feedSrc.slice(0, 60).map(m=>rxTotal(m.id))) : "";
   RX = map || {}; RX_V = String(rv || "");
   rxPaintAll();
+  if (typeof WL !== "undefined" && WL && WL.paint) WL.paint();
   if ($("#qSort").value === "react" && loaded && JSON.stringify(feedSrc.slice(0, 60).map(m=>rxTotal(m.id))) !== old) renderFeed(new Set(), true);
 }
 function rxSumHtml(id){
@@ -2502,11 +2627,259 @@ let started = false, poll = null;
 function start(){
   if (started) return; started = true;
   spotAfter = Date.now() + 10000;
+  setTimeout(wlMaybe, 900);
   /* lệch thời điểm tải giữa các máy để 150 người mở cùng lúc không dồn vào một giây */
   setTimeout(()=>refresh(false), Math.random()*400);
   clearTimeout(poll);
   (function loop(){ poll = setTimeout(()=>{ if (!document.hidden) refresh(true); loop(); }, TIMING.refresh*1000*(0.85 + Math.random()*0.3)); })();
 }
+
+/* ---------- màn hình chào mừng ngày sinh nhật ----------
+   3 mẫu: 1 cây bừng nở, 2 cùng thổi nến, 3 pháo hoa lời chúc. Ban tổ chức chọn mẫu, xem thử trong Quản trị → Chào mừng.
+   Cài đặt lưu chung với phần Nội dung trên máy chủ: welcomeMode (0 tắt, 1/2/3), welcomeWhen (day | now), welcomeGoal.
+   Mỗi máy chỉ tự hiện 1 lần mỗi ngày; thêm ?welcome=1|2|3 vào địa chỉ trang để xem thử. */
+const WL_KEYS = ["welcomeMode","welcomeWhen","welcomeGoal"];
+const WL_CAKE = "WELCOME_CAKE";
+const wlMode = () => /^[0-3]$/.test(TXT.welcomeMode || "") ? TXT.welcomeMode : "1";
+const wlGoal = () => Math.max(1, Math.min(5000, parseInt(TXT.welcomeGoal, 10) || 50));
+const vnDay = d => new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Ho_Chi_Minh",year:"numeric",month:"2-digit",day:"2-digit"}).format(d);
+const wlIsDay = () => { const b = new Date(bday()); return !isNaN(b) && vnDay(b) === vnDay(new Date()); };
+const wlCakeCount = () => Object.values(RX[WL_CAKE] || {}).reduce((a,b)=>a + (+b || 0), 0);
+let WL = null;   // {kind, preview, el, timers[]}
+const svgEl = (tag, attrs={}) => { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+const wlRnd = (a, b) => a + Math.random() * (b - a);
+const WL_PAL = ["#2F7D57","#1F8A8A","#7DB65A","#D9A441","#E8743B","#3D6FB6","#7B5BA6","#C2185B","#00897B","#5C6BC0","#FFD166","#FF8FAB"];
+const wlBr = s => esc(s).replace(/\n/g, "<br>");
+
+function wlMaybe(){
+  if (WL || !started) return;
+  const q = /[?&]welcome=([1-3])/.exec(location.search);
+  if (q && !wlMaybe.forced){ wlMaybe.forced = true; return wlOpen(+q[1], true); }
+  const m = wlMode(); if (m === "0") return;
+  if (TXT.welcomeWhen !== "now" && !wlIsDay()) return;
+  const key = vnDay(new Date()) + "|" + m;
+  if (load("cta_wl_seen") === key) return;
+  if ([...$$(".modal.show")].some(x=>x.id !== "gate")) return;   // đang mở hộp thoại khác thì để lần sau
+  save("cta_wl_seen", key);
+  wlOpen(+m, false);
+}
+
+function wlOpen(kind, preview){
+  wlClose(true);
+  const el = document.createElement("div"); el.id = "wl"; el.className = "k" + kind;
+  el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", t("wlAria"));
+  document.body.appendChild(el); document.body.classList.add("wl-open");
+  WL = {kind, preview, el, timers: []};
+  [wl1, wl2, wl3][kind - 1](el, preview);
+  const sk = document.createElement("button"); sk.type = "button"; sk.className = "wl-skip"; sk.textContent = t("wlSkip") + " ›"; sk.onclick = ()=>wlClose(); el.appendChild(sk);
+  if (preview){ const p = document.createElement("div"); p.className = "wl-prev"; p.textContent = t("wlPreviewTag"); el.appendChild(p); }
+  requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add("in")));
+  setTimeout(()=>sk.focus({preventScroll:true}), 400);
+}
+function wlClose(now){
+  if (!WL) return;
+  const {el, timers} = WL; WL = null;
+  timers.forEach(x=>{ clearTimeout(x); clearInterval(x); });
+  document.body.classList.remove("wl-open");
+  if (now){ el.remove(); return; }
+  el.classList.add("out"); setTimeout(()=>el.remove(), 500);
+}
+document.addEventListener("keydown", e=>{ if (e.key === "Escape" && WL){ e.stopPropagation(); wlClose(); } }, true);
+function wlButtons(cls){
+  const box = document.createElement("div"); box.className = "wl-btns";
+  const a = document.createElement("button"); a.type = "button"; a.className = "wl-b " + cls[0]; a.textContent = "🌳 " + t("wlToTree"); a.onclick = ()=>wlClose();
+  box.appendChild(a);
+  if (cls[1]){ const b = document.createElement("button"); b.type = "button"; b.className = "wl-b " + cls[1]; b.textContent = "✉ " + t("wlSend");
+    b.onclick = ()=>{ const pv = WL && WL.preview; wlClose(); if (!pv) setTimeout(openSend, 350); }; box.appendChild(b); }
+  return box;
+}
+function wlLogo(){ const i = document.createElement("img"); i.className = "wl-logo"; i.alt = COMPANY; i.src = (CFG.company && CFG.company.logo) || ""; return i; }
+/* hoa lá bung ra từ giữa màn hình rồi lơ lửng */
+function wlBurst(box, count, spread){
+  let h = "";
+  for (let i = 0; i < count; i++){
+    const a = wlRnd(0, Math.PI*2), r = wlRnd(.3, 1) * spread, c = WL_PAL[i % WL_PAL.length], s = wlRnd(10, 22);
+    const x = Math.cos(a) * r * Math.min(innerWidth, 1400) / 100, y = Math.sin(a) * r * .8 * innerHeight / 100;
+    const inner = i % 3 ? `<s style="width:${s}px;height:${(s*.55).toFixed(0)}px;background:${c};border-radius:100% 0"></s>` : `<s style="font-size:${s}px;color:${c};line-height:1">✿</s>`;
+    h += `<i style="--x:${x.toFixed(0)}px;--y:${y.toFixed(0)}px;--r:${wlRnd(-200,200).toFixed(0)}deg;--o:${wlRnd(.55,.95).toFixed(2)};animation-delay:${wlRnd(1.6,2.4).toFixed(2)}s">${inner}</i>`;
+  }
+  box.innerHTML = h;
+}
+function wlCountUp(node, to, ms, delay){
+  const t0 = performance.now() + delay;
+  const step = now => { if (!WL) return; const k = Math.min(1, Math.max(0, (now - t0) / ms)); node.textContent = Math.round(to * (1 - Math.pow(1 - k, 3))).toLocaleString("vi-VN"); if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function wlDateDots(){ const d = new Date(bday()); if (isNaN(d)) return "";
+  const p = new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Ho_Chi_Minh",day:"2-digit",month:"2-digit"}).formatToParts(d);
+  return +p.find(x=>x.type==="day").value + "." + p.find(x=>x.type==="month").value; }
+
+/* 1. Cây bừng nở */
+function wl1(el){
+  const n = items.length;
+  el.innerHTML = `<div class="wl1-big" aria-hidden="true">${esc(wlDateDots())}</div>
+    <div class="wl1-tree"><div></div></div><div class="wl-fx"></div>
+    <div class="wl1-top"><div class="wl-kick wl-up">${esc(dateFull().replace(/\//g," · "))}</div><h2 class="wl-h wl-up" style="animation-delay:.15s">${wlBr(t("wl1Title"))}</h2></div>
+    <div class="wl1-bot"><div class="wl1-cnt wl-up" style="animation-delay:1.4s"><b>0</b>${esc(t("wl1Count"))}</div></div>`;
+  el.prepend(wlLogo());
+  el.querySelector(".wl1-bot").appendChild(wlButtons(["solid", "ghost"])).classList.add("wl-up");
+  el.querySelector(".wl1-bot .wl-btns").style.animationDelay = "2.6s";
+  /* chép cây đang có trên trang (chỉ hoa lá và cành, không kèm nền) */
+  const svg = svgEl("svg"), wrap = svgEl("g"), src = $("#treeScale").cloneNode(true);
+  src.querySelectorAll("#canopy,#canopyN,#foliageN,#halos").forEach(e=>e.remove());
+  src.removeAttribute("id"); src.querySelectorAll("[id]").forEach(e=>e.removeAttribute("id"));
+  src.querySelectorAll("[style]").forEach(e=>{ e.style.opacity = ""; e.style.display = ""; });
+  src.querySelectorAll("[tabindex]").forEach(e=>e.removeAttribute("tabindex"));
+  const lv = src.children[0] && src.children[0].lastElementChild;   // nhóm lời chúc
+  if (lv) [...lv.children].forEach(g=>{ g.classList.add("wlp"); g.style.animationDelay = wlRnd(1.2, 3.2).toFixed(2) + "s"; });
+  /* thân cây luôn màu gỗ ban ngày trên nền đỏ */
+  const bk = $("#bark").cloneNode(true); bk.id = "wlBark"; [...bk.children].forEach((st,i)=>st.setAttribute("stop-color", DAY_BARK[i] || DAY_BARK[3]));
+  const defs = svgEl("defs"); defs.appendChild(bk); svg.appendChild(defs);
+  src.querySelectorAll('[fill="url(#bark)"]').forEach(e=>e.setAttribute("fill", "url(#wlBark)"));
+  wrap.appendChild(src); svg.appendChild(wrap); svg.setAttribute("aria-hidden", "true");
+  el.querySelector(".wl1-tree > div").appendChild(svg);
+  try{ const b = wrap.getBBox(); const pad = 24; svg.setAttribute("viewBox", `${(b.x-pad).toFixed(0)} ${(b.y-pad).toFixed(0)} ${(b.width+pad*2).toFixed(0)} ${(b.height+pad*2).toFixed(0)}`); }
+  catch(e){ svg.setAttribute("viewBox", "-60 40 1120 980"); }
+  wlBurst(el.querySelector(".wl-fx"), innerWidth < 700 ? 34 : 70, 46);
+  wlCountUp(el.querySelector(".wl1-cnt b"), n, 2000, 1500);
+}
+
+/* 2. Cùng thổi nến */
+function wl2(el, preview){
+  const hl = esc(COMPANY), title = esc(t("wl2Title")).replace(hl, `<em>${hl}</em>`);
+  let cand = "";
+  for (let i = 0; i < 5; i++){ const x = 400 + i*50, c = ["#FFD166","#7DB65A","#3D6FB6","#E8743B","#7B5BA6"][i];
+    cand += `<rect x="${x-6}" y="250" width="12" height="52" rx="4" fill="${c}"/><rect x="${x-6}" y="258" width="12" height="6" fill="#fff" opacity=".6"/><rect x="${x-6}" y="276" width="12" height="6" fill="#fff" opacity=".6"/>
+      <g class="fl" style="animation-delay:-${(i*.13).toFixed(2)}s"><ellipse cx="${x}" cy="236" rx="9" ry="16" fill="url(#wlFl)"/><ellipse cx="${x}" cy="240" rx="4" ry="8" fill="#FFF7D6"/></g>
+      <circle class="smoke" cx="${x}" cy="232" r="9" fill="#BDB6B6" style="animation-delay:${(i*.08).toFixed(2)}s"/>`; }
+  el.innerHTML = `<div class="wl-conf" aria-hidden="true"></div>
+    <div class="wl2-top"><div class="wl-kick wl-up">${esc(t("wl2Kicker"))}</div><h2 class="wl-h wl-up" style="animation-delay:.15s">${title}</h2></div>
+    <div class="wl2-cake wl-fade" style="animation-delay:.3s"><svg viewBox="150 200 700 480" aria-hidden="true">
+      <defs><radialGradient id="wlFl" cx="50%" cy="60%" r="60%"><stop offset="0" stop-color="#FFE38A"/><stop offset=".6" stop-color="#FFB13B"/><stop offset="1" stop-color="#FF7A1A" stop-opacity="0"/></radialGradient>
+      <linearGradient id="wlCk" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#F2163F"/><stop offset="1" stop-color="#B80023"/></linearGradient>
+      <radialGradient id="wlGl" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#FFD166" stop-opacity=".45"/><stop offset="1" stop-color="#FFD166" stop-opacity="0"/></radialGradient></defs>
+      <ellipse class="glow" cx="500" cy="270" rx="230" ry="110" fill="url(#wlGl)"/>
+      <ellipse cx="500" cy="660" rx="330" ry="34" fill="#000" opacity=".07"/>
+      <rect x="200" y="530" width="600" height="120" rx="18" fill="url(#wlCk)"/><rect x="200" y="530" width="600" height="26" rx="13" fill="#fff"/>
+      <rect x="270" y="420" width="460" height="120" rx="18" fill="#fff"/><rect x="270" y="420" width="460" height="18" rx="9" fill="#FDE8EC"/>
+      <rect x="350" y="300" width="300" height="130" rx="18" fill="url(#wlCk)"/><rect x="350" y="300" width="300" height="22" rx="11" fill="#fff"/>
+      <text x="500" y="392" text-anchor="middle" font-size="46" font-weight="900" fill="#fff">${esc(wlDateDots())}</text>
+      <text x="500" y="500" text-anchor="middle" font-size="22" font-weight="700" fill="#E4002B" letter-spacing="4">${esc(COMPANY.toUpperCase())}</text>
+      <g fill="#FFD166">${[...Array(12)].map((_,i)=>`<circle cx="${225+i*50}" cy="600" r="7"/>`).join("")}</g>${cand}</svg></div>
+    <div class="wl2-bot"><div class="wl2-bar"><i></i></div><div class="wl2-info"></div></div>`;
+  el.prepend(wlLogo());
+  /* robot của trang đứng hai bên bánh */
+  const bots = svgEl("svg", {viewBox:"0 0 1000 200", class:"wl2-bots", "aria-hidden":"true"}); el.appendChild(bots);
+  const src = $$("#frontBots > g, #backBots > g");
+  [[60,170,1.25,1],[175,175,1.05,1],[825,175,1.05,-1],[940,170,1.25,-1]].forEach(([x,y,s,f], i)=>{
+    const g = src[i % (src.length || 1)]; if (!g) return;
+    const c = g.cloneNode(true); c.removeAttribute("transform"); c.removeAttribute("id"); c.style.transform = "none";
+    const w = svgEl("g", {transform:`translate(${x},${y}) scale(${s*f},${s})`}); w.appendChild(c); bots.appendChild(w); });
+  const btn = document.createElement("button"); btn.type = "button"; btn.className = "wl-b red";
+  const bot = el.querySelector(".wl2-bot"); bot.appendChild(btn);
+  const tree = document.createElement("button"); tree.type = "button"; tree.className = "wl-b"; tree.style.cssText = "border-color:var(--line);color:var(--ink);background:#fff;margin-left:10px"; tree.textContent = "🌳 " + t("wlToTree"); tree.onclick = ()=>wlClose(); bot.appendChild(tree);
+  let fake = 0, done = false;
+  const paint = () => {
+    const goal = wlGoal(), n = preview ? fake : wlCakeCount(), mine = preview ? fake > 0 : !!MYRX[WL_CAKE];
+    el.querySelector(".wl2-bar i").style.width = Math.min(100, n / goal * 100).toFixed(1) + "%";
+    const fin = n >= goal;
+    el.querySelector(".wl2-info").innerHTML = fin ? esc(t("wl2Finished")) : esc(t("wl2Progress", {n:"\u0001", goal:goal.toLocaleString("vi-VN")})).replace("\u0001", `<b>${n.toLocaleString("vi-VN")}</b>`);
+    btn.disabled = mine || fin; btn.textContent = fin ? "🎉 " + t("wl2Done") : mine ? "✓ " + t("wl2Blown") : "🎂 " + t("wl2Btn");
+    if (fin && !done){ done = true; el.classList.add("out-c"); wlConfetti(el.querySelector(".wl-conf"), 110);
+      el.querySelector(".wl2-top .wl-h").innerHTML = esc(t("wl2FinishedTitle")).replace(hl, `<em>${hl}</em>`); }
+  };
+  btn.onclick = async ()=>{
+    if (preview){ fake = wlGoal(); paint(); return; }   // xem thử: tắt nến ngay để thấy hiệu ứng
+    btn.disabled = true;
+    try{
+      const res = await api("react", {id: WL_CAKE, cid: CID, r: "love"});
+      if (!res || !res.ok) throw new Error(res && res.error === "Không tìm thấy lời chúc." ? t("wl2Old") : (res && res.error) || t("netError"));
+      MYRX[WL_CAKE] = "love"; save("cta_myrx", JSON.stringify(MYRX));
+      if (res.counts) RX[WL_CAKE] = res.counts; RX_V = "";
+      wlConfetti(el.querySelector(".wl-conf"), 24, true);
+    }catch(e){ toast(e.message || t("netError")); }
+    paint();
+  };
+  paint();
+  WL.paint = paint;
+  /* đang mở màn hình này thì cập nhật số người thổi nến nhanh hơn bình thường */
+  if (!preview) WL.timers.push(setInterval(()=>{ if (!document.hidden) refresh(true); }, 20000));
+}
+function wlConfetti(box, n, small){
+  if (!box) return;
+  let h = "";
+  for (let i = 0; i < n; i++) h += `<i style="left:${wlRnd(0,100).toFixed(1)}%;background:${WL_PAL[i % WL_PAL.length]};--dx:${wlRnd(-120,120).toFixed(0)}px;--r:${wlRnd(-720,720).toFixed(0)}deg;animation-duration:${wlRnd(small?2.2:3,small?3.4:6).toFixed(2)}s;animation-delay:${wlRnd(0,small?.4:1.6).toFixed(2)}s;${small?"":""}"></i>`;
+  box.insertAdjacentHTML("beforeend", h);
+  setTimeout(()=>{ [...box.children].slice(0, n).forEach(x=>x.remove()); }, 9000);
+}
+
+/* 3. Pháo hoa lời chúc */
+function wl3(el){
+  buildNightScene();
+  const n = items.length, narrow = innerWidth < 700;
+  let h = ""; for (let i = 0; i < (narrow ? 50 : 100); i++) h += `<div class="wl3-star" style="left:${wlRnd(0,100).toFixed(1)}%;top:${wlRnd(0,82).toFixed(1)}%;animation-delay:${wlRnd(0,3).toFixed(1)}s"></div>`;
+  const spots = narrow ? [[50,10,"#F2163F"],[22,71,"#7FF0C4"],[78,71,"#8FC1FF"]] : [[13,24,"#FFD166"],[87,22,"#FF8FAB"],[15,63,"#7FF0C4"],[85,61,"#8FC1FF"],[50,9,"#F2163F"],[32,8,"#C9A0FF"],[68,8,"#FFB13B"]];
+  const dur = 4.2;
+  spots.forEach(([x,y,c], k)=>{
+    let rays = ""; for (let i = 0; i < 34; i++){ const a = i/34*Math.PI*2, L = wlRnd(70,122); rays += `<line x1="${(Math.cos(a)*18).toFixed(1)}" y1="${(Math.sin(a)*18).toFixed(1)}" x2="${(Math.cos(a)*L).toFixed(1)}" y2="${(Math.sin(a)*L).toFixed(1)}" stroke="${c}" stroke-width="2.4" stroke-linecap="round" opacity="${wlRnd(.5,1).toFixed(2)}"/><circle cx="${(Math.cos(a)*(L+6)).toFixed(1)}" cy="${(Math.sin(a)*(L+6)).toFixed(1)}" r="2.6" fill="#fff"/>`; }
+    const delay = (k * dur / spots.length * 1.7) % dur;
+    const sz = k >= 4 ? 200 : narrow ? 220 : 280;
+    h += `<svg class="wl3-fw" viewBox="-140 -140 280 280" style="left:${x}%;top:${y}%;width:${sz}px;height:${sz}px;filter:drop-shadow(0 0 10px ${c});animation-delay:${delay.toFixed(2)}s" aria-hidden="true">${rays}</svg>`;
+    if (!narrow && k < 4) h += `<div class="wl3-card" data-k="${k}" style="left:${x}%;top:${y}%;border-color:${c}66;animation-delay:${delay.toFixed(2)}s"></div>`;
+  });
+  el.innerHTML = h + `<div class="wl3-mid"><h2 class="wl-h wl-up" style="animation-delay:.2s">${wlBr(t("wl3Title"))}</h2><div class="wl3-sub wl-up" style="animation-delay:.5s">${esc(t("wl3Sub", {n: n.toLocaleString("vi-VN")}))}</div></div><div class="wl3-bot"></div>`;
+  el.querySelector(".wl3-mid").prepend(wlLogo());
+  el.querySelector(".wl3-bot").appendChild(wlButtons(["solid"]));
+  /* mặt đất: cỏ phát sáng và robot lấy từ cảnh đêm của trang */
+  const g = svgEl("svg", {viewBox:"0 820 1000 200", preserveAspectRatio:"xMidYMax slice", class:"wl3-ground", "aria-hidden":"true"});
+  const gn = $("#grassN"); if (gn){ const c = gn.cloneNode(true); c.removeAttribute("id"); c.removeAttribute("class"); c.style.cssText = ""; g.appendChild(c); }
+  const src = $$("#frontBots > g, #backBots > g");
+  [[140,975,1.05,1],[860,975,1.05,-1]].forEach(([x,y,s,f], i)=>{ const b0 = src[i % (src.length || 1)]; if (!b0) return; const c = b0.cloneNode(true); c.removeAttribute("transform"); c.removeAttribute("id"); c.style.transform = "none";
+    const w = svgEl("g", {transform:`translate(${x},${y}) scale(${s*f},${s})`}); w.appendChild(c); g.appendChild(w); });
+  el.insertBefore(g, el.querySelector(".wl3-bot"));
+  /* mỗi chùm pháo hé một lời chúc thật, đổi lời ở mỗi lần nổ */
+  const pool = items.filter(m=>m.text).sort(()=>Math.random() - .5);
+  let pi = 0;
+  const fill = card => {
+    if (!pool.length){ card.style.display = "none"; return; }
+    const m = pool[pi++ % pool.length], s = String(m.text || "");
+    card.innerHTML = `“${esc(s.length > 110 ? s.slice(0, 107).trim() + "…" : s)}”` + (!ANON && m.from ? `<small>${esc(t("cardFrom", {from: m.from}))}</small>` : "");
+  };
+  el.querySelectorAll(".wl3-card").forEach(c=>{ fill(c); c.addEventListener("animationiteration", ()=>fill(c)); });
+}
+
+/* Quản trị → Chào mừng */
+let wlDraft = null;
+function renderWelcomeAdmin(){
+  if (!wlDraft) wlDraft = {welcomeMode: wlMode(), welcomeWhen: TXT.welcomeWhen === "now" ? "now" : "day", welcomeGoal: String(wlGoal())};
+  $$("#wlCards .wlA-card").forEach(c=>c.classList.toggle("on", c.dataset.k === wlDraft.welcomeMode));
+  $("#wlWhen").value = wlDraft.welcomeWhen; $("#wlGoalIn").value = wlDraft.welcomeGoal;
+  const n = wlCakeCount(), m = wlDraft.welcomeMode;
+  const name = m === "0" ? t("wlOff") : t("wlName" + m);
+  $("#wlState").innerHTML = esc(t("wlAdminState", {name: "\u0001", when: wlDraft.welcomeWhen === "now" ? t("wlWhenNow") : t("wlWhenDay", {date: dateFull()})})).replace("\u0001", `<b>${esc(name)}</b>`) + " · " + esc(t("wlAdminBlown", {n}));
+  const dirty = WL_KEYS.some(k=>String(wlDraft[k]) !== String(k === "welcomeMode" ? wlMode() : k === "welcomeGoal" ? wlGoal() : (TXT.welcomeWhen === "now" ? "now" : "day")));
+  $("#wlSave").disabled = !dirty;
+}
+$$("#wlCards .wlA-card").forEach(c=>{
+  c.addEventListener("click", e=>{ if (e.target.closest("button")) return; wlDraft.welcomeMode = c.dataset.k; renderWelcomeAdmin(); });
+  const b = c.querySelector("button"); if (b) b.onclick = ()=>wlOpen(+c.dataset.k, true);
+});
+$("#wlWhen").addEventListener("change", e=>{ wlDraft.welcomeWhen = e.target.value; renderWelcomeAdmin(); });
+$("#wlGoalIn").addEventListener("input", e=>{ wlDraft.welcomeGoal = String(Math.max(1, Math.min(5000, parseInt(e.target.value, 10) || 1))); renderWelcomeAdmin(); });
+$("#wlSave").onclick = async ()=>{
+  const btn = $("#wlSave"), out = Object.assign({}, TEXTS_OVR);
+  WL_KEYS.forEach(k=>{ out[k] = String(wlDraft[k]); });
+  btn.disabled = true; btn.textContent = t("adminPinSaving");
+  try{
+    const res = await api("adminSetTexts", {texts: out});
+    if (!res || !res.ok) throw new Error((res && res.error) || t("adminSaveError"));
+    applyServerTexts(res.texts || out, res.tv);
+    Object.keys(BACKENDS).filter(k=>k !== CUR).forEach(k=>{ apiRaw("adminSetTexts", {texts: out}, k).catch(()=>{}); });
+    if (txDraft) WL_KEYS.forEach(k=>{ txDraft[k] = out[k]; });
+    wlDraft = null; toast(t("wlSaved"));
+  }catch(e){ toast(e.message || t("adminSaveError")); }
+  finally{ btn.textContent = t("wlSave"); renderWelcomeAdmin(); }
+};
 
 /* ---------- khởi động ---------- */
 if (PREVIEW) document.body.classList.add("preview");
@@ -2952,6 +3325,15 @@ $("#btnDraw").onclick = openDraw;
 
 function renderAdmin(){
   $("#txSave").hidden = adminTab !== "texts";
+  const isW = adminTab === "welcome";
+  $("#aWelcome").hidden = !isW;
+  if (isW){
+    ["#aDepts","#aList","#aSrv",".a-search","#aFilt","#aShow","#dpSave","#aAnon","#aPin","#aTexts","#aBackup"].forEach(q=>$(q).hidden = true);
+    $$("#aTabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===adminTab));
+    $("#aInfo").textContent = "";
+    renderWelcomeAdmin();
+    return;
+  }
   const isB = adminTab === "backup";
   $("#aBackup").hidden = !isB;
   if (isB){
@@ -3153,6 +3535,7 @@ const TX_GROUPS = [
   ["Form gửi lời chúc", [["formTitle","Tiêu đề form"],["formPrivacy","Dòng bảo mật (khi không ẩn danh)"],["formPrivacyAnon","Dòng bảo mật (khi ẩn danh)"],["accLabel","Nhãn ô Account"],["accPlaceholder","Chữ mờ trong ô Account"],["accHint","Gợi ý dưới ô Account"],["errAccount","Lỗi thiếu Account"],["msgLabel","Nhãn ô lời chúc"],["msgPlaceholder","Chữ mờ trong ô lời chúc"],["ideasCompany","Gợi ý câu mở đầu (mỗi dòng một gợi ý)"],["ideasHint","Dòng dưới các gợi ý"],["btnLater","Nút để sau"],["btnSubmit","Nút gửi"],["errShort","Lỗi lời chúc quá ngắn"],["errSend","Lỗi gửi không được"]]],
   ["Sau khi gửi", [["doneTitle","Tiêu đề cảm ơn"],["doneText","Nội dung cảm ơn"],["doneTextPending","Nội dung khi cần chờ duyệt"],["btnInvite","Nút mời đồng nghiệp"],["inviteText","Lời mời (khi ẩn danh)"],["inviteTextNamed","Lời mời (khi không ẩn danh)"],["inviteCopied","Thông báo đã chép lời mời"],["btnAgain","Nút gửi thêm"],["btnViewTree","Nút xem cây"]]],
   ["Màn hình nhập PIN", [["gateHello","Lời chào"],["gateText","Hướng dẫn nhập PIN"],["pinPlaceholder","Chữ mờ trong ô PIN"],["gateButton","Nút vào trang"],["gateFoot","Dòng cuối (khi ẩn danh)"],["gateFootNamed","Dòng cuối (khi không ẩn danh)"],["pinWrong","Lỗi sai PIN"]]],
+  ["Màn hình chào mừng ngày sinh nhật", [["wlSkip","Nút bỏ qua"],["wlToTree","Nút vào xem cây"],["wlSend","Nút gửi lời chúc"],["wl1Title","Mẫu 1: dòng chữ lớn (xuống dòng được)"],["wl1Count","Mẫu 1: chữ sau con số lời cảm ơn"],["wl2Kicker","Mẫu 2: dòng chữ nhỏ trên cùng"],["wl2Title","Mẫu 2: dòng chữ lớn"],["wl2FinishedTitle","Mẫu 2: dòng chữ lớn khi nến đã tắt"],["wl2Btn","Mẫu 2: nút thổi nến"],["wl2Blown","Mẫu 2: nút khi đã thổi"],["wl2Progress","Mẫu 2: tiến độ ({n} số người đã thổi, {goal} số cần đạt)"],["wl2Finished","Mẫu 2: khi đủ người"],["wl3Title","Mẫu 3: dòng chữ lớn (xuống dòng được)"],["wl3Sub","Mẫu 3: dòng chữ phụ ({n} số lời chúc)"]]],
   ["Trình chiếu và thông báo", [["showTitle","Tiêu đề trình chiếu"],["showCount","Đếm số lời chúc"],["showEmpty","Khi không có gì để chiếu"],["toastNewOne","Thông báo 1 lời chúc mới"],["toastNewMany","Thông báo nhiều lời chúc mới"]]]
 ];
 let txDraft = null;

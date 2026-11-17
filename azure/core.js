@@ -307,7 +307,8 @@ function createCore(tables, env = process.env, deps = {}) {
     if (now - h.at > 60e3) { h.n = 0; h.at = now; }
     if (++h.n > 120) return { ok: false, error: 'Bạn thao tác nhanh quá, thử lại sau ít phút nhé.' };
     rxHits.set(k, h); if (rxHits.size > 5000) rxHits.clear();
-    if (!(await approved()).some(m => m.id === id)) return { ok: false, error: 'Không tìm thấy lời chúc.' };
+    /* WELCOME_CAKE: bộ đếm chung của nút "Thổi nến" trên màn hình chào mừng (mỗi trình duyệt 1 lượt) */
+    if (id !== 'WELCOME_CAKE' && !(await approved()).some(m => m.id === id)) return { ok: false, error: 'Không tìm thấy lời chúc.' };
     await reactions.upsertEntity({ partitionKey: id, rowKey: cid, r, atS: stamp(now) }, 'Replace');
     const mine = [];
     for await (const e of reactions.listEntities({ queryOptions: { filter: `PartitionKey eq '${id}'` } })) mine.push({ id, cid: e.rowKey, r: e.r || '' });
