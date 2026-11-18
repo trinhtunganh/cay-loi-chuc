@@ -257,6 +257,8 @@ window.SITE_CONFIG = {
     adminTabTexts:    "Nội dung",
     adminTabBackup:   "Sao lưu",
     adminTabWelcome:  "Chào mừng",
+    adminStageHint:   "Số lời chúc, phải lớn hơn mốc trước ({prev})",
+    adminStageOrder:  "Mốc giai đoạn {n} phải là số nguyên lớn hơn mốc của giai đoạn trước.",
 
     /* màn hình chào mừng ngày sinh nhật (chọn mẫu trong Quản trị → Chào mừng) */
     wlAria:           "Chào mừng sinh nhật {company}",

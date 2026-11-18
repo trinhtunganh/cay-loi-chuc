@@ -459,6 +459,7 @@ body.anon #accField{display:none}
 .tx-lb small{display:block;font-size:11px;color:var(--muted);margin-top:2px;word-break:break-all}
 .tx-row textarea{font:inherit;font-size:14px;line-height:1.45;border:1px solid var(--line);border-radius:9px;padding:7px 9px;resize:vertical;min-height:36px;width:100%;box-sizing:border-box}
 .tx-date{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:7px 9px;justify-self:start}
+.tx-num{width:120px} .tx-num.bad{border-color:var(--brand);background:#FFF1F3}
 .tx-row button{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:#fff;cursor:pointer;color:#6b5f61}
 .tx-row button:disabled{opacity:.3;cursor:default}
 @media (max-width:640px){ .tx-row{grid-template-columns:1fr 34px} .tx-lb{grid-column:1 / span 2} }
@@ -1378,7 +1379,8 @@ function applyServerTexts(o, tv){
 function refreshTextsUI(){
   try{
     applyTexts(); setAnonMode(ANON); syncType();
-    if (loaded){ renderStatus(); applyFilter(new Set(), true); }
+    if (typeof STAGES !== "undefined") applyStageMins();
+    if (loaded){ renderLeaves(); applyFilter(new Set(), true); }
     if (typeof alignTitle === "function") alignTitle();
   }catch(e){ console.warn(e); }
 }
@@ -1784,6 +1786,23 @@ const STAGES = (function(){
 })();
 const stageIdx = n => STAGES.reduce((k,x,i)=> n>=x.min ? i : k, 0);
 STAGES.forEach((s,i)=>{ const k = "stageName" + i; DEF_TXT[k] = s.name; if (!(k in TEXTS_OVR)) TXT[k] = s.name; });
+/* mốc số lời chúc của từng giai đoạn: Ban tổ chức sửa ở Quản trị → Nội dung (stageMin1, stageMin2…); giai đoạn đầu luôn từ 0 */
+STAGES.forEach((s,i)=>{ s.def = s.min; if (!i) return; const k = "stageMin" + i; DEF_TXT[k] = String(s.min); if (!(k in TEXTS_OVR)) TXT[k] = String(s.min); });
+function stageMinsFrom(src){
+  const out = [0];
+  for (let i = 1; i < STAGES.length; i++){
+    const v = parseInt(src["stageMin" + i], 10);
+    out.push(Number.isFinite(v) && v > out[i-1] ? v : Math.max(STAGES[i].def, out[i-1] + 1));
+  }
+  return out;
+}
+function stageMinsValid(src){
+  let prev = 0;
+  for (let i = 1; i < STAGES.length; i++){ const v = Number(src["stageMin" + i]); if (!Number.isInteger(v) || v <= prev) return i; prev = v; }
+  return 0;
+}
+function applyStageMins(){ const m = stageMinsFrom(TXT); STAGES.forEach((s,i)=>{ s.min = m[i]; }); }
+applyStageMins();
 const stageName = i => TXT["stageName" + i] != null ? TXT["stageName" + i] : STAGES[i].name;
 
 let items = [], byId = new Map(), currentStage = null, leafEls = new Map(), loaded = false;
@@ -3638,7 +3657,7 @@ const TX_GROUPS = [
 ];
 let txDraft = null;
 function txGroups(){
-  const groups = TX_GROUPS.map(([g, list])=>[g, list.flatMap(([k, l])=> k === "__stages" ? STAGES.map((s,i)=>["stageName"+i, `Tên giai đoạn ${i+1} (từ ${s.min} lời chúc)`]) : [[k, l]])]);
+  const groups = TX_GROUPS.map(([g, list])=>[g, list.flatMap(([k, l])=> k === "__stages" ? STAGES.flatMap((s,i)=> i ? [["stageName"+i, `Tên giai đoạn ${i+1}`], ["stageMin"+i, `Mốc giai đoạn ${i+1}: đủ bao nhiêu lời chúc thì cây lên "${txDraft && txDraft["stageName"+i] || stageName(i)}"`]] : [["stageName"+i, `Tên giai đoạn 1 (từ 0 lời chúc)`]]) : [[k, l]])]);
   if ($("#txAll").checked){
     const seen = new Set(groups.flatMap(g=>g[1].map(x=>x[0])));
     groups.push(["Chữ khác (khu quản trị, thông báo lỗi…)", Object.keys(DEF_TXT).filter(k=>!seen.has(k)).map(k=>[k, k])]);
@@ -3661,6 +3680,17 @@ function renderTexts(){
     rows.forEach(([k, l])=>{
       const row = document.createElement("div"); row.className = "tx-row"; row.dataset.k = k;
       const isDate = k === "birthday";
+      if (/^stageMin\d+$/.test(k)){
+        const i = +k.slice(8);
+        row.innerHTML = `<div class="tx-lb"><b>${esc(l)}</b><small>${esc(t("adminStageHint", {prev: i > 1 ? (txDraft["stageMin" + (i-1)] || "") : "0"}))}</small></div><input type="number" min="1" step="1" inputmode="numeric" class="tx-date tx-num"><button type="button" title="${esc(t("adminTextsReset"))}" aria-label="${esc(t("adminTextsReset"))}">↺</button>`;
+        const inp = row.querySelector("input"), rb = row.querySelector("button");
+        const mark = ()=>{ row.classList.toggle("ovr", txDraft[k] !== DEF_TXT[k]); row.classList.toggle("dirty", txDraft[k] !== TXT[k]); rb.disabled = txDraft[k] === DEF_TXT[k];
+          const bad = stageMinsValid(txDraft); $$("#txList .tx-num").forEach(x=>x.classList.toggle("bad", bad && +x.closest(".tx-row").dataset.k.slice(8) === bad)); };
+        inp.value = txDraft[k];
+        inp.addEventListener("input", ()=>{ txDraft[k] = inp.value.trim(); mark(); txState(); });
+        rb.onclick = ()=>{ txDraft[k] = DEF_TXT[k]; inp.value = txDraft[k]; mark(); txState(); };
+        mark(); box.appendChild(row); return;
+      }
       row.innerHTML = `<div class="tx-lb"><b>${esc(l)}</b><small>${esc(isDate ? t("adminTextsDateHint") : k)}</small></div>${isDate ? `<input type="datetime-local" class="tx-date">` : `<textarea rows="1" spellcheck="false"></textarea>`}<button type="button" title="${esc(t("adminTextsReset"))}" aria-label="${esc(t("adminTextsReset"))}">↺</button>`;
       if (isDate){
         const inp = row.querySelector("input"), rb = row.querySelector("button");
@@ -3687,6 +3717,8 @@ $("#txQ").addEventListener("input", renderTexts);
 $("#txAll").addEventListener("change", renderTexts);
 $("#txSave").onclick = async ()=>{
   const btn = $("#txSave"), out = {};
+  const bad = stageMinsValid(txDraft);
+  if (bad){ toast(t("adminStageOrder", {n: bad + 1})); const r = $(`#txList .tx-row[data-k="stageMin${bad}"]`); if (r) r.scrollIntoView({block:"center", behavior:"smooth"}); return; }
   Object.keys(Object.assign({}, DEF_TXT, txDraft)).forEach(k=>{ const v = txDraft[k]; if (typeof v === "string" && v !== DEF_TXT[k]) out[k] = v; });
   btn.disabled = true; btn.textContent = t("adminPinSaving");
   try{

@@ -130,3 +130,8 @@ Hoa đỏ = lời chúc gửi cả công ty; lá màu = gửi phòng ban hoặc 
 - Quay xong, người trúng tự bị loại khỏi lượt sau (theo luật cũ); nút đổi thành **Quay tiếp**. Có thể đổi tên giải ngay ở ô "Tên giải" trước mỗi lượt, hoặc bấm "Hủy kết quả này" nếu người trúng không có mặt.
 - Phím tắt: **Space** hoặc **Enter** để quay, **Esc** để thoát về cửa sổ chọn tiêu chí.
 
+## Mốc lớn của cây
+- Vào **Quản trị → Nội dung**, nhóm "Cây và tiến độ". Mỗi giai đoạn có 2 dòng: **Tên giai đoạn** và **Mốc giai đoạn** (đủ bao nhiêu lời chúc thì cây lên giai đoạn đó). Giai đoạn đầu luôn từ 0.
+- Mốc sau phải lớn hơn mốc trước; nhập sai thì ô đó tô đỏ và không cho lưu. Bấm ↺ để về mốc mặc định.
+- Lưu xong, cây và thanh tiến độ trên máy mọi người tự cập nhật trong khoảng 1 phút.
+
