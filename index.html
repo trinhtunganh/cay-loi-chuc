@@ -738,6 +738,50 @@ body.wl-open{overflow:hidden}
 .wlA-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:14px}
 .wlA-opts .pn-box select{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:15px;background:#fff}
 .wlA-state{font-size:13px;color:var(--muted);margin:12px 0 0} .wlA-state b{color:var(--ink)}
+/* quay thưởng toàn màn hình: MC chọn tiêu chí trong cửa sổ, bấm Bắt đầu rồi quay trên màn hình lớn */
+.dw-start{font-size:17px;padding:13px 34px}
+.dw-hint{font-size:13px;color:var(--muted);margin:12px auto 0 0;align-self:center}
+#dwFs{position:fixed;inset:0;z-index:70;display:none;grid-template-columns:minmax(0,1fr) clamp(260px,24vw,380px);grid-template-rows:auto minmax(0,1fr) auto;color:#fff;background:radial-gradient(120% 120% at 30% 0%,#FF4D6D 0%,#E4002B 42%,#8E001C 100%);-webkit-user-select:none;user-select:none}
+#dwFs.show{display:grid}
+body.dw-fs{overflow:hidden}
+.fs-head{grid-column:1 / -1;display:flex;align-items:center;gap:18px;padding:18px 28px 6px}
+.fs-head img{height:30px;filter:brightness(0) invert(1)}
+.fs-head h2{margin:0;font-size:clamp(18px,1.8vw,26px);font-weight:800;letter-spacing:.02em}
+.fs-head .fs-pool{margin-left:auto;font-size:clamp(14px,1.2vw,18px);opacity:.9} .fs-head .fs-pool b{font-size:1.3em}
+.fs-main{min-width:0;min-height:0;display:flex;padding:6px 10px 6px 28px}
+#dwFs .dw-stage{flex:1;background:none;box-shadow:none;border-radius:0;padding:10px 0;min-height:0}
+#dwFs .dw-prize-tag{font-size:clamp(18px,2vw,30px);letter-spacing:4px}
+#dwFs .dw-cloud{height:auto;flex:1;min-height:0;margin:14px 0 8px}
+#dwFs .dw-to{font-size:clamp(15px,1.4vw,21px)}
+#dwFs .dw-text{font-size:clamp(17px,1.7vw,26px);max-width:900px}
+#dwFs .dw-result{min-height:4em}
+#dwFs .dw-prog{height:9px;border-radius:9px}
+.fs-side{min-height:0;display:flex;flex-direction:column;margin:6px 28px 6px 6px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.18);border-radius:20px;padding:16px 16px 10px}
+.fs-side h3{margin:0 0 10px;font-size:clamp(16px,1.3vw,20px);display:flex;align-items:center;gap:8px}
+.fs-side h3 span{margin-left:auto;background:#fff;color:var(--brand);border-radius:999px;padding:1px 10px;font-size:.85em}
+.fs-win{list-style:none;margin:0;padding:0;overflow:auto;flex:1;min-height:0}
+.fs-win li{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.1);margin-bottom:8px;animation:fsIn .5s ease both}
+.fs-win li.new{background:#fff;color:var(--ink);box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.fs-win li b{font-size:clamp(16px,1.35vw,21px);font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fs-win li .pz{font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#FFD15C}
+.fs-win li.new .pz{color:var(--brand)}
+.fs-win li small{font-size:12.5px;opacity:.8}
+.fs-win li.none{background:none;border:1px dashed rgba(255,255,255,.35);text-align:center;opacity:.85}
+@keyframes fsIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.fs-bar{grid-column:1 / -1;display:flex;align-items:center;gap:12px;padding:10px 28px 20px;flex-wrap:wrap}
+.fs-bar label{font-size:13px;opacity:.85}
+.fs-bar input{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;padding:10px 16px;font:inherit;font-size:15px;width:min(260px,40vw)}
+.fs-bar input::placeholder{color:rgba(255,255,255,.6)}
+.fs-bar .fs-keys{font-size:12.5px;opacity:.7;margin-left:auto}
+.fs-b{border:2px solid #fff;background:transparent;color:#fff;border-radius:999px;padding:11px 22px;font:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:transform .15s,background .15s,color .15s}
+.fs-b:hover:not(:disabled){transform:translateY(-1px);background:rgba(255,255,255,.15)}
+.fs-b.big{background:#fff;color:var(--brand);font-size:clamp(18px,1.6vw,24px);padding:14px 44px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.fs-b.big:hover:not(:disabled){background:#FFF1F3}
+.fs-b:disabled{opacity:.45;cursor:default}
+@media (max-width:760px){
+  #dwFs{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr) auto auto;overflow:auto}
+  .fs-main{padding:4px 14px} .fs-side{margin:6px 14px;max-height:30vh} .fs-head{padding:14px 16px 4px;flex-wrap:wrap} .fs-bar{padding:8px 14px 16px} .fs-bar .fs-keys{display:none}
+}
 </style>
 <script src="config.js"></script>
 </head>
@@ -1002,13 +1046,25 @@ body.wl-open{overflow:hidden}
         <div class="dw-confetti" id="dwConfetti"></div>
       </div>
       <div class="dw-btns">
-        <button class="btn ghost" id="dwUndo" hidden data-t="drawUndo"></button>
-        <button class="btn primary dw-spin" id="dwSpin" data-t="drawSpin"></button>
+        <p class="dw-hint" data-t="drawStartHint"></p>
+        <button class="btn primary dw-start" id="dwStart" type="button">⛶ <span data-t="drawStart"></span></button>
       </div>
       </div>
     </div>
     <h3 class="dw-h" id="dwListH"></h3>
     <div class="dw-tbl-wrap"><table class="dw-tbl"><thead><tr><th>#</th><th data-t="drawColTime"></th><th>Account</th><th data-t="drawColTo"></th><th data-t="drawColText"></th><th data-t="drawColStatus"></th></tr></thead><tbody id="dwTbl"></tbody></table></div>
+  </div>
+</div>
+<div id="dwFs" role="dialog" aria-modal="true" aria-labelledby="dwFsTitle">
+  <div class="fs-head"><img id="dwFsLogo" alt=""><h2 id="dwFsTitle">🎁 <span data-t="drawTitle"></span></h2><div class="fs-pool" id="dwFsPool"></div></div>
+  <div class="fs-main" id="dwFsMain"></div>
+  <aside class="fs-side"><h3>🏆 <span data-t="drawWinners" style="all:unset"></span><span id="dwFsCount">0</span></h3><ul class="fs-win" id="dwFsWin"></ul></aside>
+  <div class="fs-bar">
+    <button class="fs-b big" id="dwSpin" type="button"></button>
+    <label for="dwFsPrize" data-t="drawPrize"></label><input id="dwFsPrize" type="text" maxlength="60">
+    <button class="fs-b" id="dwUndo" type="button" hidden data-t="drawUndo"></button>
+    <span class="fs-keys" data-t="drawFsKeys"></span>
+    <button class="fs-b" id="dwExit" type="button">✕ <span data-t="drawExit"></span></button>
   </div>
 </div>
 <div class="modal" id="adminPanel" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
@@ -3189,6 +3245,9 @@ function dwInfo(){
   if (why.length) html += `<br><span class="dw-why">${esc(why.join(" "))}</span>`;
   $("#dwInfo").innerHTML = html;
   $("#dwSpin").disabled = dwBusy || !pool.length;
+  $("#dwStart").disabled = !pool.length;
+  $("#dwFsPool").innerHTML = esc(t("drawFsPool", {p:"\u0001", n:pool.length})).replace("\u0001", `<b>${people.size}</b>`);
+  if (!dwBusy) $("#dwSpin").textContent = t(dwShowingWin ? "drawSpinNext" : "drawSpin");
   if (!dwBusy && !dwShowingWin) dwRenderCloud(pool);
   dwRenderTable(inRange, pool);
 }
@@ -3215,7 +3274,8 @@ function dwRenderCloud(pool){
   stage.classList.remove("done","rolling"); $("#dwResult").hidden = true; box.textContent = ""; dwProgReset();
   if (!accs.length){ box.innerHTML = '<span class="dw-empty">?</span>'; box.style.fontSize = ""; return; }
   const n = accs.length;
-  box.style.fontSize = (n <= 12 ? 22 : n <= 30 ? 18 : n <= 70 ? 15 : n <= 140 ? 12 : 10.5) + "px";
+  const big = DW_FS ? Math.max(1.3, Math.min(2.2, Math.sqrt(box.clientWidth * box.clientHeight / (760 * 420)))) : 1;
+  box.style.fontSize = ((n <= 12 ? 22 : n <= 30 ? 18 : n <= 70 ? 15 : n <= 140 ? 12 : 10.5) * big).toFixed(1) + "px";
   const frag = document.createDocumentFragment(), chips = [];
   accs.forEach(([k, name])=>{ const s = document.createElement("span"); s.className = "dw-chip"; s.dataset.k = k; s.textContent = name; frag.appendChild(s); chips.push(s); });
   box.appendChild(frag);
@@ -3250,6 +3310,10 @@ function dwCenterWin(chip){
 function dwRenderWinners(){
   const ul = $("#dwWinners"); ul.textContent = "";
   const list = adminItems.filter(m=>m.prize).sort((a,b)=>(b.wonAt||0)-(a.wonAt||0));
+  /* danh sách trúng giải trên màn hình lớn: người mới nhất ở trên, nổi bật */
+  const fs = $("#dwFsWin"); $("#dwFsCount").textContent = list.length;
+  fs.innerHTML = list.length ? list.map((m,i)=>`<li class="${i === 0 && dwLast && dwLast.id === m.id ? "new" : ""}"><span class="pz">${esc(m.prize)}</span><b>${esc(m.account)}</b><small>${esc(recipient(m))} · ${esc(new Date(m.wonAt||Date.now()).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"}))}</small></li>`).join("")
+    : `<li class="none">${esc(t("drawNoWinners"))}</li>`;
   if (!list.length){ ul.innerHTML = `<li class="a-empty">${esc(t("drawNoWinners"))}</li>`; return; }
   list.forEach(m=>{
     const li = document.createElement("li");
@@ -3274,7 +3338,8 @@ function dwConfetti(){
 const rnd = n => { const a = new Uint32Array(1); (window.crypto||{}).getRandomValues ? crypto.getRandomValues(a) : (a[0] = Math.floor(Math.random()*4294967296)); return a[0] % n; };
 async function dwSpin(){
   const pool = dwPool(); if (!pool.length || dwBusy) return;
-  const prize = $("#dwPrize").value.trim() || t("drawPrizeDefault");
+  const prize = ($("#dwFsPrize").value || $("#dwPrize").value).trim() || t("drawPrizeDefault");
+  $("#dwPrize").value = prize; $("#dwFsPrize").disabled = true;
   dwBusy = true; $("#dwSpin").disabled = true; $("#dwUndo").hidden = true;
   dwShowingWin = false; dwRenderCloud(pool);
   const stage = $("#dwStage"); stage.classList.add("rolling");
@@ -3302,10 +3367,43 @@ async function dwSpin(){
   dwShowingWin = true;
   $("#dwTo2").textContent = recipient(winner) + " · " + timeAgo(winner.time); $("#dwText").textContent = "“" + winner.text + "”"; $("#dwResult").hidden = false;
   dwConfetti();
-  try{ await dwSetPrize(winner, prize); dwLast = winner; $("#dwUndo").hidden = false; }
-  catch(e){ toast(e.message || t("adminSaveError")); }
-  dwBusy = false; dwInfo();
+  try{ dwLast = winner; await dwSetPrize(winner, prize); $("#dwUndo").hidden = false; }
+  catch(e){ dwLast = null; toast(e.message || t("adminSaveError")); }
+  dwBusy = false; $("#dwFsPrize").disabled = false; dwInfo();
 }
+/* màn hình quay thưởng toàn màn hình */
+let DW_FS = false;
+function dwEnterFs(){
+  if (!dwPool().length) return;
+  DW_FS = true; dwShowingWin = false; dwLast = null; $("#dwUndo").hidden = true;
+  $("#dwFsLogo").src = (CFG.company && CFG.company.logo) || ""; $("#dwFsLogo").alt = COMPANY;
+  $("#dwFsPrize").value = $("#dwPrize").value.trim() || t("drawPrizeDefault");
+  $("#dwFsMain").appendChild($("#dwStage"));
+  $("#dwPrizeTag").textContent = $("#dwFsPrize").value;
+  $("#dwFs").classList.add("show"); document.body.classList.add("dw-fs");
+  try{ const r = document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); if (r && r.catch) r.catch(()=>{}); }catch(e){}
+  setTimeout(()=>{ dwInfo(); dwRenderWinners(); $("#dwSpin").focus({preventScroll:true}); }, 60);
+  setTimeout(()=>{ if (DW_FS && !dwBusy && !dwShowingWin) dwRenderCloud(dwPool()); }, 450);   // vẽ lại khi trình duyệt đã vào toàn màn hình
+}
+function dwExitFs(){
+  if (!DW_FS || dwBusy) return;
+  DW_FS = false; dwShowingWin = false;
+  $("#dwFs").classList.remove("show"); document.body.classList.remove("dw-fs");
+  $(".dw-main").insertBefore($("#dwStage"), $(".dw-main .dw-btns"));
+  try{ if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(()=>{}); }catch(e){}
+  $("#dwPrizeTag").textContent = "";
+  setTimeout(dwInfo, 60);
+}
+$("#dwStart").onclick = dwEnterFs;
+$("#dwExit").onclick = dwExitFs;
+$("#dwFsPrize").addEventListener("input", e=>{ if (!dwBusy && !dwShowingWin) $("#dwPrizeTag").textContent = e.target.value; });
+document.addEventListener("keydown", e=>{
+  if (!DW_FS) return;
+  if (e.target && e.target.id === "dwFsPrize"){ if (e.key === "Enter") e.target.blur(); return; }
+  if (e.key === "Escape"){ e.preventDefault(); e.stopPropagation(); dwExitFs(); }
+  else if (e.key === " " || e.key === "Enter"){ e.preventDefault(); e.stopPropagation(); if (!dwBusy) dwSpin(); }
+}, true);
+addEventListener("resize", ()=>{ if (DW_FS && !dwBusy && !dwShowingWin){ clearTimeout(dwEnterFs.rt); dwEnterFs.rt = setTimeout(()=>dwRenderCloud(dwPool()), 200); } });
 async function openDraw(){
   if (!ADMIN_PIN) return openAdminGate();
   if (!dwBusy) dwShowingWin = false;

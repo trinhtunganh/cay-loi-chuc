@@ -123,3 +123,10 @@ Hoa đỏ = lời chúc gửi cả công ty; lá màu = gửi phòng ban hoặc 
 - Nút **▶ Xem thử** chỉ mở trên máy bạn. Có thể xem thử bằng đường link: thêm `?welcome=1` (hoặc 2, 3) vào cuối địa chỉ trang.
 - **Khi nào hiện**: mặc định chỉ trong ngày sinh nhật (ngày ở tab Nội dung); chọn "Ngay từ bây giờ" nếu muốn mọi người thấy luôn. Mỗi máy tự hiện 1 lần mỗi ngày, luôn có nút Bỏ qua (hoặc phím Esc).
 - Chữ trên các màn hình sửa ở tab **Nội dung**, nhóm "Màn hình chào mừng ngày sinh nhật".
+
+## Quay thưởng toàn màn hình
+- MC bấm nút hộp quà, chọn **Tên giải**, khoảng thời gian, "Chỉ lời chúc đã duyệt", xem bảng kê, rồi bấm **⛶ Bắt đầu**.
+- Màn hình chuyển sang toàn màn hình: giữa là các account đang được quay, bên phải là **Danh sách trúng thưởng** (người mới trúng nổi bật trên cùng), dưới cùng là nút **Quay**.
+- Quay xong, người trúng tự bị loại khỏi lượt sau (theo luật cũ); nút đổi thành **Quay tiếp**. Có thể đổi tên giải ngay ở ô "Tên giải" trước mỗi lượt, hoặc bấm "Hủy kết quả này" nếu người trúng không có mặt.
+- Phím tắt: **Space** hoặc **Enter** để quay, **Esc** để thoát về cửa sổ chọn tiêu chí.
+
