@@ -2965,6 +2965,42 @@ $("#wlSave").onclick = async ()=>{
   finally{ btn.textContent = t("wlSave"); renderWelcomeAdmin(); }
 };
 
+
+/* ---------- tự tải bản mới ----------
+   Tab để mở lâu (nhất là trên điện thoại) vẫn chạy code cũ dù trang đã cập nhật: phần mới (ví dụ mốc giai đoạn sửa trong Quản trị)
+   không có hiệu lực trên máy đó. Cứ 5 phút (và mỗi khi quay lại tab) hỏi GitHub Pages xem index.html có đổi không;
+   có bản mới thì tự tải lại khi người dùng không bận: không đang mở hộp thoại, trình chiếu, quay thưởng hay màn hình chào mừng. */
+const VER = {base: "", pending: false};
+async function verCheck(){
+  if (PREVIEW_FILE || VER.pending || !navigator.onLine) return;
+  try{
+    const r = await fetch(location.pathname, {method: "HEAD", cache: "no-store"});
+    const tag = r.ok ? (r.headers.get("last-modified") || r.headers.get("etag") || "") : "";
+    if (!tag) return;
+    if (!VER.base){ VER.base = tag; return; }
+    if (tag === VER.base){ VER.seen = ""; return; }
+    /* thấy bản mới 2 lần liên tiếp mới tải lại, và tối đa 1 lần mỗi 30 phút, để không bao giờ tải lại liên tục */
+    if (VER.seen !== tag){ VER.seen = tag; setTimeout(verCheck, 60000); return; }
+    let last = 0; try{ last = +sessionStorage.getItem("cta_reload") || 0; }catch(e){}
+    if (Date.now() - last < 30 * 60e3) return;
+    VER.pending = true; verReload();
+  }catch(e){}
+}
+function verBusy(){
+  return document.querySelector(".modal.show:not(#gate)") || $("#show").classList.contains("show")
+    || (typeof DW_FS !== "undefined" && DW_FS) || (typeof WL !== "undefined" && WL) || document.activeElement && /^(TEXTAREA|INPUT)$/.test(document.activeElement.tagName);
+}
+function verReload(){
+  if (!VER.pending) return;
+  if (verBusy()){ setTimeout(verReload, 30000); return; }
+  try{ sessionStorage.setItem("cta_reload", String(Date.now())); }catch(e){}
+  location.reload();
+}
+const PREVIEW_FILE = location.protocol === "file:";
+setTimeout(verCheck, 20000);
+setInterval(()=>{ if (!document.hidden) verCheck(); }, 5 * 60e3);
+document.addEventListener("visibilitychange", ()=>{ if (!document.hidden) verCheck(); });
+
 /* ---------- khởi động ---------- */
 if (PREVIEW) document.body.classList.add("preview");
 applyTexts(); setAnonMode(ANON); buildLeafGradients(); setupScene(); buildGrass(); buildLegend(); syncType(); setupCountdown(); setupPetals();
