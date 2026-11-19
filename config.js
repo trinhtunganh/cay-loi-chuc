@@ -298,6 +298,8 @@ window.SITE_CONFIG = {
     wlWhenNow:        "ngay từ bây giờ",
     wlGoalTitle:      "Số người thổi nến để nến tắt (mẫu 2)",
     wlGoalSub:        "Khi tổng số người bấm Thổi nến đạt con số này, nến trên mọi máy cùng tắt.",
+    wlStrokeTitle:    "Viền số ngày sinh nhật (mẫu 1)",
+    wlStrokeSub:      "Độ dày viền trắng của số 21.11 cỡ lớn phía sau cây, tính bằng pixel (0 là ẩn). Bấm Xem thử để thấy ngay trước khi lưu.",
     wlAdminState:     "Đang dùng: {name}, hiện {when}",
     wlAdminBlown:     "{n} người đã thổi nến",
     wlSave:           "Lưu cài đặt chào mừng",

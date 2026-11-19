@@ -660,7 +660,7 @@ body.wl-open{overflow:hidden}
 /* mẫu 1: cây bừng nở */
 #wl.k1{background:radial-gradient(120% 90% at 50% 45%,#F2163F 0%,#D0002A 45%,#8E001C 100%)}
 #wl.k1 .wl-logo{filter:brightness(0) invert(1)}
-.wl1-big{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:min(44vw,600px);letter-spacing:-.06em;color:transparent;-webkit-text-stroke:2px rgba(255,255,255,.16);line-height:1;animation:wlBig 2.4s ease both}
+.wl1-big{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:min(40vw,560px);letter-spacing:.02em;color:transparent;-webkit-text-stroke:var(--wl-stroke,1.5px) #fff;line-height:1;animation:wlBig 2.4s ease both}
 @keyframes wlBig{from{opacity:0;transform:scale(1.12)}to{opacity:1;transform:none}}
 .wl1-tree{position:absolute;left:50%;top:53%;width:min(70vh,92vw,820px);height:min(70vh,92vw,820px);transform:translate(-50%,-50%)}
 .wl1-tree > div{width:100%;height:100%;transform-origin:50% 100%;animation:wlGrow 1.8s cubic-bezier(.2,.9,.25,1) .3s both}
@@ -1131,6 +1131,8 @@ body.dw-fs{overflow:hidden}
           <select id="wlWhen"><option value="day" data-t="wlWhenDayOpt"></option><option value="now" data-t="wlWhenNowOpt"></option></select></div>
         <div class="pn-box"><h3 class="pn-h" data-t="wlGoalTitle"></h3><p class="pn-sub" data-t="wlGoalSub"></p>
           <input id="wlGoalIn" type="number" min="1" max="5000" inputmode="numeric"></div>
+        <div class="pn-box"><h3 class="pn-h" data-t="wlStrokeTitle"></h3><p class="pn-sub" data-t="wlStrokeSub"></p>
+          <input id="wlStrokeIn" type="number" min="0" max="12" step="0.5" inputmode="decimal"></div>
       </div>
       <p class="wlA-state" id="wlState"></p>
       <button class="btn primary" id="wlSave" type="button" data-t="wlSave" style="margin-top:12px"></button>
@@ -2713,7 +2715,10 @@ function start(){
    3 mẫu: 1 cây bừng nở, 2 cùng thổi nến, 3 pháo hoa lời chúc. Ban tổ chức chọn mẫu, xem thử trong Quản trị → Chào mừng.
    Cài đặt lưu chung với phần Nội dung trên máy chủ: welcomeMode (0 tắt, 1/2/3), welcomeWhen (day | now), welcomeGoal.
    Mỗi máy chỉ tự hiện 1 lần mỗi ngày; thêm ?welcome=1|2|3 vào địa chỉ trang để xem thử. */
-const WL_KEYS = ["welcomeMode","welcomeWhen","welcomeGoal"];
+const WL_KEYS = ["welcomeMode","welcomeWhen","welcomeGoal","welcomeStroke"];
+/* độ dày viền trắng của số ngày sinh nhật cỡ lớn ở mẫu 1 (px) */
+const wlStroke = v => { const n = parseFloat(String(v == null ? "" : v).replace(",", ".")); return Number.isFinite(n) ? Math.max(0, Math.min(12, n)) : 1.5; };
+const wlCur = () => ({welcomeMode: wlMode(), welcomeWhen: TXT.welcomeWhen === "now" ? "now" : "day", welcomeGoal: String(wlGoal()), welcomeStroke: String(wlStroke(TXT.welcomeStroke))});
 const WL_CAKE = "WELCOME_CAKE";
 const wlMode = () => /^[0-3]$/.test(TXT.welcomeMode || "") ? TXT.welcomeMode : "1";
 const wlGoal = () => Math.max(1, Math.min(5000, parseInt(TXT.welcomeGoal, 10) || 50));
@@ -2792,6 +2797,8 @@ function wlDateDots(){ const d = new Date(bday()); if (isNaN(d)) return "";
 /* 1. Cây bừng nở */
 function wl1(el){
   const n = items.length;
+  const sw = wlStroke(WL && WL.preview && wlDraft ? wlDraft.welcomeStroke : TXT.welcomeStroke);
+  el.style.setProperty("--wl-stroke", sw + "px");
   el.innerHTML = `<div class="wl1-big" aria-hidden="true">${esc(wlDateDots())}</div>
     <div class="wl1-tree"><div></div></div><div class="wl-fx"></div>
     <div class="wl1-top"><div class="wl-kick wl-up">${esc(dateFull().replace(/\//g," · "))}</div><h2 class="wl-h wl-up" style="animation-delay:.15s">${wlBr(t("wl1Title"))}</h2></div>
@@ -2926,13 +2933,14 @@ function wl3(el){
 /* Quản trị → Chào mừng */
 let wlDraft = null;
 function renderWelcomeAdmin(){
-  if (!wlDraft) wlDraft = {welcomeMode: wlMode(), welcomeWhen: TXT.welcomeWhen === "now" ? "now" : "day", welcomeGoal: String(wlGoal())};
+  if (!wlDraft) wlDraft = wlCur();
   $$("#wlCards .wlA-card").forEach(c=>c.classList.toggle("on", c.dataset.k === wlDraft.welcomeMode));
   $("#wlWhen").value = wlDraft.welcomeWhen; $("#wlGoalIn").value = wlDraft.welcomeGoal;
+  if (document.activeElement !== $("#wlStrokeIn")) $("#wlStrokeIn").value = wlDraft.welcomeStroke;
   const n = wlCakeCount(), m = wlDraft.welcomeMode;
   const name = m === "0" ? t("wlOff") : t("wlName" + m);
   $("#wlState").innerHTML = esc(t("wlAdminState", {name: "\u0001", when: wlDraft.welcomeWhen === "now" ? t("wlWhenNow") : t("wlWhenDay", {date: dateFull()})})).replace("\u0001", `<b>${esc(name)}</b>`) + " · " + esc(t("wlAdminBlown", {n}));
-  const dirty = WL_KEYS.some(k=>String(wlDraft[k]) !== String(k === "welcomeMode" ? wlMode() : k === "welcomeGoal" ? wlGoal() : (TXT.welcomeWhen === "now" ? "now" : "day")));
+  const cur = wlCur(), dirty = WL_KEYS.some(k=>String(wlDraft[k]) !== cur[k]);
   $("#wlSave").disabled = !dirty;
 }
 $$("#wlCards .wlA-card").forEach(c=>{
@@ -2940,6 +2948,7 @@ $$("#wlCards .wlA-card").forEach(c=>{
   const b = c.querySelector("button"); if (b) b.onclick = ()=>wlOpen(+c.dataset.k, true);
 });
 $("#wlWhen").addEventListener("change", e=>{ wlDraft.welcomeWhen = e.target.value; renderWelcomeAdmin(); });
+$("#wlStrokeIn").addEventListener("input", e=>{ wlDraft.welcomeStroke = String(wlStroke(e.target.value)); renderWelcomeAdmin(); });
 $("#wlGoalIn").addEventListener("input", e=>{ wlDraft.welcomeGoal = String(Math.max(1, Math.min(5000, parseInt(e.target.value, 10) || 1))); renderWelcomeAdmin(); });
 $("#wlSave").onclick = async ()=>{
   const btn = $("#wlSave"), out = Object.assign({}, TEXTS_OVR);
