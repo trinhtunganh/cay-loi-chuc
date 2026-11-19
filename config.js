@@ -261,6 +261,7 @@ window.SITE_CONFIG = {
     adminStageOrder:  "Mốc giai đoạn {n} phải là số nguyên lớn hơn mốc của giai đoạn trước.",
 
     /* màn hình chào mừng ngày sinh nhật (chọn mẫu trong Quản trị → Chào mừng) */
+    feedPeek:         "Xem tất cả {n} lời chúc",
     wlAria:           "Chào mừng sinh nhật {company}",
     wlSkip:           "Bỏ qua",
     wlToTree:         "Vào xem cây",

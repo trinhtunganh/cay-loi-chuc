@@ -548,6 +548,8 @@ body.anon #accField{display:none}
 
 /* Nút gửi cố định cho điện thoại */
 .fab{display:none}
+.feed-peek{display:none}
+@keyframes peekBob{0%,100%{transform:translateY(-1px)}50%{transform:translateY(3px)}}
 
 /* Trình chiếu */
 #show{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;padding:24px 40px 28px;background:linear-gradient(180deg,var(--bg-top) 0%,var(--bg-mid) 55%,var(--bg-bot) 100%);overflow:hidden}
@@ -631,6 +633,11 @@ body.anon #accField{display:none}
   .panel{padding:20px}
   .fab{display:block;position:fixed;left:0;right:0;bottom:0;z-index:20;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(255,251,249,0),rgba(255,251,249,.95) 35%)}
   .fab .btn{width:100%;padding:14px 18px;font-size:16px}
+  /* màn hình đầu chỉ có cây, lời chúc nổi bật và nút gửi; danh sách lời chúc nằm ngay dưới mép màn hình */
+  .feed-peek{display:flex;white-space:nowrap;position:fixed;left:50%;bottom:calc(78px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:21;align-items:center;gap:6px;border:1px solid var(--line);background:rgba(255,255,255,.94);color:var(--ink);font:inherit;font-size:13.5px;font-weight:700;padding:7px 14px 7px 12px;border-radius:999px;box-shadow:0 6px 18px rgba(122,20,40,.12);cursor:pointer;transition:opacity .3s,transform .3s}
+  .feed-peek svg{width:16px;height:16px;animation:peekBob 1.6s ease-in-out infinite}
+  .feed-peek.off{opacity:0;pointer-events:none;transform:translate(-50%,10px)}
+  body.night .feed-peek{background:rgba(14,24,54,.85);color:#E7ECFF;border-color:rgba(160,190,255,.25)}
   body{padding-bottom:76px}
   #show{padding:16px} #show .s-top img{height:26px}
 }
@@ -926,6 +933,7 @@ body.dw-fs{overflow:hidden}
 
 <div class="petals" id="petals" aria-hidden="true"></div>
 
+<button class="feed-peek off" id="feedPeek" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span id="feedPeekT"></span></button>
 <div class="fab"><button class="btn primary js-send">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21c-4-3-8-6.5-8-11a5 5 0 0 1 8-4 5 5 0 0 1 8 4c0 4.5-4 8-8 11z"/></svg><span data-t="btnSend"></span></button></div>
 
@@ -2027,6 +2035,7 @@ function renderStatus(bump){
   } else { $("#gBar").style.width = "100%"; $("#gNext").textContent = t("statusDone"); }
   if (bump){ const s=$("#status"); s.classList.remove("bump"); void s.offsetWidth; s.classList.add("bump"); }
   $("#empty").hidden = !(loaded && items.length===0);
+  if (innerWidth <= 640) mobPeek();
 }
 
 let foliageKey = "";
@@ -2704,6 +2713,8 @@ let started = false, poll = null;
 function start(){
   if (started) return; started = true;
   spotAfter = Date.now() + 10000;
+  [50, 800, 2500].forEach(ms=>setTimeout(()=>mobFeedGap(true), ms));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(()=>mobFeedGap(true));
   setTimeout(wlMaybe, 900);
   /* lệch thời điểm tải giữa các máy để 150 người mở cùng lúc không dồn vào một giây */
   setTimeout(()=>refresh(false), Math.random()*400);
@@ -2768,6 +2779,7 @@ function wlClose(now){
   const {el, timers} = WL; WL = null;
   timers.forEach(x=>{ clearTimeout(x); clearInterval(x); });
   document.body.classList.remove("wl-open");
+  setTimeout(()=>{ if (innerWidth <= 640) mobPeek(); }, 600);
   if (now){ el.remove(); return; }
   el.classList.add("out"); setTimeout(()=>el.remove(), 500);
 }
@@ -2972,6 +2984,34 @@ $("#wlSave").onclick = async ()=>{
   finally{ btn.textContent = t("wlSave"); renderWelcomeAdmin(); }
 };
 
+
+
+/* ---------- điện thoại: danh sách lời chúc lùi xuống dưới màn hình đầu ----------
+   Màn hình đầu chỉ có cây, lời chúc nổi bật (callout) và nút gửi. Danh sách bắt đầu ngay dưới mép màn hình;
+   muốn đọc thì cuộn xuống hoặc chạm nút "Xem tất cả lời chúc". Chỉ tính lại khi đổi chiều ngang (không theo
+   thanh địa chỉ co giãn khi cuộn) để trang không bị giật. */
+const MOB = {w: 0, h: 0};
+function mobFeedGap(force){
+  const f = $("#feed"); if (!f) return;
+  const mob = innerWidth <= 640;
+  if (!mob){ f.style.marginTop = ""; $("#feedPeek").classList.add("off"); MOB.w = 0; return; }
+  if (!force && MOB.w === innerWidth) return;
+  MOB.w = innerWidth; MOB.h = Math.max(MOB.h && MOB.w === innerWidth ? MOB.h : 0, innerHeight);
+  f.style.marginTop = "";
+  const top = f.getBoundingClientRect().top + scrollY;
+  f.style.marginTop = (8 + Math.max(0, MOB.h - top)) + "px";
+  mobPeek();
+}
+function mobPeek(){
+  const p = $("#feedPeek"); if (innerWidth > 640){ p.classList.add("off"); return; }
+  $("#feedPeekT").textContent = t("feedPeek", {n: items.length.toLocaleString("vi-VN")});
+  const ft = $("#feed").getBoundingClientRect().top;
+  p.classList.toggle("off", !items.length || ft < innerHeight - 40 || document.body.classList.contains("wl-open"));
+}
+$("#feedPeek").onclick = ()=>{ const f = $("#feed"); scrollTo({top: f.getBoundingClientRect().top + scrollY - 8, behavior: "smooth"}); };
+addEventListener("scroll", ()=>{ if (innerWidth <= 640) mobPeek(); }, {passive: true});
+addEventListener("resize", ()=>{ if (MOB.w !== innerWidth){ MOB.h = 0; mobFeedGap(true); } });
+addEventListener("orientationchange", ()=>setTimeout(()=>{ MOB.h = 0; mobFeedGap(true); }, 300));
 
 /* ---------- tự tải bản mới ----------
    Tab để mở lâu (nhất là trên điện thoại) vẫn chạy code cũ dù trang đã cập nhật: phần mới (ví dụ mốc giai đoạn sửa trong Quản trị)
