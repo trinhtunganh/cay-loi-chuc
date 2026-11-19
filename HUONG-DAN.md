@@ -121,7 +121,7 @@ Hoa đỏ = lời chúc gửi cả công ty; lá màu = gửi phòng ban hoặc 
   2. **Cùng thổi nến**: mỗi người bấm "Thổi nến" (mỗi trình duyệt 1 lần); đủ số người đặt trong ô "Số người thổi nến" thì nến trên mọi máy cùng tắt và pháo giấy bung ra. Cần máy chủ Azure bản mới (khởi động lại Azure sau ngày 17/11).
   3. **Pháo hoa lời chúc**: trời đêm, pháo hoa, mỗi chùm hé một lời chúc thật. Hợp màn hình lớn.
 - Nút **▶ Xem thử** chỉ mở trên máy bạn. Có thể xem thử bằng đường link: thêm `?welcome=1` (hoặc 2, 3) vào cuối địa chỉ trang.
-- **Khi nào hiện**: mặc định chỉ trong ngày sinh nhật (ngày ở tab Nội dung); chọn "Ngay từ bây giờ" nếu muốn mọi người thấy luôn. Mỗi máy tự hiện 1 lần mỗi ngày, luôn có nút Bỏ qua (hoặc phím Esc).
+- **Khi nào hiện**: mặc định màn hình chào mừng là **trang chủ**, hiện mỗi lần mở trang (sau khi nhập PIN). Có thể đổi thành "1 lần mỗi ngày trên mỗi máy" hoặc "Chỉ trong ngày sinh nhật". Luôn có nút Bỏ qua (hoặc phím Esc).
 - **Viền số ngày sinh nhật (mẫu 1)**: độ dày viền trắng của số 21.11 cỡ lớn, tính bằng pixel (mặc định 1.5), sửa ngay trong tab Chào mừng.
 - Chữ trên các màn hình sửa ở tab **Nội dung**, nhóm "Màn hình chào mừng ngày sinh nhật".
 
