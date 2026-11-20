@@ -136,6 +136,8 @@ Hoa đỏ = lời chúc gửi cả công ty; lá màu = gửi phòng ban hoặc 
 - Mốc sau phải lớn hơn mốc trước; nhập sai thì ô đó tô đỏ và không cho lưu. Bấm ↺ để về mốc mặc định.
 - Lưu xong, cây và thanh tiến độ trên máy mọi người tự cập nhật trong khoảng 1 phút.
 
+- **Nhạc quay thưởng**: mỗi lần bấm Quay sẽ phát nhạc (`assets/draw-music.mp3`, khoảng 17 giây); tên bay ngẫu nhiên khắp khung, mờ tỏ và đổi cỡ liên tục, **hết nhạc thì dừng** và công bố người trúng. Nút 🔊/🔇 trên màn hình quay để tắt/bật nhạc (tắt nhạc thì quay 5 giây). Muốn đổi nhạc: thay file `assets/draw-music.mp3`, thời gian quay tự theo độ dài bài.
+
 ## Quay thưởng theo danh sách
 - Trong cửa sổ Quay thưởng, chọn **Theo danh sách** (cạnh "Theo lời chúc").
 - Dán danh sách vào ô "Danh sách người tham gia", **mỗi dòng một người** (dán thẳng từ Excel được; dòng trống và dòng trùng tên tự bỏ qua). Đặt **Tên giải**, rồi bấm **⛶ Bắt đầu**.
