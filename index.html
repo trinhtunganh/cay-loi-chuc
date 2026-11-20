@@ -240,15 +240,16 @@ body.night .petals span{background:radial-gradient(circle at 30% 30%,#fff,#BFE0F
 body.night .tap-hint{background:rgba(255,255,255,.14)}
 body.night #show{color:#E7ECFF}
 body.night #show .s-mode{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15)}
-.ff{animation:tw 3s ease-in-out infinite} @keyframes tw{0%,100%{opacity:.12}50%{opacity:1}}
+.ff{animation:tw 3s steps(10) infinite} @keyframes tw{0%,100%{opacity:.12}50%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.ff{animation:none;opacity:.6}}
-.sway{animation:sway 7s ease-in-out infinite;transform-box:view-box;transform-origin:500px 930px}
+/* cây đung đưa rất nhẹ: chỉ vẽ lại ~8 lần/giây thay vì 60 (vẽ lại cả cây mỗi khung hình rất nặng với máy yếu) */
+.sway{animation:sway 7s steps(28) infinite;transform-box:view-box;transform-origin:500px 930px}
 @keyframes sway{0%,100%{transform:rotate(-.35deg)}50%{transform:rotate(.35deg)}}
 svg.filtering .leaf:not(.match) .shape{opacity:.12}
 svg.filtering .leaf.match .shape{filter:drop-shadow(0 0 8px rgba(255,190,90,1))}
 .seg-in{animation:segin 1.1s ease-out both}
 .deco{pointer-events:none}
-.sun-rays{animation:spin 60s linear infinite;transform-box:fill-box;transform-origin:center}
+.sun-rays{animation:spin 60s steps(120) infinite;transform-box:fill-box;transform-origin:center}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes segin{from{opacity:0}to{opacity:1}}
 
@@ -656,6 +657,12 @@ body.anon #accField{display:none}
   body{padding-bottom:76px}
   #show{padding:16px} #show .s-top img{height:26px}
 }
+/* màn hình quay thưởng / chào mừng che kín trang: tạm ẩn trang phía sau để máy không phải vẽ */
+body.dw-fs .main,body.dw-fs header,body.dw-fs .petals,body.dw-fs .modal,body.dw-fs .fab,body.dw-fs .feed-peek{visibility:hidden}
+body.wl-open .main,body.wl-open .petals{visibility:hidden}
+/* máy yếu: tắt các chuyển động trang trí */
+body.lite .sway,body.lite .ff,body.lite .sun-rays{animation:none}
+body.lite .petals{display:none}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.petals{display:none}}
 /* ---------- màn hình chào mừng ngày sinh nhật (3 mẫu) ---------- */
 #wl{position:fixed;inset:0;z-index:45;overflow:hidden;color:#fff;opacity:0;transition:opacity .5s;-webkit-user-select:none;user-select:none}
@@ -1271,6 +1278,8 @@ let DEPT_LIST = parseDepts(CFG.departments);
 let DEPARTMENTS = DEPT_LIST.map(d=>d.name);
 const TIMING = Object.assign({refresh:45, spotlight:6, slide:9}, CFG.timing || {});
 /* hai máy chủ: Google (chính) và Azure (dự phòng); Ban tổ chức chọn máy chủ đang dùng trong Quản trị */
+/* mở sẵn kết nối tới máy chủ ngay khi tải trang (tiết kiệm vài trăm ms cho lần gọi đầu) */
+{ const B = CFG.backend || {}; [B.azureUrl, B.apiUrl].forEach(u=>{ try{ if (!u) return; const l = document.createElement("link"); l.rel = "preconnect"; l.href = new URL(u).origin; l.crossOrigin = ""; document.head.appendChild(l); }catch(e){} }); }
 const BACKENDS = {};
 { const B = CFG.backend || {}; const g = String(B.apiUrl || B.google || "").trim(), a = String(B.azureUrl || B.azure || "").trim();
   if (g) BACKENDS.google = g; if (a) BACKENDS.azure = a; }
@@ -1805,13 +1814,22 @@ function updateFlyers(now){
   });
 }
 
-let lastT = 0, frameN = 0;
+/* robot, chim, bướm: 30 hình/giây (máy yếu 15), dừng hẳn khi có màn hình che kín trang */
+let lastT = 0, frameN = 0, LITE = false, rafPrev = 0;
+const lite = { n: 0, slow: 0 };
 function animate(now){
-  if (frameN++ % 30 === 0) updateVis();
-  const dt = Math.min(.05, lastT ? (now-lastT)/1000 : 0); lastT = now;
+  if (!REDUCED) requestAnimationFrame(animate);
+  /* đo tốc độ máy: nếu khung hình liên tục chậm (> 34 ms) thì chuyển sang chế độ nhẹ */
+  const gap = rafPrev ? now - rafPrev : 0; rafPrev = now;
+  const covered = document.body.classList.contains("dw-fs") || document.body.classList.contains("wl-open") || document.hidden;
+  if (!covered && !LITE && gap && gap < 1000){ lite.n++; if (gap > 34) lite.slow++;
+    if (lite.n >= 180){ if (lite.slow / lite.n > .5){ LITE = true; document.body.classList.add("lite"); } lite.n = lite.slow = 0; } }
+  if (covered){ lastT = 0; return; }
+  if (lastT && now - lastT < (LITE ? 64 : 31)) return;
+  if (frameN++ % 15 === 0) updateVis();
+  const dt = Math.min(.08, lastT ? (now-lastT)/1000 : 0); lastT = now;
   BOTS.forEach(b=>updateBot(b, dt, now));
   updateFlyers(now);
-  if (!REDUCED) requestAnimationFrame(animate);
 }
 function setupScene(){ buildSun(); buildBots(); buildFlyers(); placeSun(); requestAnimationFrame(animate); }
 
@@ -2640,6 +2658,22 @@ const mine = new Map();
 /* đồng bộ tiết kiệm: nhớ phiên bản danh sách máy chủ đã gửi để lần sau chỉ nhận phần thay đổi */
 let srvItems = [], syncVer = "", syncAfter = "";
 function resetSync(){ srvItems = []; syncVer = ""; syncAfter = ""; }
+/* bản lưu danh sách lời chúc trên máy: lần mở sau hiện cây ngay, không phải chờ máy chủ */
+const LIST_CACHE = "cta_list_v1";
+function listToCache(){
+  clearTimeout(listToCache.t);
+  listToCache.t = setTimeout(()=>{ try{ localStorage.setItem(LIST_CACHE, JSON.stringify({b: CUR, v: syncVer, a: syncAfter, at: Date.now(), items: srvItems})); }catch(e){ try{ localStorage.removeItem(LIST_CACHE); }catch(e2){} } }, 1500);
+}
+function listFromCache(){
+  if (loaded || PREVIEW) return;
+  let c = null; try{ c = JSON.parse(localStorage.getItem(LIST_CACHE) || "null"); }catch(e){}
+  if (!c || !Array.isArray(c.items) || c.b !== CUR || Date.now() - (c.at || 0) > 7 * 864e5) return;
+  srvItems = c.items; syncVer = c.v || ""; syncAfter = c.a || "";
+  items = srvItems.slice().sort((a,b)=> String(a.time).localeCompare(String(b.time)));
+  byId = new Map(items.map(m=>[m.id,m]));
+  loaded = true;
+  try{ renderLeaves(new Set()); updateLegend(); }catch(e){}
+}
 async function refresh(silent){
   refresh.at = Date.now();
   try{
@@ -2654,6 +2688,7 @@ async function refresh(silent){
     else base = res.items || [];
     srvItems = base; syncVer = res.ver || "";
     syncAfter = base.reduce((a,m)=> String(m.time) > a ? String(m.time) : a, "");
+    if (!res.same) listToCache();
     /* không có gì mới và không có lời chúc riêng đang chờ: khỏi vẽ lại cây */
     if (res.same && loaded && !mine.size){ refresh.fails = 0; return; }
     const incoming = base.slice(), fresh = new Set(), first = !loaded;
@@ -2746,8 +2781,9 @@ function start(){
   [50, 800, 2500].forEach(ms=>setTimeout(()=>mobFeedGap(true), ms));
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(()=>mobFeedGap(true));
   setTimeout(wlMaybe, 900);
-  /* lệch thời điểm tải giữa các máy để 150 người mở cùng lúc không dồn vào một giây */
-  setTimeout(()=>refresh(false), Math.random()*400);
+  /* hiện ngay số lời chúc và cây từ lần mở trước (lưu trên máy), rồi hỏi máy chủ phần thay đổi */
+  listFromCache();
+  refresh(false);
   clearTimeout(poll);
   (function loop(){ poll = setTimeout(()=>{ if (!document.hidden) refresh(true); loop(); }, TIMING.refresh*1000*(0.85 + Math.random()*0.3)); })();
 }
@@ -3650,7 +3686,7 @@ async function dwSpin(){
   const big = DW_FS ? 1.5 : 1, many = chips.length > 120 ? .75 : chips.length > 50 ? .9 : 1;
   /* nhịp quay: PHÓNG RA (tên bay loạn khắp khung, mờ, to nhỏ ngẫu nhiên) rồi THU LẠI (các tên xếp thành hình logo công ty),
      lặp lại suốt bài nhạc; cuối bài thu về hình logo rồi người trúng bay ra giữa. Trình duyệt tự làm mượt bằng transition. */
-  const pts = dwLogoPts(chips.length, W, H), blur = chips.length <= 150;
+  const pts = dwLogoPts(chips.length, W, H), blur = false;   // làm mờ từng tên rất nặng với máy chiếu, chỉ dùng độ trong
   const order = chips.map((c,i)=>i).sort(()=>Math.random() - .5);
   const spread = ms => {
     stage.style.setProperty("--fly", ms + "ms"); stage.classList.remove("gather");
