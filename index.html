@@ -102,7 +102,10 @@ header{display:grid;grid-template-columns:auto auto 1fr auto;gap:26px;align-item
 .dw-cloud .dw-empty{position:absolute;inset:0;display:grid;place-items:center}
 .dw-chip{position:absolute;left:0;top:0;transform-origin:50% 50%;will-change:transform,opacity;display:inline-block;padding:.18em .55em;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-weight:700;line-height:1.25;white-space:nowrap;transition:transform .14s ease,opacity .5s ease,background .14s,color .14s,box-shadow .14s}
 .dw-chip.hot{opacity:1!important;background:#fff;color:#C40026;z-index:3;box-shadow:0 6px 22px rgba(0,0,0,.3)}
-.dw-stage.done .dw-chip{opacity:.1}
+.dw-stage.done .dw-chip{opacity:.1;transition:opacity 1.3s ease,transform .6s ease}
+.dw-stage.done .dw-chip.win{opacity:1;transition:transform 1.15s cubic-bezier(.2,.9,.25,1.12),opacity .3s,background .3s,color .3s,box-shadow 1s}
+.dw-stage.done .dw-result:not([hidden]){animation:dwRes .8s ease .85s both}
+@keyframes dwRes{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .dw-stage.rolling .dw-chip{transition:transform var(--fly,1s) cubic-bezier(.45,.05,.55,.95),opacity var(--fly,1s) ease-in-out,filter var(--fly,1s),background .15s,color .15s}
 .dw-chip.win{opacity:1!important;background:#fff;color:#C40026;z-index:4;box-shadow:0 10px 34px rgba(0,0,0,.35);transition:transform .8s cubic-bezier(.2,1.3,.4,1),opacity .3s}
 .dw-empty{font-size:64px;font-weight:900;opacity:.6}
@@ -3560,12 +3563,19 @@ const DW_SPIN_MS = 5000;
 let DW_AU = null, DW_MUTE = load("cta_dw_mute") === "1";
 function dwAudio(){ if (!DW_AU){ DW_AU = new Audio("assets/draw-music.mp3"); DW_AU.preload = "auto"; } return DW_AU; }
 async function dwPlay(au){
+  if (typeof DW_CLAP !== "undefined" && DW_CLAP) try{ DW_CLAP.pause(); }catch(e){}
   if (DW_MUTE) return false;
   try{
     au.currentTime = 0;
     if (!isFinite(au.duration)) await new Promise(r=>{ const k = ()=>{ au.removeEventListener("loadedmetadata", k); r(); }; au.addEventListener("loadedmetadata", k); setTimeout(k, 1500); au.load(); });
     await au.play(); return isFinite(au.duration) && au.duration > 1;
   }catch(e){ return false; }
+}
+/* tiếng vỗ tay khi công bố người trúng (tắt cùng nút nhạc) */
+let DW_CLAP = null;
+function dwClap(){
+  if (DW_MUTE) return;
+  try{ if (!DW_CLAP){ DW_CLAP = new Audio("assets/applause.mp3"); DW_CLAP.preload = "auto"; } DW_CLAP.currentTime = 0; DW_CLAP.volume = .9; const r = DW_CLAP.play(); if (r && r.catch) r.catch(()=>{}); }catch(e){}
 }
 function dwMutePaint(){ const b = $("#dwMute"); if (b){ b.textContent = DW_MUTE ? "🔇" : "🔊"; b.title = t(DW_MUTE ? "drawSoundOff" : "drawSoundOn"); b.setAttribute("aria-pressed", String(!DW_MUTE)); } }
 function dwChipFor(acc){ const k = DW_SRC === "list" ? dwKey(acc) : String(acc).toLowerCase(); return [...$$("#dwCloud .dw-chip")].find(c=>c.dataset.k === k); }
@@ -3662,40 +3672,63 @@ async function dwSpin(){
     });
   };
   let hot = null, done = false, flyT = 0, endT = 0, phase = 0;
-  const lastGather = Math.max(1200, dur - 2600);                  // 2,6 giây cuối: thu về logo và giữ nguyên
+  const lastGather = Math.max(1200, dur - 4200);                  // 4,2 giây cuối: thu về logo, ánh sáng chạy chậm dần tới người trúng
   await new Promise(fin=>{
     const finish = () => { if (done) return; done = true; clearTimeout(flyT); clearTimeout(endT); au.removeEventListener("ended", finish); fin(); };
     if (music) au.addEventListener("ended", finish);
     endT = setTimeout(finish, dur + (music ? 1500 : 0));          // phòng khi trình duyệt không báo hết nhạc
-    (function step(){
+    /* đúng mốc thì vào đoạn kết, không chờ hết nhịp đang chạy */
+    const finT = setTimeout(()=>{ if (done) return; clearTimeout(flyT); step.final = true; step(); }, lastGather);
+    const step = function(){
       if (done) return;
       const el = performance.now() - t0;
       if (hot){ hot.classList.remove("hot"); hot = null; }
-      if (el >= lastGather){ gather(1400); return; }               // về hình logo, chờ hết nhạc
+      if (el >= lastGather || step.final){
+        if (step.finalOn) return; step.finalOn = true;
+        /* về hình logo rồi ánh sáng chạy qua từng tên, chậm dần và dừng đúng trên người trúng khi hết nhạc */
+        gather(1200);
+        const win = dwChipFor(winner.account), others = chips.filter(c=>c !== win);
+        let total = 0;
+        const sweep = () => {
+          if (done) return;
+          const rem = t0 + dur - performance.now(); if (!total) total = Math.max(1, rem);
+          const gap = 70 + Math.pow(Math.min(1, 1 - rem / total), 2) * 520;      // chậm dần như vòng quay sắp dừng
+          if (hot) hot.classList.remove("hot");
+          if (rem <= gap * 1.15 || !others.length){ hot = win; if (hot) hot.classList.add("hot"); return; }
+          hot = others[rnd(others.length)]; hot.classList.add("hot");
+          flyT = setTimeout(sweep, gap);
+        };
+        flyT = setTimeout(sweep, 1000); return;
+      }
       if (phase % 2 === 0){
         /* bay lung tung: 3 chặng ngẫu nhiên khắp khung hình rồi mới tụ lại */
         spread(700); hot = chips[rnd(chips.length)]; hot.classList.add("hot");
         let hop = 0;
-        const more = () => { if (done || ++hop > 2) return step(); if (hot) hot.classList.remove("hot"); spread(700); hot = chips[rnd(chips.length)]; hot.classList.add("hot"); flyT = setTimeout(more, 650); };
+        const more = () => { if (done || ++hop > 2 || step.final) return step(); if (hot) hot.classList.remove("hot"); spread(700); hot = chips[rnd(chips.length)]; hot.classList.add("hot"); flyT = setTimeout(more, 650); };
         flyT = setTimeout(more, 650); phase++; return;
       } else {
         gather(1000); flyT = setTimeout(step, 1700);
       }
       phase++;
-    })();
+    };
+    step.final = false; step.finalOn = false;
+    au.addEventListener("ended", ()=>clearTimeout(finT), {once: true});
+    step();
   });
   try{ au.pause(); }catch(e){}
+  dwClap();
   chips.forEach(c=>{ c.style.opacity = ""; c.style.filter = ""; });
   stage.classList.remove("gather");
   if (hot) hot.classList.remove("hot");
   const wc = dwChipFor(winner.account);
   stage.classList.remove("rolling"); stage.classList.add("done");
-  if (wc){ wc.classList.add("win"); dwCenterWin(wc); }
+  /* người trúng từ vị trí trong logo phóng to dần ra giữa, các tên khác mờ dần; chữ kết quả và pháo giấy đến sau */
+  if (wc){ wc.classList.add("win"); void wc.offsetWidth; dwCenterWin(wc); }
   dwShowingWin = true;
   if (winner.list){ $("#dwTo2").textContent = t("drawWinnerIs"); $("#dwText").textContent = "🎁 " + prize; }
   else { $("#dwTo2").textContent = recipient(winner) + " · " + timeAgo(winner.time); $("#dwText").textContent = "“" + winner.text + "”"; }
   $("#dwResult").hidden = false;
-  dwConfetti();
+  setTimeout(dwConfetti, 650);
   try{ dwLast = winner; await dwSetPrize(winner, prize); $("#dwUndo").hidden = false; }
   catch(e){ dwLast = null; toast(e.message || t("adminSaveError")); }
   dwBusy = false; $("#dwFsPrize").disabled = false; dwInfo();
@@ -3711,6 +3744,7 @@ function dwEnterFs(){
   $("#dwPrizeTag").textContent = $("#dwFsPrize").value;
   $("#dwFs").classList.add("show"); document.body.classList.add("dw-fs");
   dwAudio(); dwMutePaint();   // tải sẵn nhạc để bấm Quay là chạy ngay
+  if (!DW_CLAP){ DW_CLAP = new Audio("assets/applause.mp3"); DW_CLAP.preload = "auto"; }
   try{ const r = document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); if (r && r.catch) r.catch(()=>{}); }catch(e){}
   setTimeout(()=>{ dwInfo(); dwRenderWinners(); $("#dwSpin").focus({preventScroll:true}); }, 60);
   setTimeout(()=>{ if (DW_FS && !dwBusy && !dwShowingWin) dwRenderCloud(dwPool()); }, 450);   // vẽ lại khi trình duyệt đã vào toàn màn hình
@@ -3725,7 +3759,7 @@ function dwExitFs(){
   setTimeout(dwInfo, 60);
 }
 $("#dwStart").onclick = dwEnterFs;
-$("#dwMute").onclick = ()=>{ DW_MUTE = !DW_MUTE; save("cta_dw_mute", DW_MUTE ? "1" : "0"); if (DW_MUTE && DW_AU) try{ DW_AU.pause(); }catch(e){} dwMutePaint(); };
+$("#dwMute").onclick = ()=>{ DW_MUTE = !DW_MUTE; save("cta_dw_mute", DW_MUTE ? "1" : "0"); if (DW_MUTE) [DW_AU, DW_CLAP].forEach(a=>{ if (a) try{ a.pause(); }catch(e){} }); dwMutePaint(); };
 dwMutePaint();
 $("#dwExit").onclick = dwExitFs;
 $("#dwFsPrize").addEventListener("input", e=>{ if (!dwBusy && !dwShowingWin) $("#dwPrizeTag").textContent = e.target.value; });
