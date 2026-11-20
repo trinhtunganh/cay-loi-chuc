@@ -257,6 +257,8 @@ window.SITE_CONFIG = {
     adminTabTexts:    "Nội dung",
     adminTabBackup:   "Sao lưu",
     adminTabWelcome:  "Chào mừng",
+    adminPendBadge:   "+{n} chờ duyệt",
+    adminCntTitle:    "{shown} lời chúc đang hiện trên cây (giống trang ngoài) · {pend} chờ duyệt chưa hiện · tổng {all}",
     adminStageHint:   "Số lời chúc, phải lớn hơn mốc trước ({prev})",
     adminStageOrder:  "Mốc giai đoạn {n} phải là số nguyên lớn hơn mốc của giai đoạn trước.",
 

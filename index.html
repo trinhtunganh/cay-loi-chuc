@@ -790,6 +790,7 @@ body.dw-fs{overflow:hidden}
   #dwFs{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr) auto auto;overflow:auto}
   .fs-main{padding:4px 14px} .fs-side{margin:6px 14px;max-height:30vh} .fs-head{padding:14px 16px 4px;flex-wrap:wrap} .fs-bar{padding:8px 14px 16px} .fs-bar .fs-keys{display:none}
 }
+.a-pend{font-style:normal;font-size:11px;font-weight:700;background:#FFE7A8;color:#6A4A00;border-radius:999px;padding:1px 7px;margin-left:4px}
 </style>
 <script src="config.js"></script>
 </head>
@@ -1084,7 +1085,7 @@ body.dw-fs{overflow:hidden}
     </div>
     <p class="a-note" id="aNote" hidden data-t="adminPreviewNote"></p>
     <div class="a-tabs" id="aTabs" role="tablist">
-      <button data-tab="list" role="tab">💬 <span data-t="adminTabList"></span> <b id="aCntAll">0</b></button>
+      <button data-tab="list" role="tab">💬 <span data-t="adminTabList"></span> <b id="aCntAll">0</b><i id="aCntPend" class="a-pend" hidden></i></button>
       <button data-tab="depts" role="tab" hidden><span data-t="adminTabDepts"></span> <b id="aCntDepts">0</b></button>
       <button data-tab="srv" role="tab" id="aTabSrv"><span data-t="adminTabServer"></span></button>
       <button data-tab="pin" role="tab">🔑 <span data-t="adminTabPin"></span></button>
@@ -2036,6 +2037,7 @@ function renderStatus(bump){
   if (bump){ const s=$("#status"); s.classList.remove("bump"); void s.offsetWidth; s.classList.add("bump"); }
   $("#empty").hidden = !(loaded && items.length===0);
   if (innerWidth <= 640) mobPeek();
+  if (typeof WL !== "undefined" && WL) wlSyncCount();
 }
 
 let foliageKey = "";
@@ -2806,7 +2808,8 @@ function wlBurst(box, count, spread){
 }
 function wlCountUp(node, to, ms, delay){
   const t0 = performance.now() + delay;
-  const step = now => { if (!WL) return; const k = Math.min(1, Math.max(0, (now - t0) / ms)); node.textContent = Math.round(to * (1 - Math.pow(1 - k, 3))).toLocaleString("vi-VN"); if (k < 1) requestAnimationFrame(step); };
+  /* đích luôn là số lời chúc hiện tại: dữ liệu mới từ máy chủ về giữa chừng thì số vẫn khớp với trang cây */
+  const step = now => { if (!WL || !node.isConnected) return; const k = Math.min(1, Math.max(0, (now - t0) / ms)); node.textContent = Math.round(items.length * (1 - Math.pow(1 - k, 3))).toLocaleString("vi-VN"); if (k < 1) requestAnimationFrame(step); else node.dataset.done = "1"; };
   requestAnimationFrame(step);
 }
 function wlDateDots(){ const d = new Date(bday()); if (isNaN(d)) return "";
@@ -2906,6 +2909,12 @@ function wl2(el, preview){
   /* đang mở màn hình này thì cập nhật số người thổi nến nhanh hơn bình thường */
   if (!preview) WL.timers.push(setInterval(()=>{ if (!document.hidden) refresh(true); }, 20000));
 }
+/* số lời chúc trên màn hình chào mừng luôn bằng số trên trang cây */
+function wlSyncCount(){
+  if (!WL) return;
+  const b = WL.el.querySelector(".wl1-cnt b"); if (b && b.dataset.done) b.textContent = items.length.toLocaleString("vi-VN");
+  const s3 = WL.el.querySelector(".wl3-sub"); if (s3) s3.textContent = t("wl3Sub", {n: items.length.toLocaleString("vi-VN")});
+}
 function wlConfetti(box, n, small){
   if (!box) return;
   let h = "";
@@ -2928,8 +2937,9 @@ function wl3(el){
     h += `<svg class="wl3-fw" viewBox="-140 -140 280 280" style="left:${x}%;top:${y}%;width:${sz}px;height:${sz}px;filter:drop-shadow(0 0 10px ${c});animation-delay:${delay.toFixed(2)}s" aria-hidden="true">${rays}</svg>`;
     if (!narrow && k < 4) h += `<div class="wl3-card" data-k="${k}" style="left:${x}%;top:${y}%;border-color:${c}66;animation-delay:${delay.toFixed(2)}s"></div>`;
   });
-  el.innerHTML = h + `<div class="wl3-mid"><h2 class="wl-h wl-up" style="animation-delay:.2s">${wlBr(t("wl3Title"))}</h2><div class="wl3-sub wl-up" style="animation-delay:.5s">${esc(t("wl3Sub", {n: n.toLocaleString("vi-VN")}))}</div></div><div class="wl3-bot"></div>`;
+  el.innerHTML = h + `<div class="wl3-mid"><h2 class="wl-h wl-up" style="animation-delay:.2s">${wlBr(t("wl3Title"))}</h2><div class="wl3-sub wl-up" style="animation-delay:.5s"></div></div><div class="wl3-bot"></div>`;
   el.querySelector(".wl3-mid").prepend(wlLogo());
+  wlSyncCount();
   el.querySelector(".wl3-bot").appendChild(wlButtons(["solid"]));
   /* mặt đất: cỏ phát sáng và robot lấy từ cảnh đêm của trang */
   const g = svgEl("svg", {viewBox:"0 820 1000 200", preserveAspectRatio:"xMidYMax slice", class:"wl3-ground", "aria-hidden":"true"});
@@ -3532,6 +3542,13 @@ $("#dwSpin").onclick = dwSpin;
 $("#dwUndo").onclick = async ()=>{ if (!dwLast) return; try{ dwShowingWin = false; await dwSetPrize(dwLast, ""); $("#dwUndo").hidden = true; dwLast = null; toast(t("drawUndone")); }catch(e){ toast(e.message); } };
 $("#btnDraw").onclick = openDraw;
 
+/* số trên tab Lời chúc = số đang hiện trên cây (đã duyệt, không ẩn), giống trang ngoài; lời chúc chờ duyệt đếm riêng */
+function aCntPaint(){
+  const live = adminItems.filter(m=>!m.deleted), shown = live.filter(m=>m.approved).length, pend = live.length - shown;
+  $("#aCntAll").textContent = shown.toLocaleString("vi-VN");
+  const pb = $("#aCntPend"); pb.hidden = !pend; pb.textContent = t("adminPendBadge", {n: pend});
+  $("#aCntAll").title = t("adminCntTitle", {shown, pend, all: live.length});
+}
 function renderAdmin(){
   $("#txSave").hidden = adminTab !== "texts";
   const isW = adminTab === "welcome";
@@ -3576,7 +3593,7 @@ function renderAdmin(){
     $("#aDepts").hidden = true; $("#aList").hidden = true; $(".a-search").hidden = true; $("#aFilt").hidden = true; $("#aShow").hidden = true; $("#dpSave").hidden = true; $("#aAnon").hidden = true;
     $$("#aTabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===adminTab));
     $("#aInfo").textContent = t("adminServerInfo",{name:BACKEND_NAMES[CUR]||""});
-    $("#aCntAll").textContent = adminItems.filter(m=>!m.deleted).length;
+    aCntPaint();
     if (dpRows) $("#aCntDepts").textContent = dpRows.length;
     svRender(); svCheck().then(()=>{ if (adminTab==="srv") svRender(); });
     pfStart();
@@ -3593,7 +3610,7 @@ function renderAdmin(){
   }
   const live = adminItems.filter(m=>!m.deleted);
   const c = { all: live, pending: live.filter(m=>!m.approved), approved: live.filter(m=>m.approved), featured: live.filter(m=>m.featured), won: adminItems.filter(m=>m.prize), trash: adminItems.filter(m=>m.deleted) };
-  $("#aCntAll").textContent = live.length;
+  aCntPaint();
   if (!isD) renderFilters(c);
   $$("#aTabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===adminTab));
   $("#aInfo").textContent = t("adminInfo",{n:c.featured.length});
