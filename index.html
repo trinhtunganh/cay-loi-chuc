@@ -3571,11 +3571,11 @@ async function dwPlay(au){
     await au.play(); return isFinite(au.duration) && au.duration > 1;
   }catch(e){ return false; }
 }
-/* tiếng vỗ tay khi công bố người trúng (tắt cùng nút nhạc) */
+/* nhạc chiến thắng khi công bố người trúng (tắt cùng nút nhạc); file này to hơn nhạc quay nên giảm âm lượng cho cân */
 let DW_CLAP = null;
 function dwClap(){
   if (DW_MUTE) return;
-  try{ if (!DW_CLAP){ DW_CLAP = new Audio("assets/applause.mp3"); DW_CLAP.preload = "auto"; } DW_CLAP.currentTime = 0; DW_CLAP.volume = .9; const r = DW_CLAP.play(); if (r && r.catch) r.catch(()=>{}); }catch(e){}
+  try{ if (!DW_CLAP){ DW_CLAP = new Audio("assets/victory.mp3"); DW_CLAP.preload = "auto"; } DW_CLAP.currentTime = 0; DW_CLAP.volume = .6; const r = DW_CLAP.play(); if (r && r.catch) r.catch(()=>{}); }catch(e){}
 }
 function dwMutePaint(){ const b = $("#dwMute"); if (b){ b.textContent = DW_MUTE ? "🔇" : "🔊"; b.title = t(DW_MUTE ? "drawSoundOff" : "drawSoundOn"); b.setAttribute("aria-pressed", String(!DW_MUTE)); } }
 function dwChipFor(acc){ const k = DW_SRC === "list" ? dwKey(acc) : String(acc).toLowerCase(); return [...$$("#dwCloud .dw-chip")].find(c=>c.dataset.k === k); }
@@ -3744,7 +3744,7 @@ function dwEnterFs(){
   $("#dwPrizeTag").textContent = $("#dwFsPrize").value;
   $("#dwFs").classList.add("show"); document.body.classList.add("dw-fs");
   dwAudio(); dwMutePaint();   // tải sẵn nhạc để bấm Quay là chạy ngay
-  if (!DW_CLAP){ DW_CLAP = new Audio("assets/applause.mp3"); DW_CLAP.preload = "auto"; }
+  if (!DW_CLAP){ DW_CLAP = new Audio("assets/victory.mp3"); DW_CLAP.preload = "auto"; }
   try{ const r = document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); if (r && r.catch) r.catch(()=>{}); }catch(e){}
   setTimeout(()=>{ dwInfo(); dwRenderWinners(); $("#dwSpin").focus({preventScroll:true}); }, 60);
   setTimeout(()=>{ if (DW_FS && !dwBusy && !dwShowingWin) dwRenderCloud(dwPool()); }, 450);   // vẽ lại khi trình duyệt đã vào toàn màn hình

@@ -136,7 +136,7 @@ Hoa đỏ = lời chúc gửi cả công ty; lá màu = gửi phòng ban hoặc 
 - Mốc sau phải lớn hơn mốc trước; nhập sai thì ô đó tô đỏ và không cho lưu. Bấm ↺ để về mốc mặc định.
 - Lưu xong, cây và thanh tiến độ trên máy mọi người tự cập nhật trong khoảng 1 phút.
 
-- **Nhạc quay thưởng**: mỗi lần bấm Quay sẽ phát nhạc (`assets/draw-music.mp3`, khoảng 17 giây); các tên liên tục **phóng ra** (bay loạn khắp khung, mờ, to nhỏ) rồi **tụ lại thành hình logo VinRobotics** (không vẽ logo nền, các tên tự tạo hình); cuối bài thu về hình logo, một ánh sáng chạy qua các tên **chậm dần và dừng đúng trên người trúng khi hết nhạc**; người trúng phóng to dần ra giữa, các tên khác mờ đi, rồi chữ kết quả, pháo giấy và **tiếng vỗ tay** (`assets/applause.mp3`). Nút 🔊/🔇 trên màn hình quay để tắt/bật nhạc và tiếng vỗ tay (tắt nhạc thì quay 5 giây). Muốn đổi nhạc: thay file `assets/draw-music.mp3`, thời gian quay tự theo độ dài bài.
+- **Nhạc quay thưởng**: mỗi lần bấm Quay sẽ phát nhạc (`assets/draw-music.mp3`, khoảng 17 giây); các tên liên tục **phóng ra** (bay loạn khắp khung, mờ, to nhỏ) rồi **tụ lại thành hình logo VinRobotics** (không vẽ logo nền, các tên tự tạo hình); cuối bài thu về hình logo, một ánh sáng chạy qua các tên **chậm dần và dừng đúng trên người trúng khi hết nhạc**; người trúng phóng to dần ra giữa, các tên khác mờ đi, rồi chữ kết quả, pháo giấy và **nhạc chiến thắng** (`assets/victory.mp3`). Nút 🔊/🔇 trên màn hình quay để tắt/bật nhạc quay và nhạc chiến thắng (tắt nhạc thì quay 5 giây). Muốn đổi nhạc: thay file `assets/draw-music.mp3`, thời gian quay tự theo độ dài bài.
 
 ## Quay thưởng theo danh sách
 - Trong cửa sổ Quay thưởng, chọn **Theo danh sách** (cạnh "Theo lời chúc").
