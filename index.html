@@ -82,6 +82,17 @@ header{display:grid;grid-template-columns:auto auto 1fr auto;gap:26px;align-item
 .dw-pre button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 10px;font-size:12.5px;cursor:pointer}
 .dw-pre button:hover{border-color:var(--brand);color:var(--brand)}
 .dw-chk{display:flex;align-items:center;gap:8px;font-size:14px;margin-top:6px}
+.dw-wishonly{display:flex;flex-direction:column;gap:6px}
+.dw-src{display:grid;grid-template-columns:1fr 1fr;background:#F6F1F2;border-radius:12px;padding:4px;gap:4px;margin-bottom:4px}
+.dw-src button{border:0;background:transparent;border-radius:9px;padding:8px 6px;font:inherit;font-size:13.5px;font-weight:700;color:var(--muted);cursor:pointer}
+.dw-src button.on{background:#fff;color:var(--brand);box-shadow:0 2px 8px rgba(122,20,40,.12)}
+.dw-lst{display:none;flex-direction:column;gap:6px}
+#drawPanel.lst .dw-lst{display:flex} #drawPanel.lst .dw-wishonly{display:none}
+.dw-lst textarea{border:1px solid var(--line);border-radius:10px;padding:9px 10px;font:inherit;font-size:14px;line-height:1.45;resize:vertical;min-height:140px;max-height:40vh}
+.dw-lst-act{display:flex;gap:6px;flex-wrap:wrap}
+.dw-mini{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 11px;font-size:12.5px;cursor:pointer}
+.dw-mini:hover{border-color:var(--brand);color:var(--brand)} .dw-mini.danger:hover{background:#FFF1F3}
+.dw-mini:disabled{opacity:.45;cursor:default}
 .dw-info{font-size:13.5px;color:var(--muted);margin:8px 0 0;line-height:1.5} .dw-info b{color:var(--ink)}
 .dw-why{display:block;margin-top:6px;color:#9A6400;background:#FFF6E0;border-radius:8px;padding:6px 8px;font-size:12.5px}
 .dw-stage{position:relative;overflow:hidden;border-radius:20px;min-height:280px;padding:26px 28px;color:#fff;background:radial-gradient(120% 140% at 20% 0%,#FF4D6D 0%,#E4002B 45%,#9E001E 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
@@ -770,7 +781,7 @@ body.dw-fs{overflow:hidden}
 .fs-win{list-style:none;margin:0;padding:0;overflow:auto;flex:1;min-height:0}
 .fs-win li{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.1);margin-bottom:8px;animation:fsIn .5s ease both}
 .fs-win li.new{background:#fff;color:var(--ink);box-shadow:0 8px 24px rgba(0,0,0,.25)}
-.fs-win li b{font-size:clamp(16px,1.35vw,21px);font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fs-win li b{font-size:clamp(16px,1.35vw,21px);font-weight:800;overflow-wrap:anywhere;line-height:1.25}
 .fs-win li .pz{font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#FFD15C}
 .fs-win li.new .pz{color:var(--brand)}
 .fs-win li small{font-size:12.5px;opacity:.8}
@@ -1032,8 +1043,18 @@ body.dw-fs{overflow:hidden}
     </div>
     <div class="dw-grid">
       <div class="dw-set">
+        <div class="dw-src" role="tablist">
+          <button type="button" data-src="wish" role="tab" data-t="drawSrcWish"></button>
+          <button type="button" data-src="list" role="tab" data-t="drawSrcList"></button>
+        </div>
         <label class="lbl" for="dwPrize" data-t="drawPrize"></label>
         <input id="dwPrize" type="text" maxlength="60">
+        <div class="dw-lst" id="dwLstBox">
+          <label class="lbl" for="dwPaste" data-t="drawPasteLabel"></label>
+          <textarea id="dwPaste" rows="8" spellcheck="false"></textarea>
+          <div class="dw-lst-act"><button type="button" class="dw-mini" id="dwLstCsv" data-t="drawListCsv"></button><button type="button" class="dw-mini danger" id="dwLstClear" data-t="drawListClear"></button></div>
+        </div>
+        <div class="dw-wishonly">
         <label class="lbl" data-t="drawRange"></label>
         <div class="dw-range"><input id="dwFrom" type="datetime-local"><span>→</span><input id="dwTo" type="datetime-local"></div>
         <div class="dw-pre">
@@ -1043,6 +1064,7 @@ body.dw-fs{overflow:hidden}
           <button type="button" data-pre="all" data-t="drawPreAll"></button>
         </div>
         <label class="dw-chk"><input type="checkbox" id="dwApproved" checked> <span data-t="drawOnlyApproved"></span></label>
+        </div>
         <p class="dw-info" id="dwInfo"></p>
         <h3 class="dw-h dw-wh" data-t="drawWinners"></h3>
         <ul class="dw-win" id="dwWinners"></ul>
@@ -1056,13 +1078,13 @@ body.dw-fs{overflow:hidden}
         <div class="dw-confetti" id="dwConfetti"></div>
       </div>
       <div class="dw-btns">
-        <p class="dw-hint" data-t="drawStartHint"></p>
+        <p class="dw-hint" id="dwHint"></p>
         <button class="btn primary dw-start" id="dwStart" type="button">⛶ <span data-t="drawStart"></span></button>
       </div>
       </div>
     </div>
     <h3 class="dw-h" id="dwListH"></h3>
-    <div class="dw-tbl-wrap"><table class="dw-tbl"><thead><tr><th>#</th><th data-t="drawColTime"></th><th>Account</th><th data-t="drawColTo"></th><th data-t="drawColText"></th><th data-t="drawColStatus"></th></tr></thead><tbody id="dwTbl"></tbody></table></div>
+    <div class="dw-tbl-wrap"><table class="dw-tbl"><thead id="dwTblHeadL" hidden><tr><th>#</th><th data-t="drawColPerson"></th><th data-t="drawColStatus"></th></tr></thead><thead id="dwTblHead"><tr><th>#</th><th data-t="drawColTime"></th><th>Account</th><th data-t="drawColTo"></th><th data-t="drawColText"></th><th data-t="drawColStatus"></th></tr></thead><tbody id="dwTbl"></tbody></table></div>
   </div>
 </div>
 <div id="dwFs" role="dialog" aria-modal="true" aria-labelledby="dwFsTitle">
@@ -3334,6 +3356,20 @@ function exportCsv(){
 const pad2 = n => String(n).padStart(2,"0");
 const toLocalInput = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 let dwBusy = false, dwLast = null, dwShowingWin = false;
+/* hai nguồn quay: "wish" theo lời chúc (lưu kết quả trên máy chủ) và "list" theo danh sách dán vào (mỗi dòng 1 người;
+   danh sách và kết quả lưu trên máy đang quay, không lẫn với kết quả quay theo lời chúc) */
+let DW_SRC = load("cta_dw_src") === "list" ? "list" : "wish";
+const DW_L = (()=>{ try{ const o = JSON.parse(load("cta_dw_list") || "{}"); return {text: String(o.text || ""), winners: Array.isArray(o.winners) ? o.winners : []}; }catch(e){ return {text:"", winners:[]}; } })();
+const dwLSave = () => save("cta_dw_list", JSON.stringify(DW_L));
+const dwKey = s => String(s).trim().replace(/\s+/g, " ").toLowerCase();
+function dwLPeople(){
+  const seen = new Map(); let dup = 0, lines = 0;
+  DW_L.text.split(/\r?\n/).forEach(line=>{
+    const name = line.replace(/\t+/g, " · ").trim().replace(/\s+/g, " ").slice(0, 80); if (!name) return; lines++;
+    const k = dwKey(name); if (seen.has(k)){ dup++; return; } seen.set(k, name);
+  });
+  return {list: [...seen.entries()].map(([k, name])=>({id: "L:" + k, account: name, key: k, text: "", time: "", list: true})), dup, lines};
+}
 function dwSetRange(kind){
   const now = new Date(), to = new Date(now.getTime() + 60e3);
   let from;
@@ -3343,8 +3379,12 @@ function dwSetRange(kind){
   else { const first = adminItems.reduce((a,m)=>Math.min(a, Date.parse(m.time)||a), now.getTime()); from = new Date(first - 60e3); }
   $("#dwFrom").value = toLocalInput(from); $("#dwTo").value = toLocalInput(to); dwInfo();
 }
-function dwWinnersSet(){ return new Set(adminItems.filter(m=>m.prize && m.account).map(m=>m.account.toLowerCase())); }
+function dwWinnersSet(){
+  if (DW_SRC === "list") return new Set(DW_L.winners.map(w=>w.key));
+  return new Set(adminItems.filter(m=>m.prize && m.account).map(m=>m.account.toLowerCase()));
+}
 function dwPool(){
+  if (DW_SRC === "list"){ const won = dwWinnersSet(); return dwLPeople().list.filter(p=>!won.has(p.key)); }
   const from = Date.parse($("#dwFrom").value), to = Date.parse($("#dwTo").value), onlyOk = $("#dwApproved").checked, won = dwWinnersSet();
   return adminItems.filter(m=>{
     const tm = Date.parse(m.time);
@@ -3352,6 +3392,7 @@ function dwPool(){
   });
 }
 function dwInfo(){
+  if (DW_SRC === "list") return dwInfoList();
   const pool = dwPool(), people = new Set(pool.map(m=>m.account.toLowerCase()));
   /* giải thích vì sao lời chúc không vào danh sách quay */
   const from = Date.parse($("#dwFrom").value), to = Date.parse($("#dwTo").value), onlyOk = $("#dwApproved").checked;
@@ -3372,6 +3413,36 @@ function dwInfo(){
   if (!dwBusy && !dwShowingWin) dwRenderCloud(pool);
   dwRenderTable(inRange, pool);
 }
+function dwInfoList(){
+  const {list, dup, lines} = dwLPeople(), pool = dwPool(), wonN = list.length - pool.length;
+  let html = esc(t("drawListInfo", {p: pool.length, w: wonN})).replace(/(\d+)/g, "<b>$1</b>");
+  const why = [];
+  if (!lines) why.push(t("drawListEmpty"));
+  if (dup) why.push(t("drawListDup", {n: dup}));
+  if (why.length) html += `<br><span class="dw-why">${esc(why.join(" "))}</span>`;
+  $("#dwInfo").innerHTML = html;
+  $("#dwSpin").disabled = dwBusy || !pool.length;
+  $("#dwStart").disabled = !pool.length;
+  $("#dwFsPool").innerHTML = esc(t("drawFsPoolList", {p: "\u0001"})).replace("\u0001", `<b>${pool.length}</b>`);
+  if (!dwBusy) $("#dwSpin").textContent = t(dwShowingWin ? "drawSpinNext" : "drawSpin");
+  if (!dwBusy && !dwShowingWin) dwRenderCloud(pool);
+  /* bảng kê: ai được quay, ai đã trúng giải gì */
+  const prizeOf = new Map(DW_L.winners.map(w=>[w.key, w.prize]));
+  $("#dwListH").textContent = t("drawListTitleL", {n: list.length, k: pool.length});
+  $("#dwTbl").innerHTML = list.length ? list.slice(0, 1000).map((m,i)=>{ const pz = prizeOf.get(m.key);
+    return `<tr class="${pz ? "no" : ""}"><td>${i+1}</td><td class="nw"><b>${esc(m.account)}</b></td><td><span class="st ${pz ? "won" : "ok"}">${esc(pz ? "🎁 " + pz : t("drawStOk"))}</span></td></tr>`; }).join("")
+    : `<tr><td colspan="3" class="a-empty">${esc(t("drawListEmpty"))}</td></tr>`;
+  $("#dwLstCsv").disabled = !DW_L.winners.length; $("#dwLstClear").disabled = !DW_L.winners.length;
+}
+function dwSetSrc(src){
+  if (dwBusy) return;
+  DW_SRC = src; save("cta_dw_src", src); dwShowingWin = false; dwLast = null; $("#dwUndo").hidden = true;
+  $("#drawPanel").classList.toggle("lst", src === "list");
+  $("#dwHint").textContent = t(src === "list" ? "drawStartHintL" : "drawStartHint");
+  $$("#drawPanel .dw-src button").forEach(b=>b.classList.toggle("on", b.dataset.src === src));
+  $("#dwTblHeadL").hidden = src !== "list"; $("#dwTblHead").hidden = src === "list";
+  dwInfo(); dwRenderWinners();
+}
 /* bảng kê lời chúc trong khoảng thời gian đã chọn, kèm lý do nếu không được quay */
 function dwRenderTable(inRange, pool){
   const ok = new Set(pool.map(m=>m.id)), won = dwWinnersSet(), body = $("#dwTbl");
@@ -3387,7 +3458,7 @@ function dwRenderTable(inRange, pool){
 /* "đám mây" account: mỗi người một ô, chữ tự co cho vừa khung đỏ */
 function dwAccounts(pool){
   const seen = new Map();
-  pool.forEach(m=>{ const k = m.account.toLowerCase(); if (!seen.has(k)) seen.set(k, m.account); });
+  pool.forEach(m=>{ const k = m.key || m.account.toLowerCase(); if (!seen.has(k)) seen.set(k, m.account); });
   return [...seen.entries()];
 }
 function dwRenderCloud(pool){
@@ -3421,7 +3492,7 @@ function dwRenderCloud(pool){
 function dwProgReset(){ const p = $("#dwProg"); p.style.transition = "none"; p.style.width = "0"; }
 function dwProgRun(ms){ const p = $("#dwProg"); dwProgReset(); void p.offsetWidth; p.style.transition = `width ${ms}ms linear`; p.style.width = "100%"; }
 const DW_SPIN_MS = 5000;
-function dwChipFor(acc){ return [...$$("#dwCloud .dw-chip")].find(c=>c.dataset.k === String(acc).toLowerCase()); }
+function dwChipFor(acc){ const k = DW_SRC === "list" ? dwKey(acc) : String(acc).toLowerCase(); return [...$$("#dwCloud .dw-chip")].find(c=>c.dataset.k === k); }
 function dwCenterWin(chip){
   const box = $("#dwCloud"), W = box.clientWidth, H = box.clientHeight, w = chip.offsetWidth, h = chip.offsetHeight;
   const s = Math.max(1, Math.min(4, (W * .8) / w, (H * .45) / h));
@@ -3430,20 +3501,29 @@ function dwCenterWin(chip){
 }
 function dwRenderWinners(){
   const ul = $("#dwWinners"); ul.textContent = "";
-  const list = adminItems.filter(m=>m.prize).sort((a,b)=>(b.wonAt||0)-(a.wonAt||0));
+  const isL = DW_SRC === "list";
+  const list = isL ? DW_L.winners.map(w=>({id: "L:" + w.key, account: w.name, key: w.key, prize: w.prize, wonAt: w.wonAt, list: true})).sort((a,b)=>(b.wonAt||0)-(a.wonAt||0))
+    : adminItems.filter(m=>m.prize).sort((a,b)=>(b.wonAt||0)-(a.wonAt||0));
+  const sub = m => m.list ? "" : esc(recipient(m)) + " · ";
   /* danh sách trúng giải trên màn hình lớn: người mới nhất ở trên, nổi bật */
   const fs = $("#dwFsWin"); $("#dwFsCount").textContent = list.length;
-  fs.innerHTML = list.length ? list.map((m,i)=>`<li class="${i === 0 && dwLast && dwLast.id === m.id ? "new" : ""}"><span class="pz">${esc(m.prize)}</span><b>${esc(m.account)}</b><small>${esc(recipient(m))} · ${esc(new Date(m.wonAt||Date.now()).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"}))}</small></li>`).join("")
+  fs.innerHTML = list.length ? list.map((m,i)=>`<li class="${i === 0 && dwLast && dwLast.id === m.id ? "new" : ""}"><span class="pz">${esc(m.prize)}</span><b>${esc(m.account)}</b><small>${sub(m)}${esc(new Date(m.wonAt||Date.now()).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"}))}</small></li>`).join("")
     : `<li class="none">${esc(t("drawNoWinners"))}</li>`;
   if (!list.length){ ul.innerHTML = `<li class="a-empty">${esc(t("drawNoWinners"))}</li>`; return; }
   list.forEach(m=>{
     const li = document.createElement("li");
-    li.innerHTML = `<span class="pz">🎁 ${esc(m.prize)}</span><span><span class="ac">${esc(m.account)}</span> <small>· ${esc(recipient(m))} · ${esc(new Date(m.wonAt||Date.now()).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"}))}</small></span><button type="button">${esc(t("drawRemove"))}</button>`;
+    li.innerHTML = `<span class="pz">🎁 ${esc(m.prize)}</span><span><span class="ac">${esc(m.account)}</span> <small>· ${sub(m)}${esc(new Date(m.wonAt||Date.now()).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"}))}</small></span><button type="button">${esc(t("drawRemove"))}</button>`;
     li.querySelector("button").onclick = ()=>dwSetPrize(m, "");
     ul.appendChild(li);
   });
 }
 async function dwSetPrize(m, prize){
+  if (m.list){
+    const k = m.key || dwKey(m.account);
+    DW_L.winners = DW_L.winners.filter(w=>w.key !== k);
+    if (prize) DW_L.winners.push({key: k, name: m.account, prize, wonAt: Date.now()});
+    dwLSave(); dwRenderWinners(); dwInfo(); return true;
+  }
   const res = await api("adminSet", {id:m.id, prize, wonAt:Date.now()});
   if (!res || !res.ok) throw new Error((res && res.error) || t("adminSaveError"));
   m.prize = res.prize != null ? res.prize : prize; m.wonAt = res.wonAt || (prize ? Date.now() : 0);
@@ -3486,7 +3566,9 @@ async function dwSpin(){
   stage.classList.remove("rolling"); stage.classList.add("done");
   if (wc){ wc.classList.add("win"); dwCenterWin(wc); }
   dwShowingWin = true;
-  $("#dwTo2").textContent = recipient(winner) + " · " + timeAgo(winner.time); $("#dwText").textContent = "“" + winner.text + "”"; $("#dwResult").hidden = false;
+  if (winner.list){ $("#dwTo2").textContent = t("drawWinnerIs"); $("#dwText").textContent = "🎁 " + prize; }
+  else { $("#dwTo2").textContent = recipient(winner) + " · " + timeAgo(winner.time); $("#dwText").textContent = "“" + winner.text + "”"; }
+  $("#dwResult").hidden = false;
   dwConfetti();
   try{ dwLast = winner; await dwSetPrize(winner, prize); $("#dwUndo").hidden = false; }
   catch(e){ dwLast = null; toast(e.message || t("adminSaveError")); }
@@ -3529,6 +3611,8 @@ async function openDraw(){
   if (!ADMIN_PIN) return openAdminGate();
   if (!dwBusy) dwShowingWin = false;
   if (!$("#dwPrize").value) $("#dwPrize").value = t("drawPrizeDefault");
+  $("#dwPaste").value = DW_L.text; $("#dwPaste").placeholder = t("drawPastePh");
+  dwSetSrc(DW_SRC);
   openModal("#drawPanel");
   $("#dwInfo").textContent = "…";
   try{ const r = await api("adminList"); if (r.ok) adminItems = (r.items||[]).sort((a,b)=>String(b.time).localeCompare(String(a.time))); }catch(e){}
@@ -3539,6 +3623,16 @@ $$("#drawPanel [data-pre]").forEach(b=>b.onclick = ()=>dwSetRange(b.dataset.pre)
 ["#dwFrom","#dwTo","#dwApproved"].forEach(q=>$(q).addEventListener("change", ()=>{ if (!dwBusy) dwShowingWin = false; dwInfo(); }));
 $$("#drawPanel [data-pre]").forEach(b=>b.addEventListener("click", ()=>{ if (!dwBusy){ dwShowingWin = false; dwInfo(); } }));
 $("#dwSpin").onclick = dwSpin;
+$$("#drawPanel .dw-src button").forEach(b=>b.onclick = ()=>dwSetSrc(b.dataset.src));
+$("#dwPaste").addEventListener("input", e=>{ DW_L.text = e.target.value.slice(0, 200000); dwLSave(); if (!dwBusy) dwShowingWin = false; clearTimeout(dwSetSrc.tm); dwSetSrc.tm = setTimeout(dwInfo, 250); });
+$("#dwLstClear").onclick = ()=>{ if (!DW_L.winners.length || !confirm(t("drawListClearAsk", {n: DW_L.winners.length}))) return; DW_L.winners = []; dwLSave(); dwShowingWin = false; dwLast = null; $("#dwUndo").hidden = true; dwInfo(); dwRenderWinners(); };
+$("#dwLstCsv").onclick = ()=>{
+  const cell = v => `"${String(v == null ? "" : v).replace(/"/g, '""')}"`;
+  const rows = DW_L.winners.slice().sort((a,b)=>a.wonAt-b.wonAt).map((w,i)=>[i+1, w.name, w.prize, new Date(w.wonAt).toLocaleString("vi-VN")]);
+  const csv = "\ufeff" + [["STT","Người trúng","Giải","Thời điểm"]].concat(rows).map(r=>r.map(cell).join(",")).join("\r\n");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], {type: "text/csv;charset=utf-8"}));
+  a.download = `quay-thuong-danh-sach-${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+};
 $("#dwUndo").onclick = async ()=>{ if (!dwLast) return; try{ dwShowingWin = false; await dwSetPrize(dwLast, ""); $("#dwUndo").hidden = true; dwLast = null; toast(t("drawUndone")); }catch(e){ toast(e.message); } };
 $("#btnDraw").onclick = openDraw;
 

@@ -136,3 +136,9 @@ Hoa đỏ = lời chúc gửi cả công ty; lá màu = gửi phòng ban hoặc 
 - Mốc sau phải lớn hơn mốc trước; nhập sai thì ô đó tô đỏ và không cho lưu. Bấm ↺ để về mốc mặc định.
 - Lưu xong, cây và thanh tiến độ trên máy mọi người tự cập nhật trong khoảng 1 phút.
 
+## Quay thưởng theo danh sách
+- Trong cửa sổ Quay thưởng, chọn **Theo danh sách** (cạnh "Theo lời chúc").
+- Dán danh sách vào ô "Danh sách người tham gia", **mỗi dòng một người** (dán thẳng từ Excel được; dòng trống và dòng trùng tên tự bỏ qua). Đặt **Tên giải**, rồi bấm **⛶ Bắt đầu**.
+- Màn hình quay, hoạt cảnh, loại người đã trúng, Hủy kết quả này, đổi tên giải từng lượt, phím Space/Esc: giống quay theo lời chúc.
+- Danh sách và kết quả quay theo danh sách lưu **trên máy đang quay** (không lẫn với kết quả quay theo lời chúc). Bấm **⬇ Tải kết quả** để tải file CSV mở bằng Excel; **Xóa kết quả quay** để quay lại từ đầu.
+
