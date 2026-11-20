@@ -101,9 +101,12 @@ header{display:grid;grid-template-columns:auto auto 1fr auto;gap:26px;align-item
 .dw-cloud{position:relative;align-self:stretch;height:clamp(300px,42vh,460px);margin:12px 0 4px;font-size:16px}
 .dw-cloud .dw-empty{position:absolute;inset:0;display:grid;place-items:center}
 .dw-chip{position:absolute;left:0;top:0;transform-origin:50% 50%;will-change:transform,opacity;display:inline-block;padding:.18em .55em;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-weight:700;line-height:1.25;white-space:nowrap;transition:transform .14s ease,opacity .5s ease,background .14s,color .14s,box-shadow .14s}
-.dw-stage.rolling .dw-chip{transition:transform var(--fly,1s) cubic-bezier(.45,.05,.55,.95),opacity var(--fly,1s) ease-in-out,background .15s,color .15s}
 .dw-chip.hot{opacity:1!important;background:#fff;color:#C40026;z-index:3;box-shadow:0 6px 22px rgba(0,0,0,.3)}
 .dw-stage.done .dw-chip{opacity:.1}
+.dw-ghost{position:absolute;left:0;top:0;pointer-events:none;fill:#fff;opacity:0;transition:opacity 1s ease}
+.dw-stage.gather .dw-ghost{opacity:.16}
+.dw-stage.done .dw-ghost{opacity:.1}
+.dw-stage.rolling .dw-chip{transition:transform var(--fly,1s) cubic-bezier(.45,.05,.55,.95),opacity var(--fly,1s) ease-in-out,filter var(--fly,1s),background .15s,color .15s}
 .dw-chip.win{opacity:1!important;background:#fff;color:#C40026;z-index:4;box-shadow:0 10px 34px rgba(0,0,0,.35);transition:transform .8s cubic-bezier(.2,1.3,.4,1),opacity .3s}
 .dw-empty{font-size:64px;font-weight:900;opacity:.6}
 .dw-result{min-height:2.6em}
@@ -3530,6 +3533,40 @@ function dwRenderCloud(pool){
 }
 function dwProgReset(){ const p = $("#dwProg"); p.style.transition = "none"; p.style.width = "0"; }
 function dwProgRun(ms){ const p = $("#dwProg"); dwProgReset(); void p.offsetWidth; p.style.transition = `width ${ms}ms linear`; p.style.width = "100%"; }
+
+/* hình logo (biểu tượng chữ V trái tim của VinRobotics) để các tên xếp vào khi "thu lại" */
+const DW_LOGO_D = "M22.72,27.97 L20.28,28.00 L19.09,27.90 L17.91,27.60 L16.41,26.93 L14.66,25.73 L13.49,24.72 L11.27,22.22 L8.23,17.91 L5.76,13.97 L4.26,11.78 L1.23,6.78 L0.34,4.91 L0.06,3.78 L0.14,2.47 L0.60,1.59 L1.59,0.59 L2.28,0.19 L3.03,0.03 L4.34,0.01 L5.34,0.23 L6.27,0.78 L7.41,1.22 L9.41,2.22 L10.28,2.78 L11.28,3.22 L13.72,4.78 L16.35,6.22 L19.95,8.78 L20.72,9.10 L21.34,9.22 L21.84,9.13 L22.47,8.83 L24.59,7.26 L27.16,5.81 L29.47,4.24 L31.09,3.28 L32.16,2.82 L33.03,2.24 L34.11,1.78 L34.91,1.31 L36.16,0.82 L37.25,0.22 L38.53,0.00 L40.09,0.11 L40.66,0.37 L41.82,1.34 L42.32,2.47 L42.47,3.34 L42.37,4.09 L41.74,5.97 L37.82,12.47 L36.23,14.72 L34.74,17.16 L32.26,20.66 L31.73,21.53 L29.67,23.91 L27.59,25.84 L25.84,26.97 L24.22,27.66 L22.72,27.97Z M23.13,25.97 L24.22,25.68 L25.78,24.81 L26.72,24.06 L28.84,21.91 L30.79,19.53 L33.78,15.09 L35.22,12.72 L36.78,10.47 L37.24,9.59 L39.84,5.41 L40.48,3.66 L40.40,3.03 L40.07,2.41 L39.72,2.13 L39.22,1.99 L38.55,2.03 L37.91,2.23 L37.03,2.77 L35.84,3.23 L35.03,3.72 L33.90,4.22 L33.03,4.79 L32.03,5.25 L30.37,6.22 L29.53,6.82 L27.03,8.20 L24.83,9.66 L23.66,10.26 L23.49,10.59 L23.62,11.03 L24.82,12.41 L25.70,13.72 L25.90,14.16 L26.13,15.72 L25.98,17.09 L25.57,17.91 L24.86,18.78 L24.34,19.17 L23.03,19.85 L21.09,20.02 L20.03,19.95 L19.16,19.75 L18.59,19.48 L17.72,18.86 L17.13,18.22 L16.37,16.47 L16.31,15.53 L16.52,14.59 L17.25,13.03 L18.90,11.09 L19.00,10.59 L18.80,10.22 L16.36,8.91 L15.41,8.19 L12.91,6.81 L12.09,6.20 L10.41,5.21 L9.53,4.82 L8.59,4.22 L6.72,3.27 L5.53,2.78 L4.61,2.22 L4.09,2.05 L3.41,2.02 L2.84,2.12 L2.45,2.34 L2.09,2.97 L2.06,4.03 L2.22,4.53 L3.17,6.22 L6.21,11.22 L7.78,13.47 L10.22,17.47 L12.24,20.34 L13.28,21.66 L15.25,23.72 L16.32,24.66 L18.28,25.74 L18.84,25.92 L19.59,25.99 L23.13,25.97Z M21.73,18.09 L22.72,17.82 L23.66,17.09 L24.06,16.41 L24.13,15.47 L23.87,14.41 L23.16,13.41 L21.92,12.22 L21.53,12.05 L21.16,12.02 L20.78,12.12 L20.41,12.34 L19.20,13.53 L18.43,14.91 L18.30,15.91 L18.59,16.66 L19.20,17.41 L19.59,17.73 L20.59,18.05 L21.73,18.09Z";
+const DW_LOGO_W = 42.6, DW_LOGO_H = 28.1;
+function dwLogoPts(n, W, H){
+  const key = n + "x" + W + "x" + H; if (dwLogoPts.k === key) return dwLogoPts.v;
+  const k = Math.min(W * .86 / DW_LOGO_W, H * .86 / DW_LOGO_H), ox = (W - DW_LOGO_W * k) / 2, oy = (H - DW_LOGO_H * k) / 2;
+  const cv = document.createElement("canvas"); cv.width = Math.ceil(W); cv.height = Math.ceil(H);
+  const g = cv.getContext("2d"); g.setTransform(k, 0, 0, k, ox, oy); g.fill(new Path2D(DW_LOGO_D), "evenodd");
+  const data = g.getImageData(0, 0, cv.width, cv.height).data, step = Math.max(2, Math.round(k / 4)), on = [];
+  for (let y = 0; y < cv.height; y += step) for (let x = 0; x < cv.width; x += step) if (data[(y * cv.width + x) * 4 + 3] > 128) on.push([x, y]);
+  /* chọn n điểm rải đều trên nét logo (lấy điểm xa các điểm đã chọn nhất) */
+  const m = Math.max(1, Math.min(n, 600)), p = [];
+  for (let i = 0; i < m && on.length; i++){
+    let best = null, bd = -1;
+    for (let c = 0; c < 18; c++){
+      const q = on[Math.floor(Math.random() * on.length)]; let d = Infinity;
+      for (const r of p){ const dx = r[0] - q[0], dy = r[1] - q[1], dd = dx*dx + dy*dy; if (dd < d) d = dd; }
+      if (d > bd){ bd = d; best = q; }
+    }
+    p.push(best);
+  }
+  /* cỡ chữ khi xếp hình: vừa với độ dày nét logo (~1,8 đơn vị) và mật độ tên */
+  const h = Math.max(9, Math.min(k * 2.1, Math.sqrt(on.length * step * step / m) * .62));
+  return (dwLogoPts.k = key, dwLogoPts.v = {p, h, k, ox, oy});
+}
+/* bóng logo mờ phía sau, chỉ hiện khi các tên thu lại thành hình */
+function dwLogoGhost(pts){
+  const box = $("#dwCloud"); let g = box.querySelector(".dw-ghost");
+  if (!g){ g = document.createElementNS("http://www.w3.org/2000/svg", "svg"); g.setAttribute("class", "dw-ghost"); g.setAttribute("aria-hidden", "true"); g.innerHTML = `<path fill-rule="evenodd" d="${DW_LOGO_D}"/>`; }
+  box.prepend(g);
+  g.setAttribute("width", box.clientWidth); g.setAttribute("height", box.clientHeight);
+  g.firstChild.setAttribute("transform", `translate(${pts.ox.toFixed(1)},${pts.oy.toFixed(1)}) scale(${pts.k.toFixed(3)})`);
+}
 const DW_SPIN_MS = 5000;
 let DW_AU = null, DW_MUTE = load("cta_dw_mute") === "1";
 function dwAudio(){ if (!DW_AU){ DW_AU = new Audio("assets/draw-music.mp3"); DW_AU.preload = "auto"; } return DW_AU; }
@@ -3612,32 +3649,53 @@ async function dwSpin(){
   dwProgRun(dur);
   const box = $("#dwCloud"), W = box.clientWidth, H = box.clientHeight;
   const big = DW_FS ? 1.5 : 1, many = chips.length > 120 ? .75 : chips.length > 50 ? .9 : 1;
-  /* mỗi nhịp: mọi tên bay tới chỗ mới ngẫu nhiên, đổi độ mờ và cỡ chữ; trình duyệt tự làm mượt bằng transition */
-  const fly = ms => {
-    stage.style.setProperty("--fly", ms + "ms");
+  /* nhịp quay: PHÓNG RA (tên bay loạn khắp khung, mờ, to nhỏ ngẫu nhiên) rồi THU LẠI (các tên xếp thành hình logo công ty),
+     lặp lại suốt bài nhạc; cuối bài thu về hình logo rồi người trúng bay ra giữa. Trình duyệt tự làm mượt bằng transition. */
+  const pts = dwLogoPts(chips.length, W, H), blur = chips.length <= 150;
+  const order = chips.map((c,i)=>i).sort(()=>Math.random() - .5);
+  const spread = ms => {
+    stage.style.setProperty("--fly", ms + "ms"); stage.classList.remove("gather");
     chips.forEach(c=>{
-      const sc = (.55 + Math.random() * 1.45) * big * many, w = c._w * sc, h = c._h * sc;
+      const sc = (.55 + Math.random() * 1.7) * big * many, w = c._w * sc, h = c._h * sc;
       const x = Math.random() * Math.max(0, W - w) + (w - c._w) / 2, y = Math.random() * Math.max(0, H - h) + (h - c._h) / 2;
-      c.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) scale(${sc.toFixed(2)})`;
-      c.style.opacity = (.18 + Math.random() * .82).toFixed(2);
+      c.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) scale(${sc.toFixed(2)}) rotate(${(Math.random()*40 - 20).toFixed(0)}deg)`;
+      c.style.opacity = (.12 + Math.random() * .6).toFixed(2);
+      if (blur) c.style.filter = `blur(${(Math.random() * 3).toFixed(1)}px)`;
     });
   };
-  let hot = null, done = false, flyT = 0, endT = 0;
+  const gather = ms => {
+    stage.style.setProperty("--fly", ms + "ms"); stage.classList.add("gather");
+    chips.forEach((c,i)=>{
+      const pt = pts.p[order[i] % pts.p.length], sc = Math.min(1.4, pts.h / c._h);
+      c.style.transform = `translate(${(pt[0] - c._w/2).toFixed(1)}px,${(pt[1] - c._h/2).toFixed(1)}px) scale(${sc.toFixed(2)})`;
+      c.style.opacity = (.8 + Math.random() * .2).toFixed(2);
+      if (blur) c.style.filter = "";
+    });
+  };
+  dwLogoGhost(pts);
+  let hot = null, done = false, flyT = 0, endT = 0, phase = 0;
+  const lastGather = Math.max(1200, dur - 2600);                  // 2,6 giây cuối: thu về logo và giữ nguyên
   await new Promise(fin=>{
     const finish = () => { if (done) return; done = true; clearTimeout(flyT); clearTimeout(endT); au.removeEventListener("ended", finish); fin(); };
     if (music) au.addEventListener("ended", finish);
     endT = setTimeout(finish, dur + (music ? 1500 : 0));          // phòng khi trình duyệt không báo hết nhạc
     (function step(){
       if (done) return;
-      const p = Math.min(1, (performance.now() - t0) / dur), ms = Math.round(650 + p * 650);   // bay chậm dần về cuối bài
-      fly(ms);
-      if (hot) hot.classList.remove("hot");
-      hot = chips[rnd(chips.length)]; hot.classList.add("hot");
-      flyT = setTimeout(step, ms * .9);
+      const el = performance.now() - t0;
+      if (hot){ hot.classList.remove("hot"); hot = null; }
+      if (el >= lastGather){ gather(1400); return; }               // về hình logo, chờ hết nhạc
+      if (phase % 2 === 0){
+        spread(900); hot = chips[rnd(chips.length)]; hot.classList.add("hot");
+        flyT = setTimeout(step, 1300);
+      } else {
+        gather(1100); flyT = setTimeout(step, 1900);
+      }
+      phase++;
     })();
   });
   try{ au.pause(); }catch(e){}
-  chips.forEach(c=>{ c.style.opacity = ""; });
+  chips.forEach(c=>{ c.style.opacity = ""; c.style.filter = ""; });
+  stage.classList.remove("gather");
   if (hot) hot.classList.remove("hot");
   const wc = dwChipFor(winner.account);
   stage.classList.remove("rolling"); stage.classList.add("done");
