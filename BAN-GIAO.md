@@ -26,6 +26,7 @@ Cập nhật: 24/10/2026. Dán file này (hoặc link repo) vào đầu cuộc t
   - Azure tự sao lưu: 3 giờ/lần, 1 giờ/lần quanh sinh nhật, chỉ khi dữ liệu đổi. Giữ 24 bản + 1 bản/ngày trong 45 ngày.
 - **Ngày và đêm** tự đổi theo vòng 30 phút (mặt trời đi trái → phải, trời tối dần, cây phát sáng). Chỉ đổi độ mờ các lớp vẽ sẵn mỗi 4 giây, dừng khi tab ẩn.
 - Tab **Chào mừng**: 3 mẫu màn hình chào mừng ngày sinh nhật (Cây bừng nở, Cùng thổi nến, Pháo hoa lời chúc), xem thử, chọn mẫu, hiện trong ngày sinh nhật hoặc ngay. Mẫu thổi nến đếm chung qua cảm xúc `WELCOME_CAKE` (cần Azure bản 17/11).
+- Quay thưởng **theo danh sách** dán vào: lưu bảng `QuayThuong` trên Azure (PK `cfg`/`list` = danh sách, PK `win` = từng lượt, không xóa, chỉ đổi status ok/undo/clear) để hậu kiểm. Thao tác: adminDrawGet/Save/Win/Undo/Clear.
 - **Cảm xúc** kiểu Facebook trên từng lời chúc, sắp xếp danh sách theo số cảm xúc.
 - **Giám sát**: workflow `.github/workflows/monitor.yml` 10 phút/lần (mở Issue khi lỗi) + tác vụ định kỳ của Claude mỗi giờ báo về điện thoại.
 - Nút **Quay thưởng** (hộp quà):

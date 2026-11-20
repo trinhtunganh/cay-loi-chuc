@@ -90,6 +90,7 @@ header{display:grid;grid-template-columns:auto auto 1fr auto;gap:26px;align-item
 #drawPanel.lst .dw-lst{display:flex} #drawPanel.lst .dw-wishonly{display:none}
 .dw-lst textarea{border:1px solid var(--line);border-radius:10px;padding:9px 10px;font:inherit;font-size:14px;line-height:1.45;resize:vertical;min-height:140px;max-height:40vh}
 .dw-lst-act{display:flex;gap:6px;flex-wrap:wrap}
+.dw-lst-st{font-size:12px;color:var(--muted)} .dw-lst-st.warn{color:#9A6400;background:#FFF6E0;border-radius:8px;padding:5px 8px}
 .dw-mini{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 11px;font-size:12.5px;cursor:pointer}
 .dw-mini:hover{border-color:var(--brand);color:var(--brand)} .dw-mini.danger:hover{background:#FFF1F3}
 .dw-mini:disabled{opacity:.45;cursor:default}
@@ -1052,6 +1053,7 @@ body.dw-fs{overflow:hidden}
         <div class="dw-lst" id="dwLstBox">
           <label class="lbl" for="dwPaste" data-t="drawPasteLabel"></label>
           <textarea id="dwPaste" rows="8" spellcheck="false"></textarea>
+          <div class="dw-lst-st" id="dwLstSt"></div>
           <div class="dw-lst-act"><button type="button" class="dw-mini" id="dwLstCsv" data-t="drawListCsv"></button><button type="button" class="dw-mini danger" id="dwLstClear" data-t="drawListClear"></button></div>
         </div>
         <div class="dw-wishonly">
@@ -3361,6 +3363,42 @@ let dwBusy = false, dwLast = null, dwShowingWin = false;
 let DW_SRC = load("cta_dw_src") === "list" ? "list" : "wish";
 const DW_L = (()=>{ try{ const o = JSON.parse(load("cta_dw_list") || "{}"); return {text: String(o.text || ""), winners: Array.isArray(o.winners) ? o.winners : []}; }catch(e){ return {text:"", winners:[]}; } })();
 const dwLSave = () => save("cta_dw_list", JSON.stringify(DW_L));
+/* lưu trên máy chủ (bảng QuayThuong) để hậu kiểm; máy chủ chưa cập nhật thì tạm lưu trên máy này */
+let DW_SRV = null, DW_HIST = null, DW_SAVED = 0;
+const dwHash = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = (h * 33 + s.charCodeAt(i)) >>> 0; return h.toString(16); };
+function dwLSt(){
+  const el = $("#dwLstSt"); if (!el) return;
+  el.classList.toggle("warn", DW_SRV === false);
+  el.textContent = DW_SRV === false ? t("drawSrvOld") : DW_SRV == null ? t("drawSrvLoading")
+    : dwLSt.saving ? t("drawSrvSaving") : t("drawSrvSaved", {time: new Date(DW_SAVED || Date.now()).toLocaleTimeString("vi-VN", {hour:"2-digit", minute:"2-digit"})});
+}
+function dwLApply(r){
+  DW_SRV = true; DW_HIST = r.wins || [];
+  DW_L.text = String(r.text || ""); DW_SAVED = Math.max(DW_SAVED, Number(r.at) || 0, ...DW_HIST.map(w=>Math.max(w.wonAt, w.endAt)));
+  DW_L.winners = DW_HIST.filter(w=>w.status === "ok").map(w=>({id: w.id, key: w.key, name: w.name, prize: w.prize, wonAt: w.wonAt}));
+  dwLSave();
+  if (document.activeElement !== $("#dwPaste")) $("#dwPaste").value = DW_L.text;
+  dwLSt(); if (DW_SRC === "list"){ dwInfo(); dwRenderWinners(); }
+}
+async function dwLLoad(){
+  DW_SRV = null; dwLSt();
+  let r = null; try{ r = await api("adminDrawGet"); }catch(e){}
+  if (!r || !r.ok){ DW_SRV = false; dwLSt(); return; }
+  try{
+    /* lần đầu: đưa danh sách và kết quả đang có trên máy này lên máy chủ */
+    if (!r.text && DW_L.text){ const x = await api("adminDrawSave", {text: DW_L.text}); if (x && x.ok) r.text = DW_L.text; }
+    const have = new Set((r.wins || []).filter(w=>w.status === "ok").map(w=>w.key));
+    for (const w of DW_L.winners.filter(w=>!w.id && !have.has(w.key))){ const x = await api("adminDrawWin", {name: w.name, key: w.key, prize: w.prize, wonAt: w.wonAt}); if (x && x.wins) r = Object.assign(x, {text: r.text}); }
+  }catch(e){}
+  dwLApply(r);
+}
+async function dwLPush(){
+  if (DW_SRV !== true) return;
+  dwLSt.saving = true; dwLSt();
+  try{ const r = await api("adminDrawSave", {text: DW_L.text}); if (!r || !r.ok) throw 0; DW_SAVED = r.at || Date.now(); }
+  catch(e){ toast(t("drawSrvFail")); }
+  dwLSt.saving = false; dwLSt();
+}
 const dwKey = s => String(s).trim().replace(/\s+/g, " ").toLowerCase();
 function dwLPeople(){
   const seen = new Map(); let dup = 0, lines = 0;
@@ -3432,7 +3470,7 @@ function dwInfoList(){
   $("#dwTbl").innerHTML = list.length ? list.slice(0, 1000).map((m,i)=>{ const pz = prizeOf.get(m.key);
     return `<tr class="${pz ? "no" : ""}"><td>${i+1}</td><td class="nw"><b>${esc(m.account)}</b></td><td><span class="st ${pz ? "won" : "ok"}">${esc(pz ? "🎁 " + pz : t("drawStOk"))}</span></td></tr>`; }).join("")
     : `<tr><td colspan="3" class="a-empty">${esc(t("drawListEmpty"))}</td></tr>`;
-  $("#dwLstCsv").disabled = !DW_L.winners.length; $("#dwLstClear").disabled = !DW_L.winners.length;
+  $("#dwLstCsv").disabled = !(DW_HIST ? DW_HIST.length : DW_L.winners.length); $("#dwLstClear").disabled = !DW_L.winners.length;
 }
 function dwSetSrc(src){
   if (dwBusy) return;
@@ -3520,6 +3558,14 @@ function dwRenderWinners(){
 async function dwSetPrize(m, prize){
   if (m.list){
     const k = m.key || dwKey(m.account);
+    if (DW_SRV === true){
+      const cur = DW_L.winners.find(w=>w.key === k);
+      const r = prize ? await api("adminDrawWin", {name: m.account, key: k, prize, pool: dwPool().length, listHash: dwHash(DW_L.text)})
+                      : await api("adminDrawUndo", {id: cur && cur.id});
+      if (r && r.wins) dwLApply(Object.assign(r, {text: r.text != null ? r.text : DW_L.text}));
+      if (!r || !r.ok) throw new Error((r && r.error) || t("adminSaveError"));
+      return true;
+    }
     DW_L.winners = DW_L.winners.filter(w=>w.key !== k);
     if (prize) DW_L.winners.push({key: k, name: m.account, prize, wonAt: Date.now()});
     dwLSave(); dwRenderWinners(); dwInfo(); return true;
@@ -3614,6 +3660,7 @@ async function openDraw(){
   $("#dwPaste").value = DW_L.text; $("#dwPaste").placeholder = t("drawPastePh");
   dwSetSrc(DW_SRC);
   openModal("#drawPanel");
+  dwLLoad();
   $("#dwInfo").textContent = "…";
   try{ const r = await api("adminList"); if (r.ok) adminItems = (r.items||[]).sort((a,b)=>String(b.time).localeCompare(String(a.time))); }catch(e){}
   if (!$("#dwFrom").value) dwSetRange("all"); else dwInfo();
@@ -3624,12 +3671,22 @@ $$("#drawPanel [data-pre]").forEach(b=>b.onclick = ()=>dwSetRange(b.dataset.pre)
 $$("#drawPanel [data-pre]").forEach(b=>b.addEventListener("click", ()=>{ if (!dwBusy){ dwShowingWin = false; dwInfo(); } }));
 $("#dwSpin").onclick = dwSpin;
 $$("#drawPanel .dw-src button").forEach(b=>b.onclick = ()=>dwSetSrc(b.dataset.src));
-$("#dwPaste").addEventListener("input", e=>{ DW_L.text = e.target.value.slice(0, 200000); dwLSave(); if (!dwBusy) dwShowingWin = false; clearTimeout(dwSetSrc.tm); dwSetSrc.tm = setTimeout(dwInfo, 250); });
-$("#dwLstClear").onclick = ()=>{ if (!DW_L.winners.length || !confirm(t("drawListClearAsk", {n: DW_L.winners.length}))) return; DW_L.winners = []; dwLSave(); dwShowingWin = false; dwLast = null; $("#dwUndo").hidden = true; dwInfo(); dwRenderWinners(); };
+$("#dwPaste").addEventListener("input", e=>{ DW_L.text = e.target.value.slice(0, 300000); dwLSave(); if (!dwBusy) dwShowingWin = false; clearTimeout(dwSetSrc.tm); dwSetSrc.tm = setTimeout(dwInfo, 250); clearTimeout(dwLPush.tm); dwLPush.tm = setTimeout(dwLPush, 1200); if (DW_SRV === true){ dwLSt.saving = true; dwLSt(); } });
+$("#dwPaste").addEventListener("blur", ()=>{ if (dwLPush.tm){ clearTimeout(dwLPush.tm); dwLPush.tm = 0; dwLPush(); } });
+$("#dwLstClear").onclick = async ()=>{
+  if (!DW_L.winners.length || !confirm(t("drawListClearAsk", {n: DW_L.winners.length}))) return;
+  if (DW_SRV === true){ try{ const r = await api("adminDrawClear"); if (!r || !r.ok) throw new Error((r && r.error) || t("adminSaveError")); dwLApply(Object.assign(r, {text: r.text != null ? r.text : DW_L.text})); }catch(e){ toast(e.message || t("adminSaveError")); return; } }
+  else { DW_L.winners = []; dwLSave(); }
+  dwShowingWin = false; dwLast = null; $("#dwUndo").hidden = true; dwInfo(); dwRenderWinners();
+};
 $("#dwLstCsv").onclick = ()=>{
   const cell = v => `"${String(v == null ? "" : v).replace(/"/g, '""')}"`;
-  const rows = DW_L.winners.slice().sort((a,b)=>a.wonAt-b.wonAt).map((w,i)=>[i+1, w.name, w.prize, new Date(w.wonAt).toLocaleString("vi-VN")]);
-  const csv = "\ufeff" + [["STT","Người trúng","Giải","Thời điểm"]].concat(rows).map(r=>r.map(cell).join(",")).join("\r\n");
+  /* có máy chủ: xuất cả lịch sử (kể cả kết quả đã hủy) để hậu kiểm */
+  const fmtT = ms => ms ? new Date(ms).toLocaleString("vi-VN") : "";
+  const stName = st => st === "ok" ? t("drawStValid") : st === "undo" ? t("drawStUndo") : t("drawStCleared");
+  const src = DW_HIST || DW_L.winners.map(w=>Object.assign({status: "ok"}, w));
+  const rows = src.slice().sort((a,b)=>a.wonAt-b.wonAt).map((w,i)=>[i+1, w.name, w.prize, fmtT(w.wonAt), w.pool || "", stName(w.status), fmtT(w.endAt), w.id || ""]);
+  const csv = "\ufeff" + [["STT","Người trúng","Giải","Thời điểm quay","Số người trong lượt quay","Trạng thái","Thời điểm hủy","Mã lượt"]].concat(rows).map(r=>r.map(cell).join(",")).join("\r\n");
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], {type: "text/csv;charset=utf-8"}));
   a.download = `quay-thuong-danh-sach-${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
 };

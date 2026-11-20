@@ -34,7 +34,7 @@ function createCore(tables, env = process.env, deps = {}) {
   const clean = (v, max) => String(v || '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').trim().slice(0, max);
 
   function ensure() {
-    if (!ready) ready = Promise.all([wishes, settings, tables.backups, tables.reactions, tables.stats].filter(Boolean).map(t => t.createTable().catch(e => { if (e.statusCode !== 409) throw e; })))
+    if (!ready) ready = Promise.all([wishes, settings, tables.backups, tables.reactions, tables.stats, tables.draws].filter(Boolean).map(t => t.createTable().catch(e => { if (e.statusCode !== 409) throw e; })))
       .catch(e => { ready = null; throw e; });
     return ready;
   }
@@ -265,6 +265,61 @@ function createCore(tables, env = process.env, deps = {}) {
     const mem = process.memoryUsage();
     return { ok: true, hours: rows, buckets: BUCKETS, live: liveViewers(), now,
       instance: { id: INST, uptimeMin: Math.round((now - STARTED) / 60e3), rssMB: Math.round(mem.rss / 1048576), heapMB: Math.round(mem.heapUsed / 1048576) } };
+  }
+
+
+  /* ---------- quay thưởng theo danh sách: lưu trên máy chủ để hậu kiểm ----------
+     Bảng QuayThuong. PK 'cfg' RK 'list': danh sách đang dán (chia mảnh t0..t9, mỗi mảnh ≤ 30.000 ký tự).
+     PK 'win' RK = mã lượt: name, key, prize, wonAtS, pool (số người trong danh sách quay lúc đó), listHash, status.
+     Không xóa dòng nào: "Hủy kết quả" đặt status = 'undo', "Xóa kết quả quay" đặt status = 'clear' (kèm endAtS). */
+  const draws = tables.draws, DR_CHUNK = 30000, DR_MAX = 300000;
+  const drKey = v => clean(v, 120).replace(/\s+/g, ' ').toLowerCase();
+  async function drState() {
+    if (!draws) return { ok: false, error: 'Máy chủ chưa có bảng quay thưởng.' };
+    let cfg = null; const wins = [];
+    for await (const e of draws.listEntities({})) {
+      if (e.partitionKey === 'cfg' && e.rowKey === 'list') cfg = e;
+      else if (e.partitionKey === 'win') wins.push({ id: e.rowKey, name: e.name || '', key: e.key || '', prize: e.prize || '', wonAt: Number(e.wonAtS) || 0, pool: Number(e.pool) || 0, listHash: e.listHash || '', status: e.status || 'ok', endAt: Number(e.endAtS) || 0 });
+    }
+    let text = '';
+    if (cfg) for (let i = 0; i < 10; i++) text += cfg['t' + i] || '';
+    wins.sort((a, b) => a.wonAt - b.wonAt);
+    return { ok: true, text, at: cfg ? Number(cfg.atS) || 0 : 0, wins };
+  }
+  async function drSave(b) {
+    if (!draws) return { ok: false, error: 'Máy chủ chưa có bảng quay thưởng.' };
+    const text = String(b.text || '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').slice(0, DR_MAX);
+    const e = { partitionKey: 'cfg', rowKey: 'list', atS: String(Date.now()), lines: String(text.split(/\r?\n/).filter(x => x.trim()).length) };
+    for (let i = 0; i < 10; i++) e['t' + i] = text.slice(i * DR_CHUNK, (i + 1) * DR_CHUNK);
+    await draws.upsertEntity(e);
+    return { ok: true, at: Number(e.atS) };
+  }
+  async function drWin(b) {
+    if (!draws) return { ok: false, error: 'Máy chủ chưa có bảng quay thưởng.' };
+    const name = clean(b.name, 120), key = drKey(b.key || b.name), prize = clean(b.prize, 60) || 'Giải';
+    if (!name || !key) return { ok: false, error: 'Thiếu tên người trúng.' };
+    const st = await drState();
+    if (st.wins.some(w => w.status === 'ok' && w.key === key)) return Object.assign(st, { ok: false, error: 'Người này đã trúng giải.' });
+    const now = Number(b.wonAt) > 1.6e12 && Number(b.wonAt) <= Date.now() + 60e3 ? Number(b.wonAt) : Date.now();
+    const id = String(now).padStart(14, '0') + '-' + crypto.randomBytes(3).toString('hex');
+    await draws.createEntity({ partitionKey: 'win', rowKey: id, name, key, prize, wonAtS: String(now), pool: String(Math.max(0, Math.min(1e6, Number(b.pool) || 0))), listHash: clean(b.listHash, 40), status: 'ok' });
+    return Object.assign(await drState(), { id });
+  }
+  async function drEnd(ids, status) {
+    const now = String(Date.now());
+    for (const id of ids) await draws.updateEntity({ partitionKey: 'win', rowKey: id, status, endAtS: now }, 'Merge');
+    return drState();
+  }
+  async function drUndo(b) {
+    if (!draws) return { ok: false, error: 'Máy chủ chưa có bảng quay thưởng.' };
+    const st = await drState(), w = st.wins.find(x => x.id === String(b.id || '') && x.status === 'ok');
+    if (!w) return Object.assign(st, { ok: false, error: 'Không tìm thấy kết quả.' });
+    return drEnd([w.id], 'undo');
+  }
+  async function drClear() {
+    if (!draws) return { ok: false, error: 'Máy chủ chưa có bảng quay thưởng.' };
+    const st = await drState();
+    return drEnd(st.wins.filter(w => w.status === 'ok').map(w => w.id), 'clear');
   }
 
   /* ---------- cảm xúc (giống Facebook) ----------
@@ -607,6 +662,11 @@ function createCore(tables, env = process.env, deps = {}) {
         case 'adminBackupGet':return await bkGet(body);
         case 'adminBackupNow':return await bkSave('manual');
         case 'adminRestore':  return await restore(body);
+        case 'adminDrawGet':  return await drState();
+        case 'adminDrawSave': return await drSave(body);
+        case 'adminDrawWin':  return await drWin(body);
+        case 'adminDrawUndo': return await drUndo(body);
+        case 'adminDrawClear':return await drClear();
         default:              return { ok: false, error: 'Thao tác không hợp lệ.' };
       }
     } catch (err) {

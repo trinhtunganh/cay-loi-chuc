@@ -140,5 +140,6 @@ Hoa đỏ = lời chúc gửi cả công ty; lá màu = gửi phòng ban hoặc 
 - Trong cửa sổ Quay thưởng, chọn **Theo danh sách** (cạnh "Theo lời chúc").
 - Dán danh sách vào ô "Danh sách người tham gia", **mỗi dòng một người** (dán thẳng từ Excel được; dòng trống và dòng trùng tên tự bỏ qua). Đặt **Tên giải**, rồi bấm **⛶ Bắt đầu**.
 - Màn hình quay, hoạt cảnh, loại người đã trúng, Hủy kết quả này, đổi tên giải từng lượt, phím Space/Esc: giống quay theo lời chúc.
-- Danh sách và kết quả quay theo danh sách lưu **trên máy đang quay** (không lẫn với kết quả quay theo lời chúc). Bấm **⬇ Tải kết quả** để tải file CSV mở bằng Excel; **Xóa kết quả quay** để quay lại từ đầu.
+- Danh sách và kết quả quay theo danh sách **lưu trên máy chủ Azure** (bảng `QuayThuong`), máy nào mở cũng thấy như nhau, không lẫn với kết quả quay theo lời chúc. Cần khởi động lại Azure một lần sau ngày 20/11; trước đó trang tạm lưu trên máy đang quay và tự đưa lên máy chủ khi máy chủ sẵn sàng.
+- **Hậu kiểm**: mọi lượt quay đều được giữ lại, kể cả lượt bấm "Hủy kết quả này" hay "Xóa kết quả quay" (chỉ đổi trạng thái, không xóa). Bấm **⬇ Tải kết quả** để tải file CSV: người trúng, giải, thời điểm quay, số người trong lượt quay, trạng thái (Hiệu lực / Đã hủy / Đã xóa khi quay lại từ đầu), thời điểm hủy, mã lượt.
 
