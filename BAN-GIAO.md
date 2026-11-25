@@ -28,13 +28,13 @@ Cập nhật: 24/10/2026. Dán file này (hoặc link repo) vào đầu cuộc t
 - Tab **Chào mừng**: 3 mẫu màn hình chào mừng ngày sinh nhật (Cây bừng nở, Cùng thổi nến, Pháo hoa lời chúc), xem thử, chọn mẫu, hiện trong ngày sinh nhật hoặc ngay. Mẫu thổi nến đếm chung qua cảm xúc `WELCOME_CAKE` (cần Azure bản 17/11).
 - Quay thưởng **theo danh sách** dán vào: lưu bảng `QuayThuong` trên Azure (PK `cfg`/`list` = danh sách, PK `win` = từng lượt, không xóa, chỉ đổi status ok/undo/clear) để hậu kiểm. Thao tác: adminDrawGet/Save/Win/Undo/Clear.
 - **Cảm xúc** kiểu Facebook trên từng lời chúc, sắp xếp danh sách theo số cảm xúc.
-- **Giám sát**: workflow `.github/workflows/monitor.yml` 10 phút/lần (mở Issue khi lỗi) + tác vụ định kỳ của Claude mỗi giờ báo về điện thoại.
+- Giám sát theo lịch (workflow GitHub và tác vụ định kỳ của Claude) đã gỡ bỏ ngày 25/11/2026 sau sự kiện.
 - Nút **Quay thưởng** (hộp quà):
   - Chọn khoảng thời gian; bảng kê lời chúc kèm lý do không được quay.
   - Account rải ngẫu nhiên, quay đúng 5 giây; người đã trúng bị loại khỏi lượt sau.
 
 ## Việc còn treo (cần máy tính có app Claude desktop)
-1. **Restart Azure** để nạp bản mới nhất. Bản mới gồm: tab Nội dung, sao lưu tự động, ngày sinh nhật sửa trong Quản trị, cảm xúc, giám sát chi tiết (?health), báo cáo hiệu năng.
+1. **Restart Azure** để nạp bản mới nhất. Bản mới gồm: tab Nội dung, sao lưu tự động, ngày sinh nhật sửa trong Quản trị, cảm xúc, số liệu ?health, báo cáo hiệu năng.
 2. "Ẩn đi" dòng lời chúc `[THỬ NGHIỆM]` trên Azure. Muốn xóa hẳn thì Ban tổ chức tự bấm.
 3. (Không cần nữa, Google đã tắt) Cài `Code.gs` mới, `SYNC_KEY`, `GOOGLE_URL`.
 
