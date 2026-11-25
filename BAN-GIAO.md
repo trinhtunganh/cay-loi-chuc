@@ -23,7 +23,7 @@ Cập nhật: 24/10/2026. Dán file này (hoặc link repo) vào đầu cuộc t
 - Tab **Nội dung**: sửa mọi chữ hiển thị và ngày giờ sinh nhật (đồng hồ đếm ngược), lưu trên máy chủ.
 - Tab **Sao lưu**:
   - Tải bản sao lưu .json; khôi phục kiểu Gộp hoặc Đưa về đúng bản sao lưu.
-  - Azure tự sao lưu: 3 giờ/lần, 1 giờ/lần quanh sinh nhật, chỉ khi dữ liệu đổi. Giữ 24 bản + 1 bản/ngày trong 45 ngày.
+  - Sao lưu tự động và đồng bộ 2 phút/lần (hàm hẹn giờ `backup`, `sync`) đã gỡ ngày 25/11/2026; chỉ còn sao lưu bằng tay. Bản sao lưu cũ vẫn giữ.
 - **Ngày và đêm** tự đổi theo vòng 30 phút (mặt trời đi trái → phải, trời tối dần, cây phát sáng). Chỉ đổi độ mờ các lớp vẽ sẵn mỗi 4 giây, dừng khi tab ẩn.
 - Tab **Chào mừng**: 3 mẫu màn hình chào mừng ngày sinh nhật (Cây bừng nở, Cùng thổi nến, Pháo hoa lời chúc), xem thử, chọn mẫu, hiện trong ngày sinh nhật hoặc ngay. Mẫu thổi nến đếm chung qua cảm xúc `WELCOME_CAKE` (cần Azure bản 17/11).
 - Quay thưởng **theo danh sách** dán vào: lưu bảng `QuayThuong` trên Azure (PK `cfg`/`list` = danh sách, PK `win` = từng lượt, không xóa, chỉ đổi status ok/undo/clear) để hậu kiểm. Thao tác: adminDrawGet/Save/Win/Undo/Clear.
