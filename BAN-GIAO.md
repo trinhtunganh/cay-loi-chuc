@@ -2,6 +2,11 @@
 
 Cập nhật: 24/10/2026. Dán file này (hoặc link repo) vào đầu cuộc trò chuyện mới để Claude nắm ngay bối cảnh.
 
+## Trạng thái (25/11/2026): ĐÃ TẠM ĐÓNG
+- `index.html` trên nhánh `main` đã thay bằng trang thông báo "Cây Tri Ân đã khép lại". Bản web đầy đủ nằm nguyên ở nhánh **`ban-day-du`**.
+- Mở lại: lấy `index.html` từ nhánh `ban-day-du` đưa về `main` (ví dụ `git checkout ban-day-du -- index.html` rồi commit, push), hoặc nhờ Claude làm.
+- Máy chủ Azure và dữ liệu (lời chúc, cảm xúc, sao lưu, kết quả quay thưởng) vẫn giữ nguyên; không ai truy cập được qua trang nữa.
+
 ## Dự án là gì
 - Web "Cây Tri Ân" mừng sinh nhật VinRobotics (21/11/2026). Khoảng 250 nhân viên gửi lời cảm ơn tới cả công ty; mỗi lời chúc mọc thành một bông hoa hoặc chiếc lá (màu ngẫu nhiên) trên cây.
 - Repo: `trinhtunganh/cay-loi-chuc` (GitHub Pages: https://trinhtunganh.github.io/cay-loi-chuc/).
